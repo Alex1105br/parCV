@@ -76,7 +76,7 @@ O `--build` força o Docker a reconstruir a imagem do zero com as novas configur
 ### 3. Entrar no container
 
 ~~~bash
-docker exec -it projeto_sd-app-1 bash
+docker exec -it sd_trabalho-main-app-1 bash
 ~~~
 
 Este comando abre um terminal **dentro** do container `app`, onde o ambiente está configurado com Python, Git e acesso direto ao Ollama na rede interna Docker.
