@@ -1,0 +1,55 @@
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - ai-net
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - ai-net
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s   # ← era 10s, agora 30s
+
+  ollama-init:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - ai-net
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint: >
+      sh -c "
+        echo 'Ollama pronto, baixando modelo...' &&
+        ollama pull qwen2.5:7b &&
+        echo 'Modelo baixado com sucesso!'
+      "
+    restart: "no"
+
+networks:
+  ai-net:
+    driver: bridge
+
+volumes:
+  ollama_data:

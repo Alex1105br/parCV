@@ -1,0 +1,19 @@
+{
+    "name": "Dev + Ollama IA",
+    "dockerComposeFile": "../docker-compose.yml",
+    "service": "app",
+    "workspaceFolder": "/workspace",
+  
+    "customizations": {
+      "vscode": {
+        "extensions": [
+          "Continue.continue"
+        ],
+        "settings": {
+          "continue.telemetryEnabled": false
+        }
+      }
+    },
+  
+    "postCreateCommand": "mkdir -p ~/.continue && cp /workspace/.devcontainer/continue-config.json ~/.continue/config.json && echo '✅ Ambiente pronto! Ollama disponível em http://ollama:11434'"
+}
