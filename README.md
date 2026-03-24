@@ -91,6 +91,66 @@ python3 src/chat.py
 
 Digite sua mensagem e pressione Enter. A IA responde com streaming (palavra por palavra). Digite `sair` para encerrar.
 
+### 5. Carregar um documento (TXT ou PDF)
+
+Você pode fornecer um arquivo como contexto de duas formas:
+
+**Via argumento de linha de comando** (carrega o documento ao iniciar o chat):
+
+~~~bash
+python3 src/chat.py --arquivo meu_documento.pdf
+python3 src/chat.py --arquivo notas.txt
+~~~
+
+**Via `#` no chat** (carrega o documento durante a conversa):
+
+~~~
+Você: #relatorio.pdf
+Você: #resumo.txt
+~~~
+
+O caminho pode ser absoluto ou relativo ao `/workspace`. Formatos suportados: `.txt` e `.pdf`.
+
+> ⚠️ Documentos muito grandes podem ultrapassar o limite de contexto do modelo (4096 tokens). Para documentos extensos, considere dividir em partes menores.
+
+### 6. Como passar arquivos locais para o container
+
+O `docker-compose.yml` monta a pasta do projeto como volume em `/workspace` dentro do container:
+
+~~~yaml
+volumes:
+  - .:/workspace
+~~~
+
+Isso significa que **qualquer arquivo dentro da pasta do projeto já está acessível automaticamente** no container. Para usar um documento:
+
+1. **Copie o arquivo para a pasta do projeto** (ou uma subpasta, ex: `docs/`):
+
+~~~bash
+# No seu terminal local (fora do container)
+cp ~/Downloads/relatorio.pdf /caminho/do/projeto/
+cp ~/Documents/notas.txt /caminho/do/projeto/docs/
+~~~
+
+2. **Referencie dentro do container** pelo caminho relativo:
+
+~~~bash
+# Via argumento CLI
+python3 src/chat.py --arquivo relatorio.pdf
+python3 src/chat.py --arquivo docs/notas.txt
+
+# Ou dentro do chat
+Você: #relatorio.pdf
+Você: #docs/notas.txt
+~~~
+
+Alternativamente, para copiar um arquivo avulso **sem mover para a pasta do projeto**, use `docker cp`:
+
+~~~bash
+# Copia um arquivo do host para dentro do container
+docker cp ~/Downloads/artigo.pdf sd_trabalho-app-1:/workspace/artigo.pdf
+~~~
+
 ---
 
 ## ⚙️ Configuração do Chat
@@ -102,7 +162,7 @@ OLLAMA_URL  = "http://ollama:11434/api/chat"
 MODEL       = "qwen2.5:7b"
 NUM_PREDICT = 200    # máximo de tokens por resposta
 TEMPERATURE = 0.1    # 0.0 = direto/preciso | 1.0 = criativo
-NUM_CTX     = 512    # tamanho do contexto (memória do modelo)
+NUM_CTX     = 4096   # tamanho do contexto (memória do modelo)
 ~~~
 
 ---
