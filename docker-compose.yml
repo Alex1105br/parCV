@@ -7,6 +7,8 @@ services:
     volumes:
       - .:/workspace
     working_dir: /workspace
+    ports:
+      - "5000:5000"
     depends_on:
       ollama:
         condition: service_healthy

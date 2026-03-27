@@ -7,9 +7,9 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     poppler-utils \
-    && pip3 install requests --break-system-packages \
+    && pip3 install requests flask --break-system-packages \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
 
-CMD ["sleep", "infinity"]
+CMD ["python3", "src/app.py"]
