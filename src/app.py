@@ -98,9 +98,12 @@ def stream_resposta(historico, mensagem):
     except Exception as e:
         yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
-
 @app.route("/")
-def index():
+def home():
+    return render_template("home.html")
+
+@app.route("/chat")
+def chat_get():
     if "historico" not in session:
         session["historico"] = []
     return render_template("chat.html")
@@ -148,8 +151,16 @@ def upload():
     contexto = f"O usuário forneceu o seguinte documento para referência:\n\n{texto}\n\nUse este documento para responder as próximas perguntas."
     historico.append({"role": "user", "content": contexto})
     historico.append({"role": "assistant", "content": "Documento recebido. Pode fazer suas perguntas sobre ele."})
-    session["historico"] = historico
 
+    mensagem = request.form.get("mensagem", "").strip()
+    if mensagem:
+        def generate():
+            yield from stream_resposta(historico, mensagem)
+            session["historico"] = historico
+
+        return Response(generate(), mimetype="text/event-stream")
+
+    session["historico"] = historico
     return jsonify({
         "success": True,
         "filename": filename,
@@ -161,6 +172,10 @@ def upload():
 def limpar():
     session["historico"] = []
     return jsonify({"success": True})
+
+
+
+
 
 
 if __name__ == "__main__":

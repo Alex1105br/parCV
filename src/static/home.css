@@ -1,0 +1,170 @@
+/* MENU TOGGLE (3 linhas) */
+.menu-toggle {
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    z-index: 1001;
+    transition: background 0.3s, transform 0.3s;
+    background: transparent;
+}
+.menu-toggle span {
+    display: block;
+    width: 16px;
+    height: 2px;
+    background: #0969da;
+    border-radius: 1px;
+    transition: background 0.3s;
+}
+.menu-toggle.active {
+    background: #d9d9d9;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+.menu-toggle.active span {
+    background: #57606a;
+}
+
+.sidebar {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    width: 220px;
+    height: calc(100vh - 64px);
+    transform: translateX(-240px);
+    transition: transform 0.3s;
+}
+.sidebar:not(.hide) {
+    transform: translateX(0);
+}
+.sidebar.hide {
+    transform: translateX(-240px);
+}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    font-family: Arial, sans-serif;
+    background: #f6f8fa;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 220px;
+    height: 100vh;
+    background: #ffffff;
+    padding: 20px;
+    padding-top: 70px;
+    border-right: 1px solid #d0d7de;
+}
+
+.sidebar h2 {
+    margin-bottom: 30px;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: #24292f;
+}
+
+.menu-item .menu-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: #f3f4f6;
+    font-size: 16px;
+}
+
+.menu-item span:last-child {
+    line-height: 1.2;
+}
+
+.menu-item:hover {
+    background: #f3f4f6;
+}
+
+.menu-item.active {
+    background: #ddf4ff;
+}
+
+.menu-item.active .menu-icon {
+    background: #cfefff;
+}
+
+/* MAIN */
+.main {
+    flex: 1;
+    margin-left: 32px;
+    padding: 40px;
+    transition: margin-left 0.3s ease;
+}
+
+.sidebar-open .main {
+    margin-left: 220px;
+}
+
+.card-container {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    min-height: 80vh;
+}
+
+h1 {
+    margin-bottom: 30px;
+}
+
+/* CARDS */
+.cards {
+    display: flex;
+    gap: 30px;
+}
+
+.card {
+    width: 180px;
+    height: 180px;
+    background: #ffffff;
+    border: 1px solid #d0d7de;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    background: #f6f8fa;
+}
+
+.icon {
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+.card p {
+    text-align: center;
+    font-size: 14px;
+}
