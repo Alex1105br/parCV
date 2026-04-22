@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 # ─── Configurações globais ────────────────────────────────
 OLLAMA_URL  = os.environ.get("OLLAMA_URL", "http://ollama:11434/api/chat")
 MODEL       = "qwen2.5:7b"
-NUM_PREDICT = 200
+NUM_PREDICT = 800
 TEMPERATURE = 0.1
 NUM_CTX     = 4096
 UPLOAD_FOLDER = "/tmp/uploads"
@@ -98,6 +98,94 @@ def stream_resposta(historico, mensagem):
     except Exception as e:
         yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
+# ==============================
+# 🧠 PROMPT ATS
+# ==============================
+def build_prompt_ats(curriculo, vaga=None):
+    return f"""
+    Você é um sistema ATS (Applicant Tracking System) profissional.
+
+    Analise o currículo com base nos critérios:
+
+    1. Estrutura e formatação (0-15)
+    2. Clareza e escrita (0-15)
+    3. Experiência profissional (0-20)
+    4. Palavras-chave ATS (0-20)
+    5. Skills técnicas (0-15)
+    6. Compatibilidade com vaga (0-15)
+
+    REGRAS:
+    - Seja objetivo
+    - Avalie como recrutador técnico
+    - Não invente informações
+
+    Retorne APENAS JSON válido:
+
+    {{
+        "score_total": int,
+        "criterios": {{
+            "estrutura": int,
+            "clareza": int,
+            "experiencia": int,
+            "palavras_chave": int,
+            "skills": int,
+            "compatibilidade": int
+        }},
+        "pontos_fortes": [""],
+        "pontos_fracos": [""],
+        "sugestoes": [""]
+    }}
+
+    Currículo:
+    {curriculo}
+
+    Descrição da vaga:
+    {vaga if vaga else "Não informada"}
+    """
+
+# ==============================
+# 🤖 CHAMAR OLLAMA (SEM STREAM)
+# ==============================
+def analisar_ollama(prompt):
+    try:
+        response = requests.post(
+            "http://ollama:11434/api/generate",
+            json={
+                "model": MODEL,
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "temperature": 0.1,
+                    "num_ctx": NUM_CTX
+                }
+            },
+            timeout=300
+        )
+
+        data = response.json()
+
+        # SEMPRE retorna 2 valores
+        return data.get("response", ""), None
+
+    except Exception as e:
+        return None, str(e)
+# ==============================
+# 🔧 EXTRAIR JSON DA RESPOSTA
+# ==============================
+def extrair_json(texto):
+    try:
+        import re
+        match = re.search(r"\{.*\}", texto, re.DOTALL)
+        if match:
+            return json.loads(match.group(0))
+    except Exception:
+        pass
+
+    return {
+        "error": "Falha ao interpretar resposta da IA",
+        "raw": texto
+    }
+
 @app.route("/")
 def home():
     return render_template("home.html")
@@ -167,6 +255,43 @@ def upload():
         "chars": len(texto)
     })
 
+@app.route("/analisar", methods=["GET", "POST"])
+def analisar():
+    if request.method == "GET":
+        return render_template("analisar.html")
+
+    # ===== POST (análise ATS) =====
+    if "arquivo" not in request.files:
+        return jsonify({"error": "Nenhum arquivo enviado"}), 400
+
+    arquivo = request.files["arquivo"]
+    vaga = request.form.get("vaga", "").strip()
+
+    if arquivo.filename == "":
+        return jsonify({"error": "Nenhum arquivo selecionado"}), 400
+
+    if not allowed_file(arquivo.filename):
+        return jsonify({"error": "Formato não suportado. Use .txt ou .pdf"}), 400
+
+    filename = secure_filename(arquivo.filename)
+    caminho = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    arquivo.save(caminho)
+
+    texto, erro = carregar_arquivo(caminho)
+    os.remove(caminho)
+
+    if erro:
+        return jsonify({"error": erro}), 400
+
+    prompt = build_prompt_ats(texto, vaga)
+
+    resposta, erro = analisar_ollama(prompt)
+    if erro:
+        return jsonify({"error": erro}), 500
+
+    resultado = extrair_json(resposta)
+
+    return jsonify(resultado)
 
 @app.route("/limpar", methods=["POST"])
 def limpar():

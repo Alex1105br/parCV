@@ -1,30 +1,3 @@
-function irParaChat() {
-    window.location.href = "/chat";
-}
-
-function irParaAnalise() {
-    window.location.href = "/analisar";
-}
-
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const toggle = document.querySelector('.menu-toggle');
-    if (sidebar && toggle) {
-        const isHidden = sidebar.classList.toggle('hide');
-        toggle.classList.toggle('active', !isHidden);
-        document.body.classList.toggle('sidebar-open', !isHidden);
-    }
-}
-
-function abrirModal() {
-    document.getElementById('modal-ats').classList.remove('hidden');
-}
-
-function fecharModal() {
-    document.getElementById('modal-ats').classList.add('hidden');
-}
-
-
 async function enviarAnalise() {
     const fileInput = document.getElementById('ats-file');
     const vaga = document.getElementById('ats-vaga').value;
@@ -47,17 +20,11 @@ async function enviarAnalise() {
             body: formData
         });
 
-        const text = await response.text();
-
-        try {
-            const data = JSON.parse(text);
-            mostrarResultadoATS(data); // ✅ única chamada correta
-        } catch (err) {
-            console.error("Resposta não é JSON:", text);
-            alert("Erro no servidor. Veja o console (F12).");
-        }
+        const data = await response.json();
 
         document.getElementById('loader').classList.add('hidden');
+
+        mostrarResultadoATS(data);
 
     } catch (err) {
         document.getElementById('loader').classList.add('hidden');

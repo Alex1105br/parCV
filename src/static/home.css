@@ -168,3 +168,77 @@ h1 {
     text-align: center;
     font-size: 14px;
 }
+
+/* MODAL */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: #1e1e1e;
+    padding: 25px;
+    border-radius: 12px;
+    width: 500px;
+    color: white;
+    text-align: center;
+}
+
+.close {
+    float: right;
+    cursor: pointer;
+    font-size: 24px;
+}
+
+/* INPUTS */
+.modal-content input,
+.modal-content textarea {
+    width: 100%;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+}
+
+/* BOTÃO */
+.modal-content button {
+    padding: 10px 20px;
+    background: #4CAF50;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+}
+
+/* LOADER */
+#loader {
+    margin-top: 10px;
+}
+
+/* RESULTADO */
+.score-box {
+    border: 2px solid;
+    padding: 10px;
+    margin: 15px 0;
+    border-radius: 10px;
+}
+
+ul {
+    text-align: left;
+}
+
+.error {
+    color: red;
+}

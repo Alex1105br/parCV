@@ -8,7 +8,7 @@ import os
 # ─── Configurações globais ────────────────────────────────
 OLLAMA_URL  = "http://ollama:11434/api/chat"
 MODEL       = "qwen2.5:7b"
-NUM_PREDICT = 200    # máximo de tokens por resposta
+NUM_PREDICT = 800    # máximo de tokens por resposta
 TEMPERATURE = 0.1    # 0.0 = direto/preciso | 1.0 = criativo
 NUM_CTX     = 4096   # tamanho do contexto (memória do modelo)
 # ─────────────────────────────────────────────────────────

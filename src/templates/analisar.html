@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Análise de Currículo</title>
+    <link rel="stylesheet" href="../static/analisar.css">
+</head>
+
+<body>
+
+<header>
+    <a href="/">⬅ Voltar</a>
+    <h1>🔎 Análise de Currículo (ATS)</h1>
+</header>
+
+<div class="container">
+
+    <div class="form">
+        <input type="file" id="ats-file" accept=".pdf,.txt">
+
+        <textarea id="ats-vaga" placeholder="Cole a descrição da vaga (opcional)"></textarea>
+
+        <button onclick="enviarAnalise()">Analisar currículo</button>
+
+        <div id="loader" class="hidden">⏳ Analisando...</div>
+    </div>
+
+    <div id="resultado" class="resultado"></div>
+
+</div>
+
+<script src="../static/analisar.js"></script>
+
+</body>
+</html>

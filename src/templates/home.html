@@ -31,12 +31,12 @@
 
         <div class="cards">
             
-            <div class="card" onclick="irParaChat()">
+            <div class="card" onclick="irParaAnalise()">
                 <div class="icon">🔎</div>
                 <p>Analisar<br>currículo</p>
             </div>
 
-            <div class="card">
+            <div class="card" onclick="irParaChat()">
                 <div class="icon">👤</div>
                 <p>Simulação<br>entrevista</p>
             </div>
@@ -46,6 +46,29 @@
     </div>
 </div>
 
+
+<!-- MODAL ANALISAR CURRÍCULO -->
+<div id="modal-ats" class="modal hidden">
+    <div class="modal-content">
+
+        <span class="close" onclick="fecharModal()">&times;</span>
+
+        <h2>🔎 Análise de Currículo (ATS)</h2>
+
+        <input type="file" id="ats-file" accept=".pdf,.txt">
+
+        <textarea id="ats-vaga" placeholder="Cole a descrição da vaga (opcional)"></textarea>
+
+        <button onclick="enviarAnalise()">Analisar</button>
+
+        <!-- LOADER -->
+        <div id="loader" class="hidden">⏳ Analisando currículo...</div>
+
+        <!-- RESULTADO -->
+        <div id="resultado"></div>
+
+    </div>
+</div>
 
 
 </body>
