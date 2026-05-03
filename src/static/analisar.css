@@ -61,3 +61,22 @@ ul {
 .error {
     color: red;
 }
+
+#btn-otimizar {
+    background: #e53935;
+    width: 100%;
+    padding: 14px;
+    font-size: 1em;
+    font-weight: bold;
+    transition: background 0.2s;
+    margin-top: 8px;
+}
+
+#btn-otimizar:hover {
+    background: #b71c1c;
+}
+
+#btn-otimizar:disabled {
+    background: #555;
+    cursor: not-allowed;
+}
