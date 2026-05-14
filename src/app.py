@@ -422,4 +422,6 @@ def limpar():
 
 
 if __name__ == "__main__":
+    import webbrowser
+    webbrowser.open("http://localhost:5005")
     app.run(host="0.0.0.0", port=5005, debug=True)
