@@ -8,11 +8,11 @@ Ambiente de desenvolvimento com IA rodando **100% local**, sem depender de nenhu
 
 ~~~
 projeto_sd/
-├── .devcontainer/
-│   ├── continue-config.json   # configuração da IA no VSCode (extensão Continue)
-│   └── devcontainer.json      # configuração do Dev Container
 ├── src/
-│   └── chat.py                # interface de chat com a IA via terminal
+│   ├── app.py                 # interface web (Flask)
+│   ├── chat.py                # interface de chat via terminal
+│   ├── static/                # CSS e JS da interface web
+│   └── templates/             # HTML das páginas
 ├── docker-compose.yml         # orquestração dos containers
 ├── Dockerfile                 # imagem do ambiente de desenvolvimento
 └── README.md
@@ -81,9 +81,20 @@ docker exec -it sd_trabalho-app-1 bash
 
 Este comando abre um terminal **dentro** do container `app`, onde o ambiente está configurado com Python, Git e acesso direto ao Ollama na rede interna Docker.
 
-### 4. Iniciar o chat com a IA
+### 4. Iniciar a interface web
 
 Dentro do container:
+
+~~~bash
+python3 src/app.py
+~~~
+
+Abra o navegador em **http://localhost:5005**. A interface oferece:
+- **Chat** com a IA (streaming)
+- **Análise de currículo** (score ATS)
+- **Otimização de currículo** com download em PDF
+
+### 5. Ou usar o chat via terminal
 
 ~~~bash
 python3 src/chat.py
@@ -91,7 +102,7 @@ python3 src/chat.py
 
 Digite sua mensagem e pressione Enter. A IA responde com streaming (palavra por palavra). Digite `sair` para encerrar.
 
-### 5. Carregar um documento (TXT ou PDF)
+### 6. Carregar um documento (TXT ou PDF)
 
 Você pode fornecer um arquivo como contexto de duas formas:
 
@@ -113,7 +124,7 @@ O caminho pode ser absoluto ou relativo ao `/workspace`. Formatos suportados: `.
 
 > ⚠️ Documentos muito grandes podem ultrapassar o limite de contexto do modelo (4096 tokens). Para documentos extensos, considere dividir em partes menores.
 
-### 6. Como passar arquivos locais para o container
+### 7. Como passar arquivos locais para o container
 
 O `docker-compose.yml` monta a pasta do projeto como volume em `/workspace` dentro do container:
 
@@ -153,14 +164,14 @@ docker cp ~/Downloads/artigo.pdf sd_trabalho-app-1:/workspace/artigo.pdf
 
 ---
 
-## ⚙️ Configuração do Chat
+## ⚙️ Configuração do Modelo
 
-As configurações do modelo ficam no topo do arquivo `src/chat.py`:
+As configurações do modelo ficam no topo do arquivo `src/app.py`:
 
 ~~~python
 OLLAMA_URL  = "http://ollama:11434/api/chat"
 MODEL       = "qwen2.5:7b"
-NUM_PREDICT = 200    # máximo de tokens por resposta
+NUM_PREDICT = 800    # máximo de tokens por resposta
 TEMPERATURE = 0.1    # 0.0 = direto/preciso | 1.0 = criativo
 NUM_CTX     = 4096   # tamanho do contexto (memória do modelo)
 ~~~
@@ -171,9 +182,9 @@ NUM_CTX     = 4096   # tamanho do contexto (memória do modelo)
 
 | Container | Função |
 |---|---|
-| `projeto_sd-app-1` | Ambiente de desenvolvimento principal |
-| `projeto_sd-ollama-1` | Servidor do modelo de IA |
-| `projeto_sd-ollama-init-1` | Baixa o modelo na primeira execução e encerra |
+| `sd_trabalho-app-1` | Interface web Flask (porta 5005) |
+| `sd_trabalho-ollama-1` | Servidor do modelo de IA |
+| `sd_trabalho-ollama-init-1` | Baixa o modelo na primeira execução e encerra |
 
 ---
 
@@ -184,3 +195,65 @@ Se quiser usar a IA diretamente no VSCode com autocomplete e chat integrado, ins
 `Ctrl+Shift+P` → **Dev Containers: Reopen in Container**
 
 A configuração da IA será aplicada automaticamente via `postCreateCommand`.
+
+---
+
+## 🔧 Solução de Problemas
+
+### Port 5005 já está em uso
+
+Se receber o erro `Port 5005 is in use by another program`, siga estes passos:
+
+**1. Identificar o processo usando a porta:**
+
+~~~bash
+# Linux/Mac
+lsof -i :5005
+
+# Ou
+netstat -tlnp | grep 5005
+~~~
+
+**2. Parar o programa:**
+
+~~~bash
+# Encerrar o processo (substitua PID pelo número encontrado acima)
+kill -9 <PID>
+
+# Ou parar todos os containers Docker
+docker compose down
+~~~
+
+**3. Ou usar uma porta diferente:**
+
+Edite `docker-compose.yml` e altere a porta do serviço:
+
+~~~yaml
+services:
+  app:
+    ports:
+      - "5006:5005"  # muda de 5005 para 5006 no host
+~~~
+
+Depois reinicie:
+
+~~~bash
+docker compose up -d
+~~~
+
+### Container não inicia ou demora muito
+
+- **Primeira execução:** normal demora 5-10 minutos (download do modelo ~4.7 GB)
+- **Próximas execuções:** deve ser rápido (< 10 segundos)
+
+Se ficar preso, verifique:
+
+~~~bash
+# Ver logs em tempo real
+docker compose logs -f
+
+# Reiniciar tudo do zero
+docker compose down
+docker system prune -a  # remove imagens antigas
+docker compose up -d --build
+~~~

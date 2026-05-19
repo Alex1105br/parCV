@@ -4,14 +4,11 @@ import time
 import argparse
 import subprocess
 import os
+import sys
 
-# ─── Configurações globais ────────────────────────────────
-OLLAMA_URL  = "http://ollama:11434/api/chat"
-MODEL       = "qwen2.5:7b"
-NUM_PREDICT = 800    # máximo de tokens por resposta
-TEMPERATURE = 0.1    # 0.0 = direto/preciso | 1.0 = criativo
-NUM_CTX     = 4096   # tamanho do contexto (memória do modelo)
-# ─────────────────────────────────────────────────────────
+sys.path.insert(0, os.path.dirname(__file__))
+
+from src.config import OLLAMA_CHAT_URL, MODEL, NUM_PREDICT, TEMPERATURE, NUM_CTX
 
 
 def carregar_arquivo(caminho):
@@ -59,7 +56,7 @@ def enviar_mensagem(historico, mensagem):
 
     inicio = time.time()
 
-    resposta = requests.post(OLLAMA_URL, json={
+    resposta = requests.post(OLLAMA_CHAT_URL, json={
         "model": MODEL,
         "messages": historico,
         "stream": True,

@@ -12,4 +12,6 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /workspace
 
-CMD ["python3", "src/app.py"]
+ENV PYTHONPATH=/workspace
+
+CMD ["python3", "-m", "src.app"]

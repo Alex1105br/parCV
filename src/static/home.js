@@ -1,107 +1,13 @@
-function irParaChat() {
-    window.location.href = "/chat";
-}
+(function () {
+    'use strict';
 
-function irParaAnalise() {
-    window.location.href = "/analisar";
-}
-
-function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
-    const toggle = document.querySelector('.menu-toggle');
-    if (sidebar && toggle) {
-        const isHidden = sidebar.classList.toggle('hide');
-        toggle.classList.toggle('active', !isHidden);
-        document.body.classList.toggle('sidebar-open', !isHidden);
-    }
-}
+    const toggle = document.getElementById('sidebar-toggle');
 
-function abrirModal() {
-    document.getElementById('modal-ats').classList.remove('hidden');
-}
-
-function fecharModal() {
-    document.getElementById('modal-ats').classList.add('hidden');
-}
-
-
-async function enviarAnalise() {
-    const fileInput = document.getElementById('ats-file');
-    const vaga = document.getElementById('ats-vaga').value;
-
-    if (!fileInput.files.length) {
-        alert("Selecione um arquivo");
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('arquivo', fileInput.files[0]);
-    if (vaga) formData.append('vaga', vaga);
-
-    document.getElementById('loader').classList.remove('hidden');
-    document.getElementById('resultado').innerHTML = '';
-
-    try {
-        const response = await fetch('/analisar', {
-            method: 'POST',
-            body: formData
+    if (toggle && sidebar) {
+        toggle.addEventListener('click', function () {
+            const isHidden = sidebar.classList.toggle('sidebar--hidden');
+            toggle.setAttribute('aria-expanded', String(!isHidden));
         });
-
-        const text = await response.text();
-
-        try {
-            const data = JSON.parse(text);
-            mostrarResultadoATS(data); // ✅ única chamada correta
-        } catch (err) {
-            console.error("Resposta não é JSON:", text);
-            alert("Erro no servidor. Veja o console (F12).");
-        }
-
-        document.getElementById('loader').classList.add('hidden');
-
-    } catch (err) {
-        document.getElementById('loader').classList.add('hidden');
-        alert("Erro: " + err.message);
     }
-}
-
-
-function mostrarResultadoATS(data) {
-    const container = document.getElementById('resultado');
-
-    if (data.error) {
-        container.innerHTML = `<p class="error">❌ ${data.error}</p>`;
-        return;
-    }
-
-    const score = data.score_total;
-
-    let cor = 'red';
-    if (score > 75) cor = 'green';
-    else if (score > 50) cor = 'orange';
-
-    container.innerHTML = `
-        <div class="score-box" style="border-color:${cor}">
-            <h2 style="color:${cor}">Score ATS: ${score}/100</h2>
-        </div>
-
-        <h3>📊 Critérios</h3>
-        <ul>
-            <li>Estrutura: ${data.criterios.estrutura}</li>
-            <li>Clareza: ${data.criterios.clareza}</li>
-            <li>Experiência: ${data.criterios.experiencia}</li>
-            <li>Palavras-chave: ${data.criterios.palavras_chave}</li>
-            <li>Skills: ${data.criterios.skills}</li>
-            <li>Compatibilidade: ${data.criterios.compatibilidade}</li>
-        </ul>
-
-        <h3>✅ Pontos fortes</h3>
-        <ul>${data.pontos_fortes.map(p => `<li>${p}</li>`).join('')}</ul>
-
-        <h3>⚠ Pontos fracos</h3>
-        <ul>${data.pontos_fracos.map(p => `<li>${p}</li>`).join('')}</ul>
-
-        <h3>💡 Sugestões</h3>
-        <ul>${data.sugestoes.map(s => `<li>${s}</li>`).join('')}</ul>
-    `;
-}
+})();

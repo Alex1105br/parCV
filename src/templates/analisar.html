@@ -1,35 +1,41 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Análise de Currículo</title>
-    <link rel="stylesheet" href="../static/analisar.css">
-</head>
+{% extends "base.html" %}
 
-<body>
+{% block title %}Análise de Currículo - IA Currículos{% endblock %}
 
-<header>
-    <a href="/">⬅ Voltar</a>
-    <h1>🔎 Análise de Currículo (ATS)</h1>
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='analisar.css') }}">
+{% endblock %}
+
+{% block body %}
+<header class="header">
+    <a href="/" class="header__back" aria-label="Voltar para a página inicial">⬅ Voltar</a>
+    <h1 class="header__title">🔎 Análise de Currículo (ATS)</h1>
 </header>
 
-<div class="container">
+<main class="analisar">
+    <section class="analisar__form" aria-label="Formulário de análise">
+        <div class="form-group">
+            <label for="ats-file" class="form-label">Currículo (PDF ou TXT)</label>
+            <input type="file" id="ats-file" class="form-input" accept=".pdf,.txt">
+        </div>
 
-    <div class="form">
-        <input type="file" id="ats-file" accept=".pdf,.txt">
+        <div class="form-group">
+            <label for="ats-vaga" class="form-label">Descrição da vaga (opcional)</label>
+            <textarea id="ats-vaga" class="form-textarea" placeholder="Cole a descrição da vaga aqui..."></textarea>
+        </div>
 
-        <textarea id="ats-vaga" placeholder="Cole a descrição da vaga (opcional)"></textarea>
+        <button type="button" class="btn btn--primary btn--block" id="btn-analisar">Analisar currículo</button>
 
-        <button onclick="enviarAnalise()">Analisar currículo</button>
+        <div id="loader" class="loader hidden" aria-live="polite">
+            <span class="loader__spinner"></span>
+            <span>Analisando...</span>
+        </div>
+    </section>
 
-        <div id="loader" class="hidden">⏳ Analisando...</div>
-    </div>
+    <section class="analisar__resultado" id="resultado" aria-live="polite" aria-label="Resultado da análise"></section>
+</main>
+{% endblock %}
 
-    <div id="resultado" class="resultado"></div>
-
-</div>
-
-<script src="../static/analisar.js"></script>
-
-</body>
-</html>
+{% block scripts %}
+<script src="{{ url_for('static', filename='analisar.js') }}"></script>
+{% endblock %}

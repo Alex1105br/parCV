@@ -1,80 +1,50 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Dashboard - IA Currículos</title>
+{% extends "base.html" %}
 
+{% block title %}Dashboard - IA Currículos{% endblock %}
 
-</head>
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+{% endblock %}
 
-<body>
-
-
-<!-- MENU ICON (3 linhas) -->
-<div class="menu-toggle" onclick="toggleSidebar()">
+{% block body %}
+<button class="sidebar-toggle" id="sidebar-toggle" aria-label="Abrir menu" aria-expanded="false">
     <span></span>
     <span></span>
     <span></span>
-</div>
+</button>
 
-<!-- SIDEBAR -->
-<div class="sidebar hide" id="sidebar">
-    <div class="menu-item active"><span class="menu-icon">⌂</span><span>Página inicial</span></div>
-    <div class="menu-item"><span class="menu-icon">🗎</span><span>Meus currículos</span></div>
-    <div class="menu-item"><span class="menu-icon">⚙</span><span>Configurações</span></div>
-</div>
+<aside class="sidebar sidebar--hidden" id="sidebar" aria-label="Menu de navegação">
+    <nav>
+        <a href="/" class="sidebar__item sidebar__item--active" aria-current="page">
+            <span class="sidebar__icon">⌂</span>
+            <span class="sidebar__label">Página inicial</span>
+        </a>
+        <a href="/analisar" class="sidebar__item">
+            <span class="sidebar__icon">🗎</span>
+            <span class="sidebar__label">Meus currículos</span>
+        </a>
+    </nav>
+</aside>
 
-<!-- MAIN -->
-<div class="main">
-    <div class="card-container">
-        <h1>Serviços</h1>
+<main class="main-content">
+    <div class="container">
+        <h1 class="page-title">Serviços</h1>
 
-        <div class="cards">
-            
-            <div class="card" onclick="irParaAnalise()">
-                <div class="icon">🔎</div>
-                <p>Analisar<br>currículo</p>
-            </div>
+        <div class="card-grid">
+            <a href="/analisar" class="card">
+                <span class="card__icon">🔎</span>
+                <span class="card__label">Analisar currículo</span>
+            </a>
 
-            <div class="card" onclick="irParaChat()">
-                <div class="icon">👤</div>
-                <p>Simulação<br>entrevista</p>
-            </div>
-
+            <a href="/chat" class="card">
+                <span class="card__icon">👤</span>
+                <span class="card__label">Simulação entrevista</span>
+            </a>
         </div>
-
     </div>
-</div>
+</main>
+{% endblock %}
 
-
-<!-- MODAL ANALISAR CURRÍCULO -->
-<div id="modal-ats" class="modal hidden">
-    <div class="modal-content">
-
-        <span class="close" onclick="fecharModal()">&times;</span>
-
-        <h2>🔎 Análise de Currículo (ATS)</h2>
-
-        <input type="file" id="ats-file" accept=".pdf,.txt">
-
-        <textarea id="ats-vaga" placeholder="Cole a descrição da vaga (opcional)"></textarea>
-
-        <button onclick="enviarAnalise()">Analisar</button>
-
-        <!-- LOADER -->
-        <div id="loader" class="hidden">⏳ Analisando currículo...</div>
-
-        <!-- RESULTADO -->
-        <div id="resultado"></div>
-
-    </div>
-</div>
-
-
-</body>
-
-</body>
-<link rel="stylesheet" href="../static/home.css">
-<script src="../static/home.js"></script>
-</html>
-</html>
+{% block scripts %}
+<script src="{{ url_for('static', filename='home.js') }}"></script>
+{% endblock %}
