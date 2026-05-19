@@ -6,8 +6,9 @@
 
     if (toggle && sidebar) {
         toggle.addEventListener('click', function () {
-            const isHidden = sidebar.classList.toggle('sidebar--hidden');
-            toggle.setAttribute('aria-expanded', String(!isHidden));
+            const collapsed = sidebar.classList.toggle('sidebar--collapsed');
+            toggle.setAttribute('aria-expanded', String(!collapsed));
+            toggle.setAttribute('aria-label', collapsed ? 'Expandir menu' : 'Contrair menu');
         });
     }
 })();

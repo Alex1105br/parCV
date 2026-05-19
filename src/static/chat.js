@@ -12,20 +12,97 @@
 
     let selectedFile = null;
 
+    function escapeHtml(text) {
+        var d = document.createElement('div');
+        d.appendChild(document.createTextNode(text));
+        return d.innerHTML;
+    }
+
+    function renderMarkdown(text) {
+        var lines = text.split('\n');
+        var html = '';
+        var inList = false;
+
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            var trimmed = line.trim();
+
+            // Numbered list: "1. item"
+            var numMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
+            if (numMatch) {
+                if (!inList) { html += '<ol>'; inList = 'ol'; }
+                html += '<li>' + formatInline(numMatch[2]) + '</li>';
+                continue;
+            }
+
+            // Bullet list: "* item" or "- item"
+            var bulletMatch = trimmed.match(/^[\*\-]\s+(.+)$/);
+            if (bulletMatch) {
+                if (!inList) { html += '<ul>'; inList = 'ul'; }
+                html += '<li>' + formatInline(bulletMatch[1]) + '</li>';
+                continue;
+            }
+
+            // Close open list
+            if (inList) { html += '</' + inList + '>'; inList = false; }
+
+            if (!trimmed) {
+                html += '<br>';
+            } else {
+                html += '<p>' + formatInline(line) + '</p>';
+            }
+        }
+        if (inList) { html += '</' + inList + '>'; }
+        return html;
+    }
+
+    function formatInline(text) {
+        var s = escapeHtml(text);
+        s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+        return s;
+    }
+
     function addMessage(content, role, tempo) {
         if (welcome) welcome.style.display = 'none';
         const div = document.createElement('div');
         div.classList.add('message', 'message--' + role);
-        div.textContent = content;
+        if (role === 'assistant') {
+            div.innerHTML = renderMarkdown(content);
+        } else {
+            div.textContent = content;
+        }
+        if (role === 'user') {
+            addCopyButton(div, content);
+        }
         if (tempo) {
             const t = document.createElement('div');
             t.classList.add('message__time');
-            t.textContent = '\u23F1 ' + tempo;
+            t.textContent = tempo;
             div.appendChild(t);
         }
         chatContainer.appendChild(div);
         chatContainer.scrollTop = chatContainer.scrollHeight;
         return div;
+    }
+
+    function addCopyButton(msgDiv, text) {
+        const btn = document.createElement('button');
+        btn.classList.add('message__copy');
+        btn.title = 'Copiar';
+        btn.innerHTML = '<i data-lucide="copy"></i>';
+        btn.addEventListener('click', function () {
+            navigator.clipboard.writeText(text).then(function () {
+                btn.innerHTML = '<i data-lucide="check"></i>';
+                if (window.lucide) lucide.createIcons({ nodes: [btn] });
+                setTimeout(function () {
+                    btn.innerHTML = '<i data-lucide="copy"></i>';
+                    if (window.lucide) lucide.createIcons({ nodes: [btn] });
+                }, 2000);
+            });
+        });
+        msgDiv.appendChild(btn);
+        if (window.lucide) lucide.createIcons({ nodes: [btn] });
     }
 
     function setInputEnabled(enabled) {
@@ -73,27 +150,28 @@
 
                     if (data.error) {
                         assistantDiv.classList.replace('message--assistant', 'message--error');
-                        assistantDiv.textContent = '\u274C ' + data.error;
+                        assistantDiv.textContent = 'Erro: ' + data.error;
                         break;
                     }
 
                     if (data.token) {
                         fullText += data.token;
-                        assistantDiv.textContent = fullText;
+                        assistantDiv.innerHTML = renderMarkdown(fullText);
                         chatContainer.scrollTop = chatContainer.scrollHeight;
                     }
 
                     if (data.done) {
+                        addCopyButton(assistantDiv, fullText);
                         const t = document.createElement('div');
                         t.classList.add('message__time');
-                        t.textContent = '\u23F1 ' + data.tempo;
+                        t.textContent = data.tempo;
                         assistantDiv.appendChild(t);
                     }
                 }
             }
         } catch (err) {
             assistantDiv.classList.replace('message--assistant', 'message--error');
-            assistantDiv.textContent = '\u274C Erro de conexão: ' + err.message;
+            assistantDiv.textContent = 'Erro de conexão: ' + err.message;
         }
 
         setInputEnabled(true);
@@ -101,7 +179,7 @@
 
     async function sendFileAndMessage(file, msg) {
         const assistantDiv = msg ? addMessage('', 'assistant') : null;
-        addMessage('\uD83D\uDCCE Enviando documento: ' + file.name + (msg ? ' e mensagem...' : '...'), 'system');
+        addMessage('Enviando documento: ' + file.name + (msg ? ' e mensagem...' : '...'), 'system');
 
         const formData = new FormData();
         formData.append('arquivo', file);
@@ -133,23 +211,24 @@
                         if (data.error) {
                             if (assistantDiv) {
                                 assistantDiv.classList.replace('message--assistant', 'message--error');
-                                assistantDiv.textContent = '\u274C ' + data.error;
+                                assistantDiv.textContent = 'Erro: ' + data.error;
                             } else {
-                                addMessage('\u274C ' + data.error, 'error');
+                                addMessage('Erro: ' + data.error, 'error');
                             }
                             break;
                         }
 
                         if (data.token && assistantDiv) {
                             fullText += data.token;
-                            assistantDiv.textContent = fullText;
+                            assistantDiv.innerHTML = renderMarkdown(fullText);
                             chatContainer.scrollTop = chatContainer.scrollHeight;
                         }
 
                         if (data.done && assistantDiv) {
+                            addCopyButton(assistantDiv, fullText);
                             const t = document.createElement('div');
                             t.classList.add('message__time');
-                            t.textContent = '\u23F1 ' + data.tempo;
+                            t.textContent = data.tempo;
                             assistantDiv.appendChild(t);
                         }
                     }
@@ -157,17 +236,17 @@
             } else {
                 const data = await response.json();
                 if (data.error) {
-                    addMessage('\u274C ' + data.error, 'error');
+                    addMessage('Erro: ' + data.error, 'error');
                 } else {
-                    addMessage('\u2705 Documento "' + data.filename + '" carregado (' + data.chars + ' caracteres).', 'system');
+                    addMessage('Documento "' + data.filename + '" carregado (' + data.chars + ' caracteres).', 'system');
                 }
             }
         } catch (err) {
             if (assistantDiv) {
                 assistantDiv.classList.replace('message--assistant', 'message--error');
-                assistantDiv.textContent = '\u274C Erro de conexão: ' + err.message;
+                assistantDiv.textContent = 'Erro de conexão: ' + err.message;
             } else {
-                addMessage('\u274C Erro de conexão: ' + err.message, 'error');
+                addMessage('Erro de conexão: ' + err.message, 'error');
             }
         }
 
@@ -183,17 +262,60 @@
             const w = document.createElement('div');
             w.classList.add('chat__welcome');
             w.id = 'welcome';
-            w.innerHTML = '<h2>Bem-vindo ao Chat IA Local</h2><p>Digite uma mensagem ou envie um documento (.txt / .pdf) para começar.</p>';
+            w.innerHTML = '<i data-lucide="message-square" class="chat__welcome-icon"></i><h2>Chat IA</h2><p>Digite uma mensagem ou envie um documento para começar.</p>';
+            if (window.lucide) lucide.createIcons({ nodes: [w] });
             chatContainer.appendChild(w);
         } catch (err) {
-            addMessage('\u274C Erro ao limpar: ' + err.message, 'error');
+            addMessage('Erro ao limpar: ' + err.message, 'error');
         }
+    }
+
+    // Query history
+    const history = [];
+    let historyIdx = -1;
+    let tempInput = '';
+
+    function autoResize() {
+        msgInput.style.height = 'auto';
+        var maxH = window.innerHeight / 3;
+        var scrollH = msgInput.scrollHeight;
+        msgInput.style.height = Math.min(scrollH, maxH) + 'px';
+        msgInput.style.overflowY = scrollH > maxH ? 'auto' : 'hidden';
     }
 
     // Event listeners
     form.addEventListener('submit', function (e) {
         e.preventDefault();
+        const msg = msgInput.value.trim();
+        if (msg) {
+            history.push(msg);
+            historyIdx = history.length;
+        }
         enviarMensagem();
+        msgInput.style.height = 'auto';
+    });
+
+    msgInput.addEventListener('input', autoResize);
+
+    msgInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            form.dispatchEvent(new Event('submit'));
+            return;
+        }
+        if (e.key === 'ArrowUp' && msgInput.selectionStart === 0 && history.length) {
+            e.preventDefault();
+            if (historyIdx === history.length) tempInput = msgInput.value;
+            historyIdx = Math.max(0, historyIdx - 1);
+            msgInput.value = history[historyIdx];
+            autoResize();
+        }
+        if (e.key === 'ArrowDown' && msgInput.selectionStart === msgInput.value.length && historyIdx < history.length) {
+            e.preventDefault();
+            historyIdx = Math.min(history.length, historyIdx + 1);
+            msgInput.value = historyIdx === history.length ? tempInput : history[historyIdx];
+            autoResize();
+        }
     });
 
     fileInput.addEventListener('change', function () {

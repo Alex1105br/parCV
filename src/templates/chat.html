@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Chat IA Local — Qwen 2.5{% endblock %}
+{% block title %}Chat IA - IA Currículos{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
@@ -9,27 +9,42 @@
 {% block body %}
 <header class="header">
     <div class="header__left">
-        <a href="/" class="header__home" title="Voltar para a página inicial" aria-label="Página inicial">⌂</a>
-        <h1 class="header__title">Chat IA Local — Qwen 2.5</h1>
+        <a href="/" class="header__home" title="Voltar para a página inicial" aria-label="Página inicial">
+            <i data-lucide="arrow-left"></i>
+        </a>
+        <h1 class="header__title">Chat IA</h1>
     </div>
     <div class="header__actions">
-        <button class="btn btn--danger" id="btn-limpar" type="button">Limpar chat</button>
+        <div class="header__status">
+            <i data-lucide="circle-dot" class="status-icon"></i>
+            <span>Modelo ativo</span>
+        </div>
+        <button class="btn btn--danger" id="btn-limpar" type="button">
+            <i data-lucide="trash-2"></i>
+            Limpar
+        </button>
     </div>
 </header>
 
 <div class="chat" id="chat-container" role="log" aria-live="polite" aria-label="Mensagens do chat">
     <div class="chat__welcome" id="welcome">
-        <h2>Bem-vindo ao Chat IA Local</h2>
+        <i data-lucide="message-square" class="chat__welcome-icon"></i>
+        <h2>Bem-vindo ao Chat IA</h2>
         <p>Digite uma mensagem ou envie um documento (.txt / .pdf) para começar.</p>
     </div>
 </div>
 
 <form class="input-area" id="input-area" aria-label="Enviar mensagem">
-    <label for="file-input" class="input-area__upload" title="Enviar documento" aria-label="Anexar arquivo">📎</label>
+    <label for="file-input" class="input-area__upload" title="Enviar documento" aria-label="Anexar arquivo">
+        <i data-lucide="paperclip"></i>
+    </label>
     <input type="file" id="file-input" accept=".txt,.pdf" hidden>
     <span class="input-area__filename" id="file-name" aria-live="polite"></span>
-    <input type="text" id="msg-input" class="input-area__text" placeholder="Digite sua mensagem..." autocomplete="off">
-    <button type="submit" id="send-btn" class="btn btn--primary">Enviar</button>
+    <textarea id="msg-input" class="input-area__text" placeholder="Digite sua mensagem..." autocomplete="off" spellcheck="false" rows="1"></textarea>
+    <button type="submit" id="send-btn" class="btn btn--primary">
+        <i data-lucide="send"></i>
+        Enviar
+    </button>
 </form>
 {% endblock %}
 

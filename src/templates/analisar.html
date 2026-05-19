@@ -8,23 +8,48 @@
 
 {% block body %}
 <header class="header">
-    <a href="/" class="header__back" aria-label="Voltar para a página inicial">⬅ Voltar</a>
-    <h1 class="header__title">🔎 Análise de Currículo (ATS)</h1>
+    <div class="header__left">
+        <a href="/" class="header__home" aria-label="Voltar para a página inicial">
+            <i data-lucide="arrow-left"></i>
+        </a>
+        <h1 class="header__title">
+            <i data-lucide="scan-search"></i>
+            Análise de Currículo (ATS)
+        </h1>
+    </div>
+    <div class="header__actions">
+        <div class="header__status">
+            <i data-lucide="circle-dot" class="status-icon"></i>
+            <span>Modelo ativo</span>
+        </div>
+    </div>
 </header>
 
 <main class="analisar">
     <section class="analisar__form" aria-label="Formulário de análise">
+        <h2 class="form-section-title">
+            <i data-lucide="upload"></i>
+            Enviar currículo
+        </h2>
+
         <div class="form-group">
             <label for="ats-file" class="form-label">Currículo (PDF ou TXT)</label>
-            <input type="file" id="ats-file" class="form-input" accept=".pdf,.txt">
+            <div class="file-drop" id="file-drop">
+                <i data-lucide="file-up" class="file-drop__icon"></i>
+                <p class="file-drop__text">Arraste ou clique para selecionar</p>
+                <input type="file" id="ats-file" class="file-drop__input" accept=".pdf,.txt">
+            </div>
         </div>
 
         <div class="form-group">
             <label for="ats-vaga" class="form-label">Descrição da vaga (opcional)</label>
-            <textarea id="ats-vaga" class="form-textarea" placeholder="Cole a descrição da vaga aqui..."></textarea>
+            <textarea id="ats-vaga" class="form-textarea" placeholder="Cole a descrição da vaga aqui..." rows="5" spellcheck="false"></textarea>
         </div>
 
-        <button type="button" class="btn btn--primary btn--block" id="btn-analisar">Analisar currículo</button>
+        <button type="button" class="btn btn--primary btn--block" id="btn-analisar">
+            <i data-lucide="scan-search"></i>
+            Analisar currículo
+        </button>
 
         <div id="loader" class="loader hidden" aria-live="polite">
             <span class="loader__spinner"></span>

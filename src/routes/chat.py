@@ -9,6 +9,13 @@ from src.utils import allowed_file, carregar_arquivo
 
 bp = Blueprint("chat", __name__)
 
+SYSTEM_PROMPT = (
+    "Você é um assistente especializado em carreiras e currículos. "
+    "Responda de forma direta, objetiva e sem rodeios. "
+    "Não use saudações, introduções longas ou frases genéricas. "
+    "Vá direto ao ponto da pergunta do usuário."
+)
+
 
 @bp.route("/chat")
 def chat_page():
@@ -26,6 +33,10 @@ def chat():
         return jsonify({"error": "Mensagem vazia"}), 400
 
     historico = session.get("historico", [])
+
+    # Inject system prompt if not already present
+    if not historico or historico[0].get("role") != "system":
+        historico.insert(0, {"role": "system", "content": SYSTEM_PROMPT})
 
     def generate():
         yield from stream_resposta(historico, mensagem)

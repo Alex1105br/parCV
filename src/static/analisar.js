@@ -6,6 +6,41 @@
     const btnAnalisar = document.getElementById('btn-analisar');
     const loader = document.getElementById('loader');
     const resultado = document.getElementById('resultado');
+    const fileDrop = document.getElementById('file-drop');
+
+    // File drop zone interactions
+    if (fileDrop) {
+        fileDrop.addEventListener('click', function () { fileInput.click(); });
+
+        fileDrop.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            fileDrop.classList.add('file-drop--active');
+        });
+
+        fileDrop.addEventListener('dragleave', function () {
+            fileDrop.classList.remove('file-drop--active');
+        });
+
+        fileDrop.addEventListener('drop', function (e) {
+            e.preventDefault();
+            fileDrop.classList.remove('file-drop--active');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                updateDropLabel();
+            }
+        });
+
+        fileInput.addEventListener('change', updateDropLabel);
+    }
+
+    function updateDropLabel() {
+        const textEl = fileDrop.querySelector('.file-drop__text');
+        if (fileInput.files.length) {
+            textEl.textContent = fileInput.files[0].name;
+        } else {
+            textEl.textContent = 'Arraste ou clique para selecionar';
+        }
+    }
 
     btnAnalisar.addEventListener('click', enviarAnalise);
 
@@ -40,7 +75,7 @@
 
     function mostrarResultado(data) {
         if (data.error) {
-            resultado.innerHTML = '<p class="error">\u274C ' + escapeHtml(data.error) + '</p>';
+            resultado.innerHTML = '<p class="error">' + escapeHtml(data.error) + '</p>';
             return;
         }
 
@@ -53,23 +88,23 @@
             '<div class="score-box" style="border-color:' + cor + '">' +
                 '<h2 style="color:' + cor + '">Score ATS: ' + score + '/100</h2>' +
             '</div>' +
-            '<h3>\uD83D\uDCCA Critérios</h3>' +
-            '<ul>' +
-                '<li>Estrutura: ' + escapeHtml(data.criterios.estrutura) + '</li>' +
-                '<li>Clareza: ' + escapeHtml(data.criterios.clareza) + '</li>' +
-                '<li>Experiência: ' + escapeHtml(data.criterios.experiencia) + '</li>' +
-                '<li>Palavras-chave: ' + escapeHtml(data.criterios.palavras_chave) + '</li>' +
-                '<li>Skills: ' + escapeHtml(data.criterios.skills) + '</li>' +
-                '<li>Compatibilidade: ' + escapeHtml(data.criterios.compatibilidade) + '</li>' +
+            '<h3>Critérios</h3>' +
+            '<ul class="criterios-list">' +
+                '<li><strong>Estrutura:</strong> ' + escapeHtml(data.criterios.estrutura) + '/15 <span class="criterio-info">Formata\u00e7\u00e3o e organiza\u00e7\u00e3o do documento</span></li>' +
+                '<li><strong>Clareza:</strong> ' + escapeHtml(data.criterios.clareza) + '/15 <span class="criterio-info">Qualidade da escrita e objetividade</span></li>' +
+                '<li><strong>Experi\u00eancia:</strong> ' + escapeHtml(data.criterios.experiencia) + '/20 <span class="criterio-info">Relev\u00e2ncia e descri\u00e7\u00e3o de cargos</span></li>' +
+                '<li><strong>Palavras-chave:</strong> ' + escapeHtml(data.criterios.palavras_chave) + '/20 <span class="criterio-info">Termos que sistemas ATS buscam</span></li>' +
+                '<li><strong>Skills:</strong> ' + escapeHtml(data.criterios.skills) + '/15 <span class="criterio-info">Compet\u00eancias t\u00e9cnicas listadas</span></li>' +
+                '<li><strong>Compatibilidade:</strong> ' + escapeHtml(data.criterios.compatibilidade) + '/15 <span class="criterio-info">Ader\u00eancia \u00e0 vaga descrita</span></li>' +
             '</ul>' +
-            '<h3>\u2705 Pontos fortes</h3>' +
+            '<h3>Pontos fortes</h3>' +
             '<ul>' + data.pontos_fortes.map(function (p) { return '<li>' + escapeHtml(p) + '</li>'; }).join('') + '</ul>' +
-            '<h3>\u26A0 Pontos fracos</h3>' +
+            '<h3>Pontos fracos</h3>' +
             '<ul>' + data.pontos_fracos.map(function (p) { return '<li>' + escapeHtml(p) + '</li>'; }).join('') + '</ul>' +
-            '<h3>\uD83D\uDCA1 Sugestões</h3>' +
+            '<h3>Sugestões</h3>' +
             '<ul>' + data.sugestoes.map(function (s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('') + '</ul>' +
             '<div style="margin-top: 20px;">' +
-                '<button class="btn btn--optimize" id="btn-otimizar">\u2728 Otimizar Currículo</button>' +
+                '<button class="btn btn--optimize" id="btn-otimizar"><i data-lucide="sparkles"></i> Otimizar Currículo</button>' +
             '</div>' +
             '<div id="loader-otimizar" class="loader hidden">' +
                 '<span class="loader__spinner"></span>' +
@@ -77,6 +112,7 @@
             '</div>' +
             '<div id="resultado-otimizado"></div>';
 
+        if (window.lucide) lucide.createIcons({ nodes: [resultado] });
         document.getElementById('btn-otimizar').addEventListener('click', otimizarCurriculo);
     }
 
@@ -110,7 +146,7 @@
             btnOtimizar.disabled = false;
 
             if (data.error) {
-                resultadoOtimizado.innerHTML = '<p class="error">\u274C ' + escapeHtml(data.error) + '</p>';
+                resultadoOtimizado.innerHTML = '<p class="error">' + escapeHtml(data.error) + '</p>';
                 return;
             }
 
@@ -129,20 +165,39 @@
         if (melhorias && melhorias.length) {
             melhorasHtml =
                 '<div class="cv-improvements">' +
-                    '<strong>\uD83D\uDD27 Melhorias aplicadas:</strong>' +
+                    '<strong>Melhorias aplicadas:</strong>' +
                     '<ul>' + melhorias.map(function (m) { return '<li>' + escapeHtml(m) + '</li>'; }).join('') + '</ul>' +
                 '</div>';
         }
 
         div.innerHTML =
             '<hr style="margin: 24px 0; border-color: var(--color-border);">' +
-            '<h2 style="color: var(--color-success);">\uD83D\uDCC4 Currículo Otimizado</h2>' +
+            '<h2 style="color: var(--color-success);">Currículo Otimizado</h2>' +
             melhorasHtml +
             '<div class="cv-structured" id="curriculo-text">' + renderStructuredCV(curriculo) + '</div>' +
             '<div style="display: flex; gap: 12px; flex-wrap: wrap;">' +
-                '<a href="/otimizar/pdf" target="_blank" class="btn btn--primary">\uD83D\uDCE5 Baixar PDF</a>' +
-                '<button type="button" class="btn btn--secondary" id="btn-copiar">\uD83D\uDCCB Copiar texto</button>' +
+                '<button type="button" class="btn btn--primary" id="btn-pdf"><i data-lucide="file-down"></i> Baixar PDF</button>' +
+                '<button type="button" class="btn btn--secondary" id="btn-copiar"><i data-lucide="clipboard"></i> Copiar texto</button>' +
             '</div>';
+
+        if (window.lucide) lucide.createIcons({ nodes: [div] });
+
+        document.getElementById('btn-pdf').addEventListener('click', function () {
+            fetch('/otimizar/pdf')
+                .then(function (res) {
+                    if (!res.ok) throw new Error('Erro ao gerar PDF');
+                    return res.blob();
+                })
+                .then(function (blob) {
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'curriculo_otimizado.pdf';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                })
+                .catch(function (err) { alert(err.message); });
+        });
 
         document.getElementById('btn-copiar').addEventListener('click', function () {
             var texto = document.getElementById('curriculo-text').innerText;

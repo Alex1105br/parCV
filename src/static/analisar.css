@@ -3,13 +3,13 @@
 .analisar {
     display: flex;
     padding: var(--spacing-xl);
-    gap: 30px;
+    gap: var(--spacing-xl);
     max-width: 1200px;
     margin: 0 auto;
 }
 
 .analisar__form {
-    flex: 0 0 320px;
+    flex: 0 0 340px;
 }
 
 .analisar__resultado {
@@ -17,9 +17,73 @@
     min-width: 0;
 }
 
+/* Form Section Title */
+.form-section-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-section-title i {
+    width: 20px;
+    height: 20px;
+    color: var(--color-primary);
+}
+
+/* Remove browser :invalid highlighting on textarea */
+.form-textarea:invalid {
+    border-color: var(--color-border);
+    box-shadow: none;
+}
+
+/* File Drop Zone */
+.file-drop {
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-2xl) var(--spacing-xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    cursor: pointer;
+    transition: border-color var(--transition), background var(--transition);
+    margin-bottom: var(--spacing-lg);
+}
+
+.file-drop:hover,
+.file-drop--active {
+    border-color: var(--color-primary);
+    background: var(--color-primary-subtle);
+}
+
+.file-drop__icon {
+    width: 36px;
+    height: 36px;
+    color: var(--color-text-muted);
+}
+
+.file-drop:hover .file-drop__icon,
+.file-drop--active .file-drop__icon {
+    color: var(--color-primary);
+}
+
+.file-drop__text {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    text-align: center;
+}
+
+.file-drop__input {
+    display: none;
+}
+
 /* Score Box */
 .score-box {
-    border: 2px solid;
+    border: 1px solid var(--color-border);
     padding: var(--spacing-lg);
     border-radius: var(--radius-lg);
     margin-bottom: var(--spacing-lg);
@@ -28,6 +92,7 @@
 
 .score-box h2 {
     font-size: var(--font-size-xl);
+    color: var(--color-text);
 }
 
 /* Result Sections */
@@ -35,6 +100,7 @@
     margin-top: var(--spacing-xl);
     margin-bottom: var(--spacing-sm);
     font-size: var(--font-size-md);
+    color: var(--color-text);
 }
 
 .analisar__resultado ul {
@@ -45,11 +111,32 @@
 .analisar__resultado li {
     padding: var(--spacing-xs) 0;
     line-height: 1.6;
+    color: var(--color-text);
+}
+
+.criterios-list {
+    list-style: none;
+}
+
+.criterios-list li {
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.criterios-list li:last-child {
+    border-bottom: none;
+}
+
+.criterio-info {
+    display: block;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    margin-top: 2px;
 }
 
 /* Optimized CV */
 .cv-optimized {
-    background: var(--color-surface);
+    background: var(--color-surface-raised);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     padding: var(--spacing-xl);
@@ -75,13 +162,14 @@
 .cv-name {
     font-size: 1.4rem;
     font-weight: 700;
+    color: var(--color-text);
     margin-bottom: 2px;
 }
 
 .cv-title {
     font-size: var(--font-size-base);
     font-style: italic;
-    color: #2c5282;
+    color: var(--color-primary);
     margin-bottom: 2px;
 }
 
@@ -93,14 +181,14 @@
 
 .cv-divider {
     border: none;
-    border-top: 1px solid var(--color-text);
+    border-top: 1px solid var(--color-border);
     margin: var(--spacing-sm) 0 var(--spacing-lg);
 }
 
 .cv-section {
     font-size: var(--font-size-base);
     font-weight: 700;
-    color: #2c5282;
+    color: var(--color-primary);
     margin-top: var(--spacing-xl);
     margin-bottom: var(--spacing-xs);
     padding-bottom: var(--spacing-xs);
@@ -112,6 +200,7 @@
 .cv-company {
     font-size: var(--font-size-base);
     font-weight: 600;
+    color: var(--color-text);
     margin-top: var(--spacing-md);
     margin-bottom: 2px;
 }
@@ -133,16 +222,18 @@
     font-size: var(--font-size-sm);
     line-height: 1.6;
     padding: 2px 0;
+    color: var(--color-text);
 }
 
 .cv-text {
     font-size: var(--font-size-sm);
     line-height: 1.6;
     margin-bottom: var(--spacing-xs);
+    color: var(--color-text);
 }
 
 .cv-improvements {
-    background: var(--color-bg);
+    background: var(--color-surface-raised);
     border-left: 3px solid var(--color-success);
     padding: var(--spacing-md);
     margin-bottom: var(--spacing-lg);
@@ -155,22 +246,26 @@
 
 /* Optimize Button */
 .btn--optimize {
-    background: var(--color-danger);
-    color: var(--color-text-inverse);
+    background: var(--color-primary);
+    color: #fff;
     border: none;
     width: 100%;
     padding: 14px;
     font-size: var(--font-size-md);
     font-weight: 600;
     margin-top: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background var(--transition);
 }
 
 .btn--optimize:hover:not(:disabled) {
-    background: #b71c1c;
+    background: #5a3aab;
 }
 
 .btn--optimize:disabled {
-    background: #999;
+    background: var(--color-surface-raised);
+    color: var(--color-text-muted);
     cursor: not-allowed;
 }
 

@@ -1,48 +1,113 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - IA Currículos{% endblock %}
+{% block title %}Dashboard - parCV{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
 {% endblock %}
 
 {% block body %}
-<button class="sidebar-toggle" id="sidebar-toggle" aria-label="Abrir menu" aria-expanded="false">
-    <span></span>
-    <span></span>
-    <span></span>
-</button>
+<div class="layout">
+    <aside class="sidebar" id="sidebar" aria-label="Menu de navegação">
+        <div class="sidebar__brand">
+            <i data-lucide="brain-circuit" class="sidebar__logo"></i>
+            <span class="sidebar__brand-text">parCV</span>
+        </div>
+        <nav class="sidebar__nav">
+            <a href="/" class="sidebar__item sidebar__item--active" aria-current="page">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/analisar" class="sidebar__item">
+                <i data-lucide="scan-search"></i>
+                <span>Analisar currículo</span>
+            </a>
+            <a href="/chat" class="sidebar__item">
+                <i data-lucide="message-square"></i>
+                <span>Chat IA</span>
+            </a>
+        </nav>
+        <div class="sidebar__footer">
+            <button class="sidebar__toggle" id="sidebar-toggle" aria-label="Contrair menu" aria-expanded="true">
+                <i data-lucide="panel-left-close"></i>
+            </button>
+        </div>
+    </aside>
 
-<aside class="sidebar sidebar--hidden" id="sidebar" aria-label="Menu de navegação">
-    <nav>
-        <a href="/" class="sidebar__item sidebar__item--active" aria-current="page">
-            <span class="sidebar__icon">⌂</span>
-            <span class="sidebar__label">Página inicial</span>
-        </a>
-        <a href="/analisar" class="sidebar__item">
-            <span class="sidebar__icon">🗎</span>
-            <span class="sidebar__label">Meus currículos</span>
-        </a>
-    </nav>
-</aside>
-
-<main class="main-content">
-    <div class="container">
-        <h1 class="page-title">Serviços</h1>
+    <main class="main-content">
+        <header class="main-header">
+            <h1 class="main-header__title">Dashboard</h1>
+            <p class="main-header__subtitle">Escolha um serviço para começar</p>
+        </header>
 
         <div class="card-grid">
             <a href="/analisar" class="card">
-                <span class="card__icon">🔎</span>
-                <span class="card__label">Analisar currículo</span>
+                <div class="card__icon-wrap">
+                    <i data-lucide="scan-search"></i>
+                </div>
+                <div class="card__body">
+                    <h3 class="card__title">Analisar currículo</h3>
+                    <p class="card__desc">Avalie seu currículo com critérios ATS e receba um score detalhado.</p>
+                </div>
+                <i data-lucide="arrow-right" class="card__arrow"></i>
             </a>
 
             <a href="/chat" class="card">
-                <span class="card__icon">👤</span>
-                <span class="card__label">Simulação entrevista</span>
+                <div class="card__icon-wrap">
+                    <i data-lucide="message-square"></i>
+                </div>
+                <div class="card__body">
+                    <h3 class="card__title">Simulação de entrevista</h3>
+                    <p class="card__desc">Converse com a IA para praticar perguntas de entrevistas.</p>
+                </div>
+                <i data-lucide="arrow-right" class="card__arrow"></i>
+            </a>
+
+            <a href="/analisar" class="card">
+                <div class="card__icon-wrap">
+                    <i data-lucide="sparkles"></i>
+                </div>
+                <div class="card__body">
+                    <h3 class="card__title">Otimizar currículo</h3>
+                    <p class="card__desc">Reescreva seu currículo com IA para maximizar compatibilidade ATS.</p>
+                </div>
+                <i data-lucide="arrow-right" class="card__arrow"></i>
+            </a>
+
+            <a href="/analisar" class="card">
+                <div class="card__icon-wrap">
+                    <i data-lucide="file-down"></i>
+                </div>
+                <div class="card__body">
+                    <h3 class="card__title">Gerar PDF profissional</h3>
+                    <p class="card__desc">Exporte seu currículo otimizado em PDF com layout estruturado.</p>
+                </div>
+                <i data-lucide="arrow-right" class="card__arrow"></i>
             </a>
         </div>
-    </div>
-</main>
+
+        <section class="info-section">
+            <h2 class="info-section__title">
+                <i data-lucide="info"></i>
+                Como funciona
+            </h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step__number">1</div>
+                    <p class="step__text">Envie seu currículo em PDF ou TXT</p>
+                </div>
+                <div class="step">
+                    <div class="step__number">2</div>
+                    <p class="step__text">Receba análise com score e critérios ATS</p>
+                </div>
+                <div class="step">
+                    <div class="step__number">3</div>
+                    <p class="step__text">Otimize e exporte em PDF profissional</p>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
 {% endblock %}
 
 {% block scripts %}
