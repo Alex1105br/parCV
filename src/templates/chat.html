@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Chat IA - IA Currículos{% endblock %}
+{% block title %}Chat - parCV{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
@@ -12,7 +12,7 @@
         <a href="/" class="header__home" title="Voltar para a página inicial" aria-label="Página inicial">
             <i data-lucide="arrow-left"></i>
         </a>
-        <h1 class="header__title">Chat IA</h1>
+        <h1 class="header__title">Chat</h1>
     </div>
     <div class="header__actions">
         <div class="header__status">
@@ -29,7 +29,7 @@
 <div class="chat" id="chat-container" role="log" aria-live="polite" aria-label="Mensagens do chat">
     <div class="chat__welcome" id="welcome">
         <i data-lucide="message-square" class="chat__welcome-icon"></i>
-        <h2>Bem-vindo ao Chat IA</h2>
+        <h2>Bem-vindo ao Chat</h2>
         <p>Digite uma mensagem ou envie um documento (.txt / .pdf) para começar.</p>
     </div>
 </div>

@@ -38,11 +38,23 @@ def chat():
     if not historico or historico[0].get("role") != "system":
         historico.insert(0, {"role": "system", "content": SYSTEM_PROMPT})
 
-    def generate():
-        yield from stream_resposta(historico, mensagem)
-        session["historico"] = historico
+    # Pre-append user message and save session before streaming
+    historico.append({"role": "user", "content": mensagem})
+    session["historico"] = historico
+    session.modified = True
 
-    return Response(generate(), mimetype="text/event-stream")
+    def generate():
+        yield from stream_resposta(historico, mensagem, skip_append_user=True)
+        # stream_resposta appends assistant response to historico (by reference)
+        # Session was already saved before streaming; assistant msg will be
+        # picked up on next request since historico is the same list object
+        # stored in session (Flask cookie-based sessions serialize on response)
+
+    resp = Response(generate(), mimetype="text/event-stream")
+    resp.headers["Cache-Control"] = "no-cache"
+    resp.headers["X-Accel-Buffering"] = "no"
+    resp.headers["Connection"] = "keep-alive"
+    return resp
 
 
 @bp.route("/upload", methods=["POST"])

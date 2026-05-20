@@ -262,7 +262,7 @@
             const w = document.createElement('div');
             w.classList.add('chat__welcome');
             w.id = 'welcome';
-            w.innerHTML = '<i data-lucide="message-square" class="chat__welcome-icon"></i><h2>Chat IA</h2><p>Digite uma mensagem ou envie um documento para começar.</p>';
+            w.innerHTML = '<i data-lucide="message-square" class="chat__welcome-icon"></i><h2>Chat</h2><p>Digite uma mensagem ou envie um documento para começar.</p>';
             if (window.lucide) lucide.createIcons({ nodes: [w] });
             chatContainer.appendChild(w);
         } catch (err) {

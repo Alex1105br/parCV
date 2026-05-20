@@ -138,9 +138,10 @@ def _ollama_call(prompt, num_predict=1200):
 
 # ===== Public API =====
 
-def stream_resposta(historico, mensagem):
+def stream_resposta(historico, mensagem, skip_append_user=False):
     """Streaming chat via SSE — yields 'data: {...}\\n\\n' chunks."""
-    historico.append({"role": "user", "content": mensagem})
+    if not skip_append_user:
+        historico.append({"role": "user", "content": mensagem})
     inicio = time.time()
 
     try:
