@@ -300,7 +300,7 @@
     msgInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            form.dispatchEvent(new Event('submit'));
+            form.requestSubmit();
             return;
         }
         if (e.key === 'ArrowUp' && msgInput.selectionStart === 0 && history.length) {
