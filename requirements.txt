@@ -1,3 +1,4 @@
+environs>=11.0
 flask>=3.0
 requests>=2.31
 reportlab>=4.0
