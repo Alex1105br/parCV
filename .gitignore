@@ -1,8 +1,1 @@
-.env
-*.log
-__pycache__/
-.DS_Store
-*.pyc
-*.pyo
-.vscode/
-ollama_data/
+*
