@@ -4,7 +4,7 @@ from flask import Blueprint, request, Response, session, jsonify
 from werkzeug.utils import secure_filename
 
 from src.config import UPLOAD_FOLDER
-from src.services.ollama import stream_resposta
+from src.services.model import stream_resposta
 from src.utils import allowed_file, carregar_arquivo
 
 bp = Blueprint("chat", __name__)

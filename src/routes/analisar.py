@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request, session, jsonify, send_fi
 from werkzeug.utils import secure_filename
 
 from src.config import UPLOAD_FOLDER
-from src.services.ollama import call_ollama
+from src.services.model import call_model
 from src.services.parser import extrair_json, extrair_texto_curriculo
 from src.services.prompts import build_prompt_ats, build_prompt_otimizar
 from src.services.pdf import gerar_pdf_curriculo
@@ -36,7 +36,7 @@ def analisar():
     if erro:
         return jsonify({"error": erro}), 400
 
-    resposta, erro = call_ollama(build_prompt_ats(texto, vaga))
+    resposta, erro = call_model(build_prompt_ats(texto, vaga))
     if erro:
         return jsonify({"error": erro}), 500
 
@@ -63,7 +63,7 @@ def otimizar():
     if erro:
         return jsonify({"error": erro}), 400
 
-    resposta, erro = call_ollama(build_prompt_otimizar(texto, vaga), num_predict=2000)
+    resposta, erro = call_model(build_prompt_otimizar(texto, vaga), num_predict=2000)
     if erro:
         return jsonify({"error": f"Erro ao conectar ao modelo: {erro}"}), 500
 
