@@ -252,8 +252,8 @@ body {
 
 .upload-btn {
     background: none;
-    border: 1px solid #d0d7de;
-    color: #0969da;
+    border: 1px solid var(--color-border);
+    color: var(--color-primary);
     padding: 8px;
     border-radius: 8px;
     cursor: pointer;
@@ -261,12 +261,12 @@ body {
     line-height: 1;
     transition: background 0.2s;
 }
-.upload-btn:hover { background: #f3f9ff; }
+.upload-btn:hover { background: var(--color-surface-raised); }
 
 #typing-indicator {
     display: none;
     align-self: flex-start;
-    color: #888;
+    color: var(--color-text-muted);
     font-size: 13px;
     padding: 6px 12px;
 }
@@ -275,8 +275,8 @@ body {
 
 .welcome {
     text-align: center;
-    color: #666;
+    color: var(--color-text-muted);
     margin-top: 30vh;
 }
-.welcome h2 { color: #0969da; margin-bottom: 8px; }
+.welcome h2 { color: var(--color-primary); margin-bottom: 8px; }
 .welcome p { font-size: 14px; }

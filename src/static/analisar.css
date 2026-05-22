@@ -60,6 +60,19 @@
     background: var(--color-primary-subtle);
 }
 
+.file-drop--active {
+    border-style: solid;
+    background: transparent;
+}
+
+.file-drop--active .file-drop__text {
+    color: var(--color-primary);
+}
+
+.file-drop--active .file-drop__icon {
+    color: var(--color-text-muted);
+}
+
 .file-drop__icon {
     width: 36px;
     height: 36px;
@@ -119,6 +132,9 @@
 }
 
 .criterios-list li {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
     padding: var(--spacing-sm) 0;
     border-bottom: 1px solid var(--color-border);
 }
@@ -127,11 +143,50 @@
     border-bottom: none;
 }
 
-.criterio-info {
-    display: block;
-    font-size: var(--font-size-xs);
+.criterio-icon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
     color: var(--color-text-muted);
-    margin-top: 2px;
+    cursor: default;
+    border-radius: 50%;
+    transition: color var(--transition);
+}
+
+.criterio-icon i {
+    width: 16px;
+    height: 16px;
+}
+
+.criterio-icon:hover {
+    color: var(--color-primary);
+}
+
+.criterio-icon::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 6px);
+    transform: translateX(-50%);
+    background: var(--color-surface-raised);
+    color: var(--color-text);
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition);
+    z-index: 10;
+}
+
+.criterio-icon:hover::after {
+    opacity: 1;
 }
 
 /* Optimized CV */
@@ -260,7 +315,7 @@
 }
 
 .btn--optimize:hover:not(:disabled) {
-    background: #5a3aab;
+    background: #89dceb;
 }
 
 .btn--optimize:disabled {

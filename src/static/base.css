@@ -1,17 +1,18 @@
-/* ===== Design Tokens — GitLab Dark ===== */
+/* ===== Design Tokens — Catppuccin Mocha ===== */
 :root {
-    --color-primary: #6e49cb;
-    --color-primary-hover: #5943a6;
-    --color-primary-subtle: rgba(110, 73, 203, 0.15);
-    --color-danger: #ec5941;
-    --color-danger-bg: rgba(236, 89, 65, 0.15);
-    --color-danger-text: #f57a6e;
-    --color-success: #108548;
-    --color-success-hover: #217645;
-    --color-success-text: #91d4a8;
-    --color-warning: #c17d10;
-    --color-warning-bg: rgba(193, 125, 16, 0.15);
-    --color-warning-text: #e9be74;
+    --color-primary: #89b4fa;
+    --color-primary-hover: #89dceb;
+    --color-primary-subtle: rgba(137, 180, 250, 0.15);
+    --color-danger: #f38ba8;
+    --color-danger-bg: rgba(243, 139, 168, 0.15);
+    --color-danger-text: #eba0ac;
+    --color-success: #a6e3a1;
+    --color-success-hover: #94e2d5;
+    --color-success-text: #a6e3a1;
+    --color-warning: #f9e2af;
+    --color-warning-bg: rgba(249, 226, 175, 0.15);
+    --color-warning-text: #f9e2af;
+    --color-peach: #fab387;
 
     --color-bg: #1f1e24;
     --color-surface: #28272d;
@@ -142,7 +143,7 @@ button {
 }
 
 .btn--danger:hover:not(:disabled) {
-    background: rgba(236, 89, 65, 0.25);
+    background: rgba(243, 139, 168, 0.25);
 }
 
 .btn--secondary {

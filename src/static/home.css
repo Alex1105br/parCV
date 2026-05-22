@@ -360,10 +360,10 @@ body {
 /* BOTÃO */
 .modal-content button {
     padding: 10px 20px;
-    background: #4CAF50;
+    background: var(--color-primary);
     border: none;
     border-radius: 8px;
-    color: white;
+    color: var(--color-text-inverse);
     cursor: pointer;
 }
 
@@ -385,5 +385,5 @@ ul {
 }
 
 .error {
-    color: red;
+    color: var(--color-danger);
 }
