@@ -106,8 +106,22 @@
             '<h3>Sugestões</h3>' +
             '<ul>' + data.sugestoes.map(function (s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('') + '</ul>' +
             (data.palavras_chave_faltando && data.palavras_chave_faltando.length ?
-                '<h3>Palavras-chave da vaga ausentes no CV</h3>' +
+                '<h3>Palavras-chave ausentes</h3>' +
                 '<div class="tags-list">' + data.palavras_chave_faltando.map(function (k) { return '<span class="tag">' + escapeHtml(k) + '</span>'; }).join('') + '</div>'
+            : '') +
+            (data.certificados_sugeridos && data.certificados_sugeridos.length ?
+                '<h3>Certificados recomendados</h3>' +
+                '<div class="cert-list">' +
+                data.certificados_sugeridos.map(function (c) {
+                    return '<div class="cert-card">' +
+                        '<div class="cert-card__info">' +
+                            '<span class="cert-card__name">' + escapeHtml(c.nome) + '</span>' +
+                            '<span class="cert-card__platform">' + escapeHtml(c.plataforma) + '</span>' +
+                        '</div>' +
+                        (c.url ? '<a class="cert-card__link" href="' + escapeHtml(c.url) + '" target="_blank" rel="noopener noreferrer"><i data-lucide="external-link"></i> Ver</a>' : '') +
+                    '</div>';
+                }).join('') +
+                '</div>'
             : '') +
             '<div style="margin-top: 20px;">' +
                 '<button class="btn btn--optimize" id="btn-otimizar"><i data-lucide="sparkles"></i> Otimizar Currículo</button>' +

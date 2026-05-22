@@ -42,6 +42,24 @@ def build_prompt_ats(curriculo, vaga=None):
         "6. Compatibilidade com vaga (0-15)\n"
         "\n"
         "Inclua em 'palavras_chave_faltando' as palavras-chave relevantes extraídas da vaga que estão ausentes no currículo.\n"
+        "Inclua em 'certificados_sugeridos' até 4 certificações reconhecidas pelo mercado que agregariam valor ao candidato para esta vaga. "
+        "Sugira apenas certificações que o candidato ainda NÃO possui e que complementem lacunas reais identificadas no currículo — não sugira algo que o candidato já demonstra domínio (ex: curso de inglês para quem já declara nível avançado/fluente). "
+        "Cada item deve ter 'nome' (nome oficial da certificação), 'plataforma' e 'url'.\n"
+        "Para a URL, use APENAS os endpoints abaixo — escolha o mais específico que se aplica, caso contrário use o catálogo da plataforma:\n"
+        "  AWS: https://aws.amazon.com/certification/\n"
+        "  Google Cloud: https://cloud.google.com/learn/certification\n"
+        "  Microsoft/Azure: https://learn.microsoft.com/en-us/credentials/\n"
+        "  Kubernetes/CNCF: https://www.cncf.io/training/certification/\n"
+        "  CompTIA: https://www.comptia.org/certifications\n"
+        "  Cisco: https://www.cisco.com/c/en/us/training-events/training-certifications/certifications.html\n"
+        "  Oracle: https://education.oracle.com/certification\n"
+        "  PMI: https://www.pmi.org/certifications\n"
+        "  Scrum.org: https://www.scrum.org/professional-scrum-certifications\n"
+        "  HashiCorp: https://www.hashicorp.com/certifications\n"
+        "  Linux Foundation: https://training.linuxfoundation.org/certification/\n"
+        "  Coursera: https://www.coursera.org/search?query=<nome+da+certificacao>\n"
+        "  LinkedIn Learning: https://www.linkedin.com/learning/search?keywords=<nome+da+certificacao>\n"
+        "Não invente URLs fora desta lista.\n"
         "\n"
         "Retorne APENAS JSON válido:\n"
         "{\n"
@@ -51,7 +69,8 @@ def build_prompt_ats(curriculo, vaga=None):
         '    "pontos_fortes": [""],\n'
         '    "pontos_fracos": [""],\n'
         '    "sugestoes": [""],\n'
-        '    "palavras_chave_faltando": [""]\n'
+        '    "palavras_chave_faltando": [""],\n'
+        '    "certificados_sugeridos": [{"nome": "", "plataforma": "", "url": ""}]\n'
         "}\n"
         "\n"
         f"Currículo: {curriculo}\n"
