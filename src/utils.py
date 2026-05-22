@@ -1,6 +1,8 @@
 import os
 import subprocess
 
+import docx
+
 from src.config import ALLOWED_EXTENSIONS
 
 
@@ -29,6 +31,12 @@ def carregar_arquivo(caminho):
             texto = resultado.stdout.strip()
         except FileNotFoundError:
             return None, "pdftotext não encontrado."
+    elif ext == ".docx":
+        try:
+            doc = docx.Document(caminho)
+            texto = "\n".join(p.text for p in doc.paragraphs).strip()
+        except Exception as e:
+            return None, f"Erro ao ler DOCX: {e}"
     elif ext == ".txt":
         with open(caminho, "r", encoding="utf-8") as f:
             texto = f.read().strip()

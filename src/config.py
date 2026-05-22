@@ -33,6 +33,6 @@ NUM_CTX = env.int("NUM_CTX", default=4096)
 TIMEOUT = env.int("OLLAMA_TIMEOUT", default=300)
 
 UPLOAD_FOLDER = env.str("UPLOAD_FOLDER", default="/tmp/uploads")
-ALLOWED_EXTENSIONS = {"txt", "pdf"}
+ALLOWED_EXTENSIONS = {"txt", "pdf", "docx"}
 
 SECRET_KEY = env.str("SECRET_KEY", default=None)
