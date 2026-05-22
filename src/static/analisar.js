@@ -105,6 +105,10 @@
             '<ul>' + data.pontos_fracos.map(function (p) { return '<li>' + escapeHtml(p) + '</li>'; }).join('') + '</ul>' +
             '<h3>Sugestões</h3>' +
             '<ul>' + data.sugestoes.map(function (s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('') + '</ul>' +
+            (data.palavras_chave_faltando && data.palavras_chave_faltando.length ?
+                '<h3>Palavras-chave da vaga ausentes no CV</h3>' +
+                '<div class="tags-list">' + data.palavras_chave_faltando.map(function (k) { return '<span class="tag">' + escapeHtml(k) + '</span>'; }).join('') + '</div>'
+            : '') +
             '<div style="margin-top: 20px;">' +
                 '<button class="btn btn--optimize" id="btn-otimizar"><i data-lucide="sparkles"></i> Otimizar Currículo</button>' +
             '</div>' +

@@ -41,6 +41,8 @@ def build_prompt_ats(curriculo, vaga=None):
         "5. Skills técnicas (0-15)\n"
         "6. Compatibilidade com vaga (0-15)\n"
         "\n"
+        "Inclua em 'palavras_chave_faltando' as palavras-chave relevantes extraídas da vaga que estão ausentes no currículo.\n"
+        "\n"
         "Retorne APENAS JSON válido:\n"
         "{\n"
         '    "score_total": int,\n'
@@ -48,7 +50,8 @@ def build_prompt_ats(curriculo, vaga=None):
         '                   "palavras_chave": int, "skills": int, "compatibilidade": int},\n'
         '    "pontos_fortes": [""],\n'
         '    "pontos_fracos": [""],\n'
-        '    "sugestoes": [""]\n'
+        '    "sugestoes": [""],\n'
+        '    "palavras_chave_faltando": [""]\n'
         "}\n"
         "\n"
         f"Currículo: {curriculo}\n"

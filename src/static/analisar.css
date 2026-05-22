@@ -1,5 +1,22 @@
 /* ===== Analisar Page ===== */
 
+.tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.tag {
+    background: color-mix(in srgb, var(--color-danger) 15%, transparent);
+    color: var(--color-danger);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 40%, transparent);
+    border-radius: 999px;
+    padding: 3px 12px;
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
 .analisar {
     display: flex;
     padding: var(--spacing-xl);
