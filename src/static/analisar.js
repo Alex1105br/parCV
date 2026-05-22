@@ -37,8 +37,10 @@
         const textEl = fileDrop.querySelector('.file-drop__text');
         if (fileInput.files.length) {
             textEl.textContent = fileInput.files[0].name;
+            fileDrop.classList.add('file-drop--active');
         } else {
             textEl.textContent = 'Arraste ou clique para selecionar';
+            fileDrop.classList.remove('file-drop--active');
         }
     }
 
@@ -82,7 +84,7 @@
         const score = data.score_total;
         let cor = 'var(--color-danger)';
         if (score > 75) cor = 'var(--color-success)';
-        else if (score > 50) cor = 'var(--color-warning)';
+        else if (score > 50) cor = 'var(--color-peach)';
 
         resultado.innerHTML =
             '<div class="score-box" style="border-color:' + cor + '">' +
@@ -90,12 +92,12 @@
             '</div>' +
             '<h3>Critérios</h3>' +
             '<ul class="criterios-list">' +
-                '<li><strong>Estrutura:</strong> ' + escapeHtml(data.criterios.estrutura) + '/15 <span class="criterio-info">Formata\u00e7\u00e3o e organiza\u00e7\u00e3o do documento</span></li>' +
-                '<li><strong>Clareza:</strong> ' + escapeHtml(data.criterios.clareza) + '/15 <span class="criterio-info">Qualidade da escrita e objetividade</span></li>' +
-                '<li><strong>Experi\u00eancia:</strong> ' + escapeHtml(data.criterios.experiencia) + '/20 <span class="criterio-info">Relev\u00e2ncia e descri\u00e7\u00e3o de cargos</span></li>' +
-                '<li><strong>Palavras-chave:</strong> ' + escapeHtml(data.criterios.palavras_chave) + '/20 <span class="criterio-info">Termos que sistemas ATS buscam</span></li>' +
-                '<li><strong>Skills:</strong> ' + escapeHtml(data.criterios.skills) + '/15 <span class="criterio-info">Compet\u00eancias t\u00e9cnicas listadas</span></li>' +
-                '<li><strong>Compatibilidade:</strong> ' + escapeHtml(data.criterios.compatibilidade) + '/15 <span class="criterio-info">Ader\u00eancia \u00e0 vaga descrita</span></li>' +
+                '<li><span class="criterio-icon" data-tooltip="Formata\u00e7\u00e3o e organiza\u00e7\u00e3o do documento"><i data-lucide="info"></i></span><strong>Estrutura:</strong> ' + escapeHtml(data.criterios.estrutura) + '/15</li>' +
+                '<li><span class="criterio-icon" data-tooltip="Qualidade da escrita e objetividade"><i data-lucide="info"></i></span><strong>Clareza:</strong> ' + escapeHtml(data.criterios.clareza) + '/15</li>' +
+                '<li><span class="criterio-icon" data-tooltip="Relev\u00e2ncia e descri\u00e7\u00e3o de cargos"><i data-lucide="info"></i></span><strong>Experi\u00eancia:</strong> ' + escapeHtml(data.criterios.experiencia) + '/20</li>' +
+                '<li><span class="criterio-icon" data-tooltip="Termos que sistemas ATS buscam"><i data-lucide="info"></i></span><strong>Palavras-chave:</strong> ' + escapeHtml(data.criterios.palavras_chave) + '/20</li>' +
+                '<li><span class="criterio-icon" data-tooltip="Compet\u00eancias t\u00e9cnicas listadas"><i data-lucide="info"></i></span><strong>Skills:</strong> ' + escapeHtml(data.criterios.skills) + '/15</li>' +
+                '<li><span class="criterio-icon" data-tooltip="Ader\u00eancia \u00e0 vaga descrita"><i data-lucide="info"></i></span><strong>Compatibilidade:</strong> ' + escapeHtml(data.criterios.compatibilidade) + '/15</li>' +
             '</ul>' +
             '<h3>Pontos fortes</h3>' +
             '<ul>' + data.pontos_fortes.map(function (p) { return '<li>' + escapeHtml(p) + '</li>'; }).join('') + '</ul>' +
@@ -200,9 +202,16 @@
         });
 
         document.getElementById('btn-copiar').addEventListener('click', function () {
-            var texto = document.getElementById('curriculo-text').innerText;
+            var el = document.getElementById('curriculo-text');
+            var texto = formatPlainText(el);
+            var btn = document.getElementById('btn-copiar');
             navigator.clipboard.writeText(texto).then(function () {
-                alert('Currículo copiado para a área de transferência!');
+                btn.innerHTML = '<i data-lucide="check"></i> Texto copiado';
+                if (window.lucide) lucide.createIcons({ nodes: [btn] });
+                setTimeout(function () {
+                    btn.innerHTML = '<i data-lucide="clipboard"></i> Copiar texto';
+                    if (window.lucide) lucide.createIcons({ nodes: [btn] });
+                }, 2000);
             });
         });
     }
@@ -278,6 +287,32 @@
 
         if (inList) html += '</ul>';
         return html;
+    }
+
+    function formatPlainText(el) {
+        var parts = [];
+        var children = el.children;
+        for (var i = 0; i < children.length; i++) {
+            var node = children[i];
+            var tag = node.tagName.toLowerCase();
+            var text = node.innerText.trim();
+            if (!text) continue;
+            if (tag === 'h2' || tag === 'h3') {
+                if (parts.length) parts.push('');
+                parts.push(text.toUpperCase());
+                parts.push('');
+            } else if (tag === 'hr') {
+                parts.push('---');
+            } else if (tag === 'ul') {
+                var items = node.querySelectorAll('li');
+                for (var j = 0; j < items.length; j++) {
+                    parts.push('• ' + items[j].innerText.trim());
+                }
+            } else {
+                parts.push(text);
+            }
+        }
+        return parts.join('\n').replace(/\n{3,}/g, '\n\n').trim();
     }
 
     function escapeHtml(text) {
