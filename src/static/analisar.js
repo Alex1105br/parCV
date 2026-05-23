@@ -8,6 +8,8 @@
     const resultado = document.getElementById('resultado');
     const fileDrop = document.getElementById('file-drop');
 
+    var textoOriginal = '';
+
     // File drop zone interactions
     if (fileDrop) {
         fileDrop.addEventListener('click', function () { fileInput.click(); });
@@ -68,6 +70,7 @@
 
             const data = await response.json();
             loader.classList.add('hidden');
+            textoOriginal = data.texto_original || '';
             mostrarResultado(data);
         } catch (err) {
             loader.classList.add('hidden');
@@ -181,7 +184,7 @@
     function mostrarCurriculoOtimizado(curriculo, melhorias) {
         const div = document.getElementById('resultado-otimizado');
 
-        let melhorasHtml = '';
+        var melhorasHtml = '';
         if (melhorias && melhorias.length) {
             melhorasHtml =
                 '<div class="cv-improvements">' +
@@ -192,15 +195,32 @@
 
         div.innerHTML =
             '<hr style="margin: 24px 0; border-color: var(--color-border);">' +
-            '<h2 style="color: var(--color-success);">Currículo Otimizado</h2>' +
-            melhorasHtml +
-            '<div class="cv-structured" id="curriculo-text">' + renderStructuredCV(curriculo) + '</div>' +
-            '<div style="display: flex; gap: 12px; flex-wrap: wrap;">' +
-                '<button type="button" class="btn btn--primary" id="btn-pdf"><i data-lucide="file-down"></i> Baixar PDF</button>' +
-                '<button type="button" class="btn btn--secondary" id="btn-copiar"><i data-lucide="clipboard"></i> Copiar texto</button>' +
+            '<div class="cv-tabs">' +
+                '<button class="cv-tab cv-tab--active" data-tab="otimizado"><i data-lucide="sparkles"></i> Otimizado</button>' +
+                '<button class="cv-tab" data-tab="comparacao"><i data-lucide="columns-2"></i> Comparação</button>' +
+            '</div>' +
+            '<div id="cv-panel-otimizado" class="cv-tab-panel">' +
+                melhorasHtml +
+                '<div class="cv-structured" id="curriculo-text">' + renderStructuredCV(curriculo) + '</div>' +
+                '<div style="display: flex; gap: 12px; flex-wrap: wrap;">' +
+                    '<button type="button" class="btn btn--primary" id="btn-pdf"><i data-lucide="file-down"></i> Baixar PDF</button>' +
+                    '<button type="button" class="btn btn--secondary" id="btn-copiar"><i data-lucide="clipboard"></i> Copiar texto</button>' +
+                '</div>' +
+            '</div>' +
+            '<div id="cv-panel-comparacao" class="cv-tab-panel hidden">' +
+                renderComparisonView(textoOriginal, curriculo) +
             '</div>';
 
         if (window.lucide) lucide.createIcons({ nodes: [div] });
+
+        div.querySelectorAll('.cv-tab').forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                div.querySelectorAll('.cv-tab').forEach(function (t) { t.classList.remove('cv-tab--active'); });
+                tab.classList.add('cv-tab--active');
+                div.querySelectorAll('.cv-tab-panel').forEach(function (p) { p.classList.add('hidden'); });
+                document.getElementById('cv-panel-' + tab.dataset.tab).classList.remove('hidden');
+            });
+        });
 
         document.getElementById('btn-pdf').addEventListener('click', function () {
             fetch('/otimizar/pdf')
@@ -232,6 +252,86 @@
                 }, 2000);
             });
         });
+    }
+
+    function renderComparisonView(original, optimized) {
+        var linesA = original.split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+        var linesB = cvToPlainLines(optimized);
+        var diff = computeDiff(linesA, linesB);
+
+        var leftHtml = '';
+        var rightHtml = '';
+
+        diff.forEach(function (item) {
+            if (item.type === 'same') {
+                leftHtml  += '<div class="diff-line diff-line--same">'   + escapeHtml(item.text) + '</div>';
+                rightHtml += '<div class="diff-line diff-line--same">'   + escapeHtml(item.text) + '</div>';
+            } else if (item.type === 'remove') {
+                leftHtml  += '<div class="diff-line diff-line--remove">' + escapeHtml(item.text) + '</div>';
+                rightHtml += '<div class="diff-line diff-line--empty"></div>';
+            } else {
+                leftHtml  += '<div class="diff-line diff-line--empty"></div>';
+                rightHtml += '<div class="diff-line diff-line--add">'    + escapeHtml(item.text) + '</div>';
+            }
+        });
+
+        return '<div class="cv-diff">' +
+            '<div class="cv-diff__panel">' +
+                '<div class="cv-diff__header"><i data-lucide="file-text"></i> Original</div>' +
+                '<div class="cv-diff__content">' + leftHtml + '</div>' +
+            '</div>' +
+            '<div class="cv-diff__divider"></div>' +
+            '<div class="cv-diff__panel">' +
+                '<div class="cv-diff__header"><i data-lucide="sparkles"></i> Otimizado</div>' +
+                '<div class="cv-diff__content">' + rightHtml + '</div>' +
+            '</div>' +
+        '</div>' +
+        '<div class="diff-legend">' +
+            '<span class="diff-legend__item diff-legend__item--remove">Removido</span>' +
+            '<span class="diff-legend__item diff-legend__item--add">Adicionado</span>' +
+        '</div>';
+    }
+
+    function cvToPlainLines(texto) {
+        return texto.split('\n').map(function (line) {
+            line = line.trim();
+            if (!line) return null;
+            var m;
+            if ((m = line.match(/^---SECAO:\s*(.+?)\s*---$/)))  return m[1].toUpperCase();
+            if ((m = line.match(/^---EMPRESA:\s*(.+?)\s*---$/))) return m[1];
+            if ((m = line.match(/^---CARGO:\s*(.+?)\s*---$/)))   return m[1];
+            return line;
+        }).filter(Boolean);
+    }
+
+    function computeDiff(a, b) {
+        var m = a.length, n = b.length;
+        var dp = [];
+        for (var i = 0; i <= m; i++) {
+            dp[i] = new Int32Array(n + 1);
+        }
+        for (var i = 1; i <= m; i++) {
+            for (var j = 1; j <= n; j++) {
+                dp[i][j] = a[i-1] === b[j-1]
+                    ? dp[i-1][j-1] + 1
+                    : Math.max(dp[i-1][j], dp[i][j-1]);
+            }
+        }
+        var result = [];
+        var i = m, j = n;
+        while (i > 0 || j > 0) {
+            if (i > 0 && j > 0 && a[i-1] === b[j-1]) {
+                result.push({ type: 'same', text: a[i-1] });
+                i--; j--;
+            } else if (j > 0 && (i === 0 || dp[i][j-1] >= dp[i-1][j])) {
+                result.push({ type: 'add', text: b[j-1] });
+                j--;
+            } else {
+                result.push({ type: 'remove', text: a[i-1] });
+                i--;
+            }
+        }
+        return result.reverse();
     }
 
     function renderStructuredCV(texto) {

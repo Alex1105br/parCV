@@ -40,7 +40,9 @@ def analisar():
     if erro:
         return jsonify({"error": erro}), 500
 
-    return jsonify(extrair_json(resposta))
+    result = extrair_json(resposta)
+    result["texto_original"] = texto
+    return jsonify(result)
 
 
 @bp.route("/otimizar", methods=["POST"])

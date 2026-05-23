@@ -105,5 +105,5 @@ def build_prompt_otimizar(curriculo, vaga=None):
         "}\n"
         "\n"
         f"Currículo original: {curriculo}\n"
-        f"Descrição da vaga: {vaga if vaga else 'Não informada'}"
+        f"Descrição da vaga: {vaga or 'Não informada'}"
     )
