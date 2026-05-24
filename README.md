@@ -40,7 +40,15 @@ pip3 install -r requirements.txt
 sudo apt update && sudo apt install poppler-utils -y
 ```
 
-### 6. Configurar a API Key do Groq
+### 6. Instalar as fontes (necessário para geração do PDF)
+
+```bash
+sudo apt update && sudo apt install -y fonts-liberation
+```
+
+> 💡 Essas fontes são usadas na geração do currículo em PDF. Sem elas, o projeto **não consegue gerar o PDF**.
+
+### 7. Configurar a API Key do Groq
 
 Antes de rodar, verifique se o arquivo `src/config.py` possui uma API Key do Groq preenchida:
 
@@ -52,13 +60,13 @@ GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "sua_api_key_aqui")
 >
 > ⚠️ Se o campo estiver vazio `("")`, o projeto **não vai funcionar corretamente**.
 
-### 7. Rodar o projeto
+### 8. Rodar o projeto
 
 ```bash
 python3 run.py
 ```
 
-### 8. Acessar no navegador
+### 9. Acessar no navegador
 
 Com o servidor rodando, abra o navegador do Windows e acesse:
 
