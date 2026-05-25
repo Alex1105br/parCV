@@ -59,20 +59,30 @@ def otimizar():
     filename = secure_filename(arquivo.filename)
     caminho = os.path.join(UPLOAD_FOLDER, filename)
     arquivo.save(caminho)
+
     texto, erro = carregar_arquivo(caminho)
     os.remove(caminho)
 
     if erro:
         return jsonify({"error": erro}), 400
 
-    resposta, erro = call_model(build_prompt_otimizar(texto, vaga), num_predict=2000)
+    resposta, erro = call_model(
+        build_prompt_otimizar(texto, vaga),
+        num_predict=2000
+    )
+
     if erro:
         return jsonify({"error": f"Erro ao conectar ao modelo: {erro}"}), 500
 
     curriculo_texto, melhorias = extrair_texto_curriculo(resposta)
+
     session["curriculo_otimizado"] = curriculo_texto
 
-    return jsonify({"curriculo_otimizado": curriculo_texto, "melhorias": melhorias})
+    return jsonify({
+        "curriculo_original": texto,
+        "curriculo_otimizado": curriculo_texto,
+        "melhorias": melhorias
+    })
 
 
 @bp.route("/otimizar/pdf")

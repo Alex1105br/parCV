@@ -255,43 +255,199 @@
     }
 
     function renderComparisonView(original, optimized) {
-        var linesA = original.split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
-        var linesB = cvToPlainLines(optimized);
-        var diff = computeDiff(linesA, linesB);
+        var originalHtml = original && original.trim()
+            ? renderOriginalCV(original)
+            : '<p class="error">Texto original não disponível. Faça a análise antes de otimizar para ver a comparação.</p>';
 
-        var leftHtml = '';
-        var rightHtml = '';
-
-        diff.forEach(function (item) {
-            if (item.type === 'same') {
-                leftHtml  += '<div class="diff-line diff-line--same">'   + escapeHtml(item.text) + '</div>';
-                rightHtml += '<div class="diff-line diff-line--same">'   + escapeHtml(item.text) + '</div>';
-            } else if (item.type === 'remove') {
-                leftHtml  += '<div class="diff-line diff-line--remove">' + escapeHtml(item.text) + '</div>';
-                rightHtml += '<div class="diff-line diff-line--empty"></div>';
-            } else {
-                leftHtml  += '<div class="diff-line diff-line--empty"></div>';
-                rightHtml += '<div class="diff-line diff-line--add">'    + escapeHtml(item.text) + '</div>';
-            }
-        });
-
-        return '<div class="cv-diff">' +
-            '<div class="cv-diff__panel">' +
-                '<div class="cv-diff__header"><i data-lucide="file-text"></i> Original</div>' +
-                '<div class="cv-diff__content">' + leftHtml + '</div>' +
+        return '<div class="cv-compare">' +
+            '<div class="cv-compare__panel">' +
+                '<div class="cv-compare__header"><i data-lucide="file-text"></i> Original</div>' +
+                '<div class="cv-structured cv-structured--preview">' + originalHtml + '</div>' +
             '</div>' +
-            '<div class="cv-diff__divider"></div>' +
-            '<div class="cv-diff__panel">' +
-                '<div class="cv-diff__header"><i data-lucide="sparkles"></i> Otimizado</div>' +
-                '<div class="cv-diff__content">' + rightHtml + '</div>' +
+            '<div class="cv-compare__panel">' +
+                '<div class="cv-compare__header"><i data-lucide="sparkles"></i> Otimizado</div>' +
+                '<div class="cv-structured cv-structured--preview">' + renderStructuredCV(optimized) + '</div>' +
             '</div>' +
-        '</div>' +
-        '<div class="diff-legend">' +
-            '<span class="diff-legend__item diff-legend__item--remove">Removido</span>' +
-            '<span class="diff-legend__item diff-legend__item--add">Adicionado</span>' +
         '</div>';
     }
 
+    function renderOriginalCV(texto) {
+
+        // ===== NORMALIZAÇÃO DO TEXTO =====
+        texto = texto
+            // Junta frases quebradas (mantendo recuos se houver nova linha com espaços)
+            .replace(/([a-záéíóúç,])\n(?=[a-záéíóúç])/gi, '$1 ')
+            // Junta linhas após vírgulas
+            .replace(/,\n/g, ', ')
+            // Remove excesso de linhas vazias
+            .replace(/\n{3,}/g, '\n\n')
+            // Normaliza bullets
+            .replace(/^\s*o\s+/gm, '• ');
+
+        var lines = texto.split('\n');
+
+        var html = '';
+        var inList = false;
+        var lastWasHeader = false;
+        var hasSectionsPrinted = false;
+
+        // ===== SEÇÕES COMUNS =====
+        var secoes = [
+            'OBJETIVO',
+            'FORMAÇÃO',
+            'FORMAÇÃO ACADÊMICA',
+            'EXPERIÊNCIA',
+            'EXPERIÊNCIAS',
+            'EXPERIÊNCIA PROFISSIONAL',
+            'PROJETOS',
+            'PROJETOS ACADÊMICOS E PESSOAIS',
+            'HABILIDADES',
+            'HABILIDADES TÉCNICAS',
+            'COMPETÊNCIAS',
+            'COMPETÊNCIAS-CHAVE',
+            'IDIOMAS',
+            'CERTIFICAÇÕES'
+        ];
+
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            var trimmedLine = line.trim();
+
+            // ===== LINHAS VAZIAS =====
+            if (!trimmedLine) {
+                continue; 
+            }
+
+            // ===== SEPARADORES MANUAIS (ex: ---) =====
+            if (trimmedLine.match(/^[-=_*•]{3,}$/)) {
+                if (inList) { html += '</ul>'; inList = false; }
+                html += '<hr class="cv-divider">';
+                lastWasHeader = false;
+                continue;
+            }
+
+            // Captura a quantidade de espaços ou tabs no início da linha original
+            var indentMatch = line.match(/^[\s\t]*/);
+            var indentLength = indentMatch ? indentMatch[0].length : 0;
+
+            // ===== BULLETS (LISTAS) =====
+            if (
+                trimmedLine.match(/^[\s•-]\s/) ||
+                trimmedLine.charAt(0) === '•' ||
+                (trimmedLine.charAt(0) === '-' && trimmedLine.charAt(1) === ' ')
+            ) {
+                if (!inList) {
+                    html += '<ul class="cv-bullets">';
+                    inList = true;
+                }
+
+                var cleanedLine = trimmedLine.replace(/^[\s•-]+\s*/, '');
+                
+                // Se o bullet em si tiver indentação (ex: sub-bullet), aplica um recuo
+                var bulletStyle = indentLength > 0 ? ' style="margin-left: ' + (indentLength * 0.5) + 'em;"' : '';
+                html += '<li' + bulletStyle + '>' + escapeHtml(cleanedLine) + '</li>';
+                
+                lastWasHeader = false;
+                continue;
+            }
+
+            // ===== TEXTO INDENTADO (Subconteúdo de um item anterior, ex: texto sob o KivyImageProcessor) =====
+            // Se a linha tem recuo (indentLength > 0) e não é um cabeçalho
+            if (indentLength > 0 && !secoes.includes(trimmedLine.toUpperCase())) {
+                
+                // Se estávamos em uma lista, mantemos ela aberta ou fechamos dependendo do contexto. 
+                // Para garantir a semântica, fechamos a lista e renderizamos o parágrafo recuado.
+                if (inList && indentLength >= 2) { 
+                    html += '</ul>';
+                    inList = false;
+                }
+
+                // Calcula o recuo dinâmico. Multiplicamos por 1.2em por caractere/tab detectado para dar o efeito visual correto do "Tab"
+                var dynamicPadding = Math.min(indentLength * 1.2, 5); 
+
+                html += '<p class="cv-text" style="padding-left: ' + dynamicPadding + 'em; text-align: justify; margin-top: 4px; margin-bottom: 4px;">' +
+                            escapeHtml(trimmedLine) +
+                        '</p>';
+                
+                lastWasHeader = false;
+                continue;
+            }
+
+            // Se chegamos aqui e a lista continua aberta, mas o texto perdeu a indentação, fecha a lista
+            if (inList) {
+                html += '</ul>';
+                inList = false;
+            }
+
+            // ===== NOME =====
+            if (i === 0 && trimmedLine.length < 80) {
+                html += '<h2 class="cv-name">' + escapeHtml(trimmedLine) + '</h2>';
+                lastWasHeader = false;
+                continue;
+            }
+
+            // ===== CONTATOS =====
+            if (
+                i < 10 &&
+                (
+                    trimmedLine.indexOf('@') !== -1 ||
+                    trimmedLine.toLowerCase().includes('linkedin') ||
+                    trimmedLine.toLowerCase().includes('github') ||
+                    trimmedLine.match(/\(\d{2}\)/)
+                )
+            ) {
+                html += '<p class="cv-contact">' + escapeHtml(trimmedLine) + '</p>';
+                continue;
+            }
+
+            // ===== SEÇÕES PRINCIPAIS =====
+            var isMajorHeader = secoes.includes(trimmedLine.toUpperCase()) || 
+                                (trimmedLine.match(/^[A-ZÁÉÍÓÚÇ][A-ZÁÉÍÓÚÇ\s]+$/) && 
+                                trimmedLine.length < 50 && 
+                                trimmedLine.length > 3 && 
+                                !trimmedLine.match(/\d{4}/));
+
+            if (isMajorHeader) {
+                if (hasSectionsPrinted) {
+                    html += '<hr class="cv-divider">';
+                }
+                html += '<h3 class="cv-section">' + escapeHtml(trimmedLine) + '</h3>';
+                lastWasHeader = true;
+                hasSectionsPrinted = true;
+                continue;
+            }
+
+            // ===== EMPRESA / INSTITUIÇÃO =====
+            if (
+                lastWasHeader &&
+                trimmedLine.length < 80 &&
+                !trimmedLine.includes(':') &&
+                !trimmedLine.match(/\d{4}/) &&
+                trimmedLine.match(/^[A-Z]/)
+            ) {
+                html += '<div class="cv-company">' + escapeHtml(trimmedLine) + '</div>';
+                lastWasHeader = false;
+                continue;
+            }
+
+            // ===== CARGO / SUBTÍTULO =====
+            if (i > 0 && lines[i - 1].trim().match(/^[A-Z]/)) {
+                html += '<div class="cv-role">' + escapeHtml(trimmedLine) + '</div>';
+                lastWasHeader = false;
+                continue;
+            }
+
+            // ===== TEXTO NORMAL (SEM INDENTAÇÃO) =====
+            html += '<p class="cv-text">' + escapeHtml(trimmedLine) + '</p>';
+            lastWasHeader = false;
+        }
+
+        if (inList) {
+            html += '</ul>';
+        }
+
+        return html;
+}
     function cvToPlainLines(texto) {
         return texto.split('\n').map(function (line) {
             line = line.trim();
