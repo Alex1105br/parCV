@@ -34,5 +34,6 @@ TIMEOUT = env.int("OLLAMA_TIMEOUT", default=300)
 
 UPLOAD_FOLDER = env.str("UPLOAD_FOLDER", default="/tmp/uploads")
 ALLOWED_EXTENSIONS = {"txt", "pdf", "docx"}
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024  # 5 MB
 
 SECRET_KEY = env.str("SECRET_KEY", default=None)

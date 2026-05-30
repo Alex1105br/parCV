@@ -3,12 +3,12 @@ import os
 from flask import Blueprint, render_template, request, session, jsonify, send_file
 from werkzeug.utils import secure_filename
 
-from src.config import UPLOAD_FOLDER
+from src.config import UPLOAD_FOLDER, MAX_UPLOAD_BYTES
 from src.services.model import call_model
 from src.services.parser import extrair_json, extrair_texto_curriculo
 from src.services.prompts import build_prompt_ats, build_prompt_otimizar
 from src.services.pdf import gerar_pdf_curriculo
-from src.utils import allowed_file, carregar_arquivo
+from src.utils import allowed_file, carregar_arquivo, get_file_size, sanitize_text, has_prompt_injection
 
 bp = Blueprint("analisar", __name__)
 
@@ -22,10 +22,13 @@ def analisar():
         return jsonify({"error": "Nenhum arquivo enviado"}), 400
 
     arquivo = request.files["arquivo"]
-    vaga = request.form.get("vaga", "").strip()
+    vaga = sanitize_text(request.form.get("vaga", ""))
 
     if arquivo.filename == "" or not allowed_file(arquivo.filename):
         return jsonify({"error": "Arquivo inválido"}), 400
+
+    if get_file_size(arquivo) > MAX_UPLOAD_BYTES:
+        return jsonify({"error": "Arquivo muito grande. Limite: 5 MB"}), 413
 
     filename = secure_filename(arquivo.filename)
     caminho = os.path.join(UPLOAD_FOLDER, filename)
@@ -35,6 +38,11 @@ def analisar():
 
     if erro:
         return jsonify({"error": erro}), 400
+
+    texto = sanitize_text(texto, max_length=20000)
+
+    if has_prompt_injection(vaga) or has_prompt_injection(texto):
+        return jsonify({"error": "Conteúdo inválido detectado"}), 422
 
     resposta, erro = call_model(build_prompt_ats(texto, vaga))
     if erro:
@@ -51,10 +59,13 @@ def otimizar():
         return jsonify({"error": "Nenhum arquivo enviado"}), 400
 
     arquivo = request.files["arquivo"]
-    vaga = request.form.get("vaga", "").strip()
+    vaga = sanitize_text(request.form.get("vaga", ""))
 
     if arquivo.filename == "" or not allowed_file(arquivo.filename):
         return jsonify({"error": "Arquivo inválido"}), 400
+
+    if get_file_size(arquivo) > MAX_UPLOAD_BYTES:
+        return jsonify({"error": "Arquivo muito grande. Limite: 5 MB"}), 413
 
     filename = secure_filename(arquivo.filename)
     caminho = os.path.join(UPLOAD_FOLDER, filename)
@@ -65,6 +76,11 @@ def otimizar():
 
     if erro:
         return jsonify({"error": erro}), 400
+
+    texto = sanitize_text(texto, max_length=20000)
+
+    if has_prompt_injection(vaga) or has_prompt_injection(texto):
+        return jsonify({"error": "Conteúdo inválido detectado"}), 422
 
     resposta, erro = call_model(
         build_prompt_otimizar(texto, vaga),
