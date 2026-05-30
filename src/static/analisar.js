@@ -9,8 +9,9 @@
     const fileDrop = document.getElementById('file-drop');
 
     var textoOriginal = '';
+    var _sliderCleanup = null;
 
-    // File drop zone interactions
+    // ===== File Drop Zone =====
     if (fileDrop) {
         fileDrop.addEventListener('click', function () { fileInput.click(); });
 
@@ -48,6 +49,7 @@
 
     btnAnalisar.addEventListener('click', enviarAnalise);
 
+    // ===== Analysis =====
     async function enviarAnalise() {
         if (!fileInput.files.length) {
             alert('Selecione um arquivo');
@@ -61,13 +63,13 @@
 
         loader.classList.remove('hidden');
         resultado.innerHTML = '';
+        if (_sliderCleanup) { _sliderCleanup(); _sliderCleanup = null; }
 
         try {
             const response = await fetch('/analisar', {
                 method: 'POST',
                 body: formData
             });
-
             const data = await response.json();
             loader.classList.add('hidden');
             textoOriginal = data.texto_original || '';
@@ -78,6 +80,21 @@
         }
     }
 
+    // ===== Tab setup =====
+    function setupTabs(container) {
+        container.querySelectorAll('.cv-tab').forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                if (this.disabled) return;
+                container.querySelectorAll('.cv-tab').forEach(function (t) { t.classList.remove('cv-tab--active'); });
+                this.classList.add('cv-tab--active');
+                container.querySelectorAll('.cv-tab-panel').forEach(function (p) { p.classList.add('hidden'); });
+                var panel = document.getElementById('cv-panel-' + this.dataset.tab);
+                if (panel) panel.classList.remove('hidden');
+            });
+        });
+    }
+
+    // ===== Show analysis result =====
     function mostrarResultado(data) {
         if (data.error) {
             resultado.innerHTML = '<p class="error">' + escapeHtml(data.error) + '</p>';
@@ -89,18 +106,23 @@
         if (score > 75) cor = 'var(--color-success)';
         else if (score > 50) cor = 'var(--color-peach)';
 
-        resultado.innerHTML =
+        var analiseHtml =
             '<div class="score-box" style="border-color:' + cor + '">' +
                 '<h2 style="color:' + cor + '">Score ATS: ' + score + '/100</h2>' +
             '</div>' +
+            '<button class="btn btn--optimize" id="btn-otimizar" style="margin-top: 16px;"><i data-lucide="wand-2"></i> Otimizar Currículo</button>' +
+            '<div id="loader-otimizar" class="loader hidden" style="margin-top: 12px;">' +
+                '<span class="loader__bar"></span>' +
+                '<span>Otimizando currículo... (pode levar alguns minutos)</span>' +
+            '</div>' +
             '<h3>Critérios</h3>' +
             '<ul class="criterios-list">' +
-                '<li><span class="criterio-icon" data-tooltip="Formata\u00e7\u00e3o e organiza\u00e7\u00e3o do documento"><i data-lucide="info"></i></span><strong>Estrutura:</strong> ' + escapeHtml(data.criterios.estrutura) + '/15</li>' +
+                '<li><span class="criterio-icon" data-tooltip="Formatação e organização do documento"><i data-lucide="info"></i></span><strong>Estrutura:</strong> ' + escapeHtml(data.criterios.estrutura) + '/15</li>' +
                 '<li><span class="criterio-icon" data-tooltip="Qualidade da escrita e objetividade"><i data-lucide="info"></i></span><strong>Clareza:</strong> ' + escapeHtml(data.criterios.clareza) + '/15</li>' +
-                '<li><span class="criterio-icon" data-tooltip="Relev\u00e2ncia e descri\u00e7\u00e3o de cargos"><i data-lucide="info"></i></span><strong>Experi\u00eancia:</strong> ' + escapeHtml(data.criterios.experiencia) + '/20</li>' +
+                '<li><span class="criterio-icon" data-tooltip="Relevância e descrição de cargos"><i data-lucide="info"></i></span><strong>Experiência:</strong> ' + escapeHtml(data.criterios.experiencia) + '/20</li>' +
                 '<li><span class="criterio-icon" data-tooltip="Termos que sistemas ATS buscam"><i data-lucide="info"></i></span><strong>Palavras-chave:</strong> ' + escapeHtml(data.criterios.palavras_chave) + '/20</li>' +
-                '<li><span class="criterio-icon" data-tooltip="Compet\u00eancias t\u00e9cnicas listadas"><i data-lucide="info"></i></span><strong>Skills:</strong> ' + escapeHtml(data.criterios.skills) + '/15</li>' +
-                '<li><span class="criterio-icon" data-tooltip="Ader\u00eancia \u00e0 vaga descrita"><i data-lucide="info"></i></span><strong>Compatibilidade:</strong> ' + escapeHtml(data.criterios.compatibilidade) + '/15</li>' +
+                '<li><span class="criterio-icon" data-tooltip="Competências técnicas listadas"><i data-lucide="info"></i></span><strong>Skills:</strong> ' + escapeHtml(data.criterios.skills) + '/15</li>' +
+                '<li><span class="criterio-icon" data-tooltip="Aderência à vaga descrita"><i data-lucide="info"></i></span><strong>Compatibilidade:</strong> ' + escapeHtml(data.criterios.compatibilidade) + '/15</li>' +
             '</ul>' +
             '<h3>Pontos fortes</h3>' +
             '<ul>' + data.pontos_fortes.map(function (p) { return '<li>' + escapeHtml(p) + '</li>'; }).join('') + '</ul>' +
@@ -125,20 +147,22 @@
                     '</div>';
                 }).join('') +
                 '</div>'
-            : '') +
-            '<div style="margin-top: 20px;">' +
-                '<button class="btn btn--optimize" id="btn-otimizar"><i data-lucide="sparkles"></i> Otimizar Currículo</button>' +
+            : '');
+
+        resultado.innerHTML =
+            '<div class="cv-tabs" id="tabs-main">' +
+                '<button class="cv-tab cv-tab--active" data-tab="analise"><i data-lucide="scan-search"></i> Análise</button>' +
+                '<button class="cv-tab" data-tab="otimizacao" id="tab-otimizacao" disabled><i data-lucide="wand-2"></i> Otimização</button>' +
             '</div>' +
-            '<div id="loader-otimizar" class="loader hidden">' +
-                '<span class="loader__spinner"></span>' +
-                '<span>Otimizando currículo... (pode levar alguns minutos)</span>' +
-            '</div>' +
-            '<div id="resultado-otimizado"></div>';
+            '<div id="cv-panel-analise" class="cv-tab-panel">' + analiseHtml + '</div>' +
+            '<div id="cv-panel-otimizacao" class="cv-tab-panel hidden"></div>';
 
         if (window.lucide) lucide.createIcons({ nodes: [resultado] });
+        setupTabs(resultado);
         document.getElementById('btn-otimizar').addEventListener('click', otimizarCurriculo);
     }
 
+    // ===== Optimization =====
     async function otimizarCurriculo() {
         if (!fileInput.files.length) {
             alert('Selecione um arquivo de currículo primeiro e clique em Analisar.');
@@ -146,11 +170,9 @@
         }
 
         const loaderOtimizar = document.getElementById('loader-otimizar');
-        const resultadoOtimizado = document.getElementById('resultado-otimizado');
         const btnOtimizar = document.getElementById('btn-otimizar');
 
         loaderOtimizar.classList.remove('hidden');
-        resultadoOtimizado.innerHTML = '';
         btnOtimizar.disabled = true;
 
         const formData = new FormData();
@@ -163,17 +185,18 @@
                 method: 'POST',
                 body: formData
             });
-
             const data = await response.json();
             loaderOtimizar.classList.add('hidden');
             btnOtimizar.disabled = false;
 
             if (data.error) {
-                resultadoOtimizado.innerHTML = '<p class="error">' + escapeHtml(data.error) + '</p>';
+                var analisePanel = document.getElementById('cv-panel-analise');
+                analisePanel.insertAdjacentHTML('beforeend',
+                    '<p class="error">' + escapeHtml(data.error) + '</p>');
                 return;
             }
 
-            mostrarCurriculoOtimizado(data.curriculo_otimizado, data.melhorias);
+            mostrarComparacao(data.curriculo_otimizado, data.melhorias);
         } catch (err) {
             loaderOtimizar.classList.add('hidden');
             btnOtimizar.disabled = false;
@@ -181,8 +204,12 @@
         }
     }
 
-    function mostrarCurriculoOtimizado(curriculo, melhorias) {
-        const div = document.getElementById('resultado-otimizado');
+    // ===== Show comparison with slider =====
+    function mostrarComparacao(curriculo, melhorias) {
+        var panel = document.getElementById('cv-panel-otimizacao');
+
+        // Cleanup old slider if re-optimizing
+        if (_sliderCleanup) { _sliderCleanup(); _sliderCleanup = null; }
 
         var melhorasHtml = '';
         if (melhorias && melhorias.length) {
@@ -193,35 +220,101 @@
                 '</div>';
         }
 
-        div.innerHTML =
-            '<hr style="margin: 24px 0; border-color: var(--color-border);">' +
-            '<div class="cv-tabs">' +
-                '<button class="cv-tab cv-tab--active" data-tab="otimizado"><i data-lucide="sparkles"></i> Otimizado</button>' +
-                '<button class="cv-tab" data-tab="comparacao"><i data-lucide="columns-2"></i> Comparação</button>' +
-            '</div>' +
-            '<div id="cv-panel-otimizado" class="cv-tab-panel">' +
-                melhorasHtml +
-                '<div class="cv-structured" id="curriculo-text">' + renderStructuredCV(curriculo) + '</div>' +
-                '<div style="display: flex; gap: 12px; flex-wrap: wrap;">' +
-                    '<button type="button" class="btn btn--primary" id="btn-pdf"><i data-lucide="file-down"></i> Baixar PDF</button>' +
-                    '<button type="button" class="btn btn--secondary" id="btn-copiar"><i data-lucide="clipboard"></i> Copiar texto</button>' +
+        var originalHtml = textoOriginal && textoOriginal.trim()
+            ? renderOriginalCV(textoOriginal)
+            : '<p class="error">Texto original não disponível.</p>';
+
+        panel.innerHTML =
+            melhorasHtml +
+            '<div class="cv-slide-wrapper">' +
+                '<div class="cv-slide-toggle-wrap">' +
+                    '<button class="cv-slide-toggle" id="slide-toggle">' +
+                        '<i data-lucide="wand-2"></i>' +
+                        '<span class="cv-slide-toggle__label" id="slide-toggle-left">Otimizado</span>' +
+                        '<span class="cv-slide-toggle__divider" id="slide-toggle-divider"><i data-lucide="arrow-left-right"></i></span>' +
+                        '<span class="cv-slide-toggle__label" id="slide-toggle-right">Original</span>' +
+                        '<i data-lucide="file-text"></i>' +
+                    '</button>' +
+                '</div>' +
+                '<div class="cv-slide-compare" id="cv-slide-compare">' +
+                    // Original pane (background, scrollable)
+                    '<div class="cv-slide-pane cv-slide-pane--original" id="slide-pane-original">' +
+                        originalHtml +
+                    '</div>' +
+                    // Optimized pane (clipped via wrapper)
+                    '<div class="cv-slide-clipper" id="slide-clipper">' +
+                        '<div class="cv-slide-pane cv-slide-pane--optimized" id="slide-pane-optimized">' +
+                            '<div class="cv-structured cv-structured--preview" id="curriculo-text">' + renderStructuredCV(curriculo) + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    // Drag handle
+                    '<div class="cv-slide-handle" id="slide-handle">' +
+                        '<div class="cv-slide-handle__bar"></div>' +
+                        '<div class="cv-slide-handle__btn"><i data-lucide="move-horizontal"></i></div>' +
+                        '<div class="cv-slide-handle__bar"></div>' +
+                    '</div>' +
                 '</div>' +
             '</div>' +
-            '<div id="cv-panel-comparacao" class="cv-tab-panel hidden">' +
-                renderComparisonView(textoOriginal, curriculo) +
+            '<div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px;">' +
+                '<button type="button" class="btn btn--primary" id="btn-pdf"><i data-lucide="file-down"></i> Baixar PDF</button>' +
+                '<button type="button" class="btn btn--secondary" id="btn-copiar"><i data-lucide="clipboard"></i> Copiar texto</button>' +
             '</div>';
 
-        if (window.lucide) lucide.createIcons({ nodes: [div] });
+        if (window.lucide) lucide.createIcons({ nodes: [panel] });
 
-        div.querySelectorAll('.cv-tab').forEach(function (tab) {
-            tab.addEventListener('click', function () {
-                div.querySelectorAll('.cv-tab').forEach(function (t) { t.classList.remove('cv-tab--active'); });
-                tab.classList.add('cv-tab--active');
-                div.querySelectorAll('.cv-tab-panel').forEach(function (p) { p.classList.add('hidden'); });
-                document.getElementById('cv-panel-' + tab.dataset.tab).classList.remove('hidden');
-            });
+        // Enable + switch to Otimização tab
+        var tabComp = document.getElementById('tab-otimizacao');
+        tabComp.disabled = false;
+        tabComp.click();
+
+        // Init slider
+        var slideContainer = document.getElementById('cv-slide-compare');
+        _sliderCleanup = initSlider(
+            slideContainer,
+            document.getElementById('slide-pane-original'),
+            document.getElementById('slide-pane-optimized'),
+            function (pct) { currentSlidePos = pct; }
+        );
+
+        // Toggle button
+        var slideToggle = document.getElementById('slide-toggle');
+        var toggleLeftEl = document.getElementById('slide-toggle-left');
+        var toggleRightEl = document.getElementById('slide-toggle-right');
+        var toggleDividerEl = document.getElementById('slide-toggle-divider');
+        var slideToggleState = 'split'; // 'split' | 'optimized' | 'original'
+        var currentSlidePos = 50;
+
+        function animateSlider(to, duration) {
+            var from = currentSlidePos;
+            var start = null;
+            function step(ts) {
+                if (!start) start = ts;
+                var t = Math.min((ts - start) / duration, 1);
+                var eased = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+                currentSlidePos = from + (to - from) * eased;
+                slideContainer.style.setProperty('--slide-pos', currentSlidePos + '%');
+                if (t < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        function updateToggleUI() {
+            toggleLeftEl.classList.toggle('cv-slide-toggle__label--active', slideToggleState === 'optimized');
+            toggleRightEl.classList.toggle('cv-slide-toggle__label--active', slideToggleState === 'original');
+        }
+
+        slideToggle.addEventListener('click', function () {
+            if (slideToggleState !== 'original') {
+                slideToggleState = 'original';
+                animateSlider(0, 380);
+            } else {
+                slideToggleState = 'optimized';
+                animateSlider(100, 380);
+            }
+            updateToggleUI();
         });
 
+        // PDF download
         document.getElementById('btn-pdf').addEventListener('click', function () {
             fetch('/otimizar/pdf')
                 .then(function (res) {
@@ -239,6 +332,7 @@
                 .catch(function (err) { alert(err.message); });
         });
 
+        // Copy text
         document.getElementById('btn-copiar').addEventListener('click', function () {
             var el = document.getElementById('curriculo-text');
             var texto = formatPlainText(el);
@@ -254,240 +348,57 @@
         });
     }
 
-    function renderComparisonView(original, optimized) {
-        var originalHtml = original && original.trim()
-            ? renderOriginalCV(original)
-            : '<p class="error">Texto original não disponível. Faça a análise antes de otimizar para ver a comparação.</p>';
+    // ===== Slider =====
+    function initSlider(container, origPane, optPane, onPosChange) {
+        var isDragging = false;
 
-        return '<div class="cv-compare">' +
-            '<div class="cv-compare__panel">' +
-                '<div class="cv-compare__header"><i data-lucide="file-text"></i> Original</div>' +
-                '<div class="cv-structured cv-structured--preview">' + originalHtml + '</div>' +
-            '</div>' +
-            '<div class="cv-compare__panel">' +
-                '<div class="cv-compare__header"><i data-lucide="sparkles"></i> Otimizado</div>' +
-                '<div class="cv-structured cv-structured--preview">' + renderStructuredCV(optimized) + '</div>' +
-            '</div>' +
-        '</div>';
+        function setPos(clientX) {
+            var rect = container.getBoundingClientRect();
+            var pct = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+            container.style.setProperty('--slide-pos', pct + '%');
+            if (onPosChange) onPosChange(pct);
+        }
+
+        var handle = container.querySelector('.cv-slide-handle');
+
+        function onMouseDown(e) { isDragging = true; e.preventDefault(); }
+        function onMouseMove(e) { if (isDragging) setPos(e.clientX); }
+        function onMouseUp() { isDragging = false; }
+        function onTouchStart(e) { isDragging = true; e.preventDefault(); }
+        function onTouchMove(e) { if (isDragging) setPos(e.touches[0].clientX); }
+        function onTouchEnd() { isDragging = false; }
+
+        // Proportional scroll sync: original drives optimized
+        function onOrigScroll() {
+            var maxOrig = origPane.scrollHeight - origPane.clientHeight;
+            var maxOpt = optPane.scrollHeight - optPane.clientHeight;
+            if (maxOrig > 0 && maxOpt > 0) {
+                optPane.scrollTop = (origPane.scrollTop / maxOrig) * maxOpt;
+            }
+        }
+
+        handle.addEventListener('mousedown', onMouseDown);
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        handle.addEventListener('touchstart', onTouchStart, { passive: false });
+        document.addEventListener('touchmove', onTouchMove);
+        document.addEventListener('touchend', onTouchEnd);
+        origPane.addEventListener('scroll', onOrigScroll);
+
+        return function () {
+            handle.removeEventListener('mousedown', onMouseDown);
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            handle.removeEventListener('touchstart', onTouchStart);
+            document.removeEventListener('touchmove', onTouchMove);
+            document.removeEventListener('touchend', onTouchEnd);
+            origPane.removeEventListener('scroll', onOrigScroll);
+        };
     }
 
+    // ===== CV Renderers =====
     function renderOriginalCV(texto) {
-
-        // ===== NORMALIZAÇÃO DO TEXTO =====
-        texto = texto
-            // Junta frases quebradas (mantendo recuos se houver nova linha com espaços)
-            .replace(/([a-záéíóúç,])\n(?=[a-záéíóúç])/gi, '$1 ')
-            // Junta linhas após vírgulas
-            .replace(/,\n/g, ', ')
-            // Remove excesso de linhas vazias
-            .replace(/\n{3,}/g, '\n\n')
-            // Normaliza bullets
-            .replace(/^\s*o\s+/gm, '• ');
-
-        var lines = texto.split('\n');
-
-        var html = '';
-        var inList = false;
-        var lastWasHeader = false;
-        var hasSectionsPrinted = false;
-
-        // ===== SEÇÕES COMUNS =====
-        var secoes = [
-            'OBJETIVO',
-            'FORMAÇÃO',
-            'FORMAÇÃO ACADÊMICA',
-            'EXPERIÊNCIA',
-            'EXPERIÊNCIAS',
-            'EXPERIÊNCIA PROFISSIONAL',
-            'PROJETOS',
-            'PROJETOS ACADÊMICOS E PESSOAIS',
-            'HABILIDADES',
-            'HABILIDADES TÉCNICAS',
-            'COMPETÊNCIAS',
-            'COMPETÊNCIAS-CHAVE',
-            'IDIOMAS',
-            'CERTIFICAÇÕES'
-        ];
-
-        for (var i = 0; i < lines.length; i++) {
-            var line = lines[i];
-            var trimmedLine = line.trim();
-
-            // ===== LINHAS VAZIAS =====
-            if (!trimmedLine) {
-                continue; 
-            }
-
-            // ===== SEPARADORES MANUAIS (ex: ---) =====
-            if (trimmedLine.match(/^[-=_*•]{3,}$/)) {
-                if (inList) { html += '</ul>'; inList = false; }
-                html += '<hr class="cv-divider">';
-                lastWasHeader = false;
-                continue;
-            }
-
-            // Captura a quantidade de espaços ou tabs no início da linha original
-            var indentMatch = line.match(/^[\s\t]*/);
-            var indentLength = indentMatch ? indentMatch[0].length : 0;
-
-            // ===== BULLETS (LISTAS) =====
-            if (
-                trimmedLine.match(/^[\s•-]\s/) ||
-                trimmedLine.charAt(0) === '•' ||
-                (trimmedLine.charAt(0) === '-' && trimmedLine.charAt(1) === ' ')
-            ) {
-                if (!inList) {
-                    html += '<ul class="cv-bullets">';
-                    inList = true;
-                }
-
-                var cleanedLine = trimmedLine.replace(/^[\s•-]+\s*/, '');
-                
-                // Se o bullet em si tiver indentação (ex: sub-bullet), aplica um recuo
-                var bulletStyle = indentLength > 0 ? ' style="margin-left: ' + (indentLength * 0.5) + 'em;"' : '';
-                html += '<li' + bulletStyle + '>' + escapeHtml(cleanedLine) + '</li>';
-                
-                lastWasHeader = false;
-                continue;
-            }
-
-            // ===== TEXTO INDENTADO (Subconteúdo de um item anterior, ex: texto sob o KivyImageProcessor) =====
-            // Se a linha tem recuo (indentLength > 0) e não é um cabeçalho
-            if (indentLength > 0 && !secoes.includes(trimmedLine.toUpperCase())) {
-                
-                // Se estávamos em uma lista, mantemos ela aberta ou fechamos dependendo do contexto. 
-                // Para garantir a semântica, fechamos a lista e renderizamos o parágrafo recuado.
-                if (inList && indentLength >= 2) { 
-                    html += '</ul>';
-                    inList = false;
-                }
-
-                // Calcula o recuo dinâmico. Multiplicamos por 1.2em por caractere/tab detectado para dar o efeito visual correto do "Tab"
-                var dynamicPadding = Math.min(indentLength * 1.2, 5); 
-
-                html += '<p class="cv-text" style="padding-left: ' + dynamicPadding + 'em; text-align: justify; margin-top: 4px; margin-bottom: 4px;">' +
-                            escapeHtml(trimmedLine) +
-                        '</p>';
-                
-                lastWasHeader = false;
-                continue;
-            }
-
-            // Se chegamos aqui e a lista continua aberta, mas o texto perdeu a indentação, fecha a lista
-            if (inList) {
-                html += '</ul>';
-                inList = false;
-            }
-
-            // ===== NOME =====
-            if (i === 0 && trimmedLine.length < 80) {
-                html += '<h2 class="cv-name">' + escapeHtml(trimmedLine) + '</h2>';
-                lastWasHeader = false;
-                continue;
-            }
-
-            // ===== CONTATOS =====
-            if (
-                i < 10 &&
-                (
-                    trimmedLine.indexOf('@') !== -1 ||
-                    trimmedLine.toLowerCase().includes('linkedin') ||
-                    trimmedLine.toLowerCase().includes('github') ||
-                    trimmedLine.match(/\(\d{2}\)/)
-                )
-            ) {
-                html += '<p class="cv-contact">' + escapeHtml(trimmedLine) + '</p>';
-                continue;
-            }
-
-            // ===== SEÇÕES PRINCIPAIS =====
-            var isMajorHeader = secoes.includes(trimmedLine.toUpperCase()) || 
-                                (trimmedLine.match(/^[A-ZÁÉÍÓÚÇ][A-ZÁÉÍÓÚÇ\s]+$/) && 
-                                trimmedLine.length < 50 && 
-                                trimmedLine.length > 3 && 
-                                !trimmedLine.match(/\d{4}/));
-
-            if (isMajorHeader) {
-                if (hasSectionsPrinted) {
-                    html += '<hr class="cv-divider">';
-                }
-                html += '<h3 class="cv-section">' + escapeHtml(trimmedLine) + '</h3>';
-                lastWasHeader = true;
-                hasSectionsPrinted = true;
-                continue;
-            }
-
-            // ===== EMPRESA / INSTITUIÇÃO =====
-            if (
-                lastWasHeader &&
-                trimmedLine.length < 80 &&
-                !trimmedLine.includes(':') &&
-                !trimmedLine.match(/\d{4}/) &&
-                trimmedLine.match(/^[A-Z]/)
-            ) {
-                html += '<div class="cv-company">' + escapeHtml(trimmedLine) + '</div>';
-                lastWasHeader = false;
-                continue;
-            }
-
-            // ===== CARGO / SUBTÍTULO =====
-            if (i > 0 && lines[i - 1].trim().match(/^[A-Z]/)) {
-                html += '<div class="cv-role">' + escapeHtml(trimmedLine) + '</div>';
-                lastWasHeader = false;
-                continue;
-            }
-
-            // ===== TEXTO NORMAL (SEM INDENTAÇÃO) =====
-            html += '<p class="cv-text">' + escapeHtml(trimmedLine) + '</p>';
-            lastWasHeader = false;
-        }
-
-        if (inList) {
-            html += '</ul>';
-        }
-
-        return html;
-}
-    function cvToPlainLines(texto) {
-        return texto.split('\n').map(function (line) {
-            line = line.trim();
-            if (!line) return null;
-            var m;
-            if ((m = line.match(/^---SECAO:\s*(.+?)\s*---$/)))  return m[1].toUpperCase();
-            if ((m = line.match(/^---EMPRESA:\s*(.+?)\s*---$/))) return m[1];
-            if ((m = line.match(/^---CARGO:\s*(.+?)\s*---$/)))   return m[1];
-            return line;
-        }).filter(Boolean);
-    }
-
-    function computeDiff(a, b) {
-        var m = a.length, n = b.length;
-        var dp = [];
-        for (var i = 0; i <= m; i++) {
-            dp[i] = new Int32Array(n + 1);
-        }
-        for (var i = 1; i <= m; i++) {
-            for (var j = 1; j <= n; j++) {
-                dp[i][j] = a[i-1] === b[j-1]
-                    ? dp[i-1][j-1] + 1
-                    : Math.max(dp[i-1][j], dp[i][j-1]);
-            }
-        }
-        var result = [];
-        var i = m, j = n;
-        while (i > 0 || j > 0) {
-            if (i > 0 && j > 0 && a[i-1] === b[j-1]) {
-                result.push({ type: 'same', text: a[i-1] });
-                i--; j--;
-            } else if (j > 0 && (i === 0 || dp[i][j-1] >= dp[i-1][j])) {
-                result.push({ type: 'add', text: b[j-1] });
-                j--;
-            } else {
-                result.push({ type: 'remove', text: a[i-1] });
-                i--;
-            }
-        }
-        return result.reverse();
+        return '<pre class="cv-original-pre">' + escapeHtml(texto) + '</pre>';
     }
 
     function renderStructuredCV(texto) {
@@ -500,7 +411,6 @@
             var line = lines[i].trim();
             if (!line) continue;
 
-            // Section marker
             var secMatch = line.match(/^---SECAO:\s*(.+?)\s*---$/);
             if (secMatch) {
                 if (inList) { html += '</ul>'; inList = false; }
@@ -509,7 +419,6 @@
                 continue;
             }
 
-            // Company marker
             var empMatch = line.match(/^---EMPRESA:\s*(.+?)\s*---$/);
             if (empMatch) {
                 if (inList) { html += '</ul>'; inList = false; }
@@ -517,7 +426,6 @@
                 continue;
             }
 
-            // Role marker
             var cargoMatch = line.match(/^---CARGO:\s*(.+?)\s*---$/);
             if (cargoMatch) {
                 if (inList) { html += '</ul>'; inList = false; }
@@ -525,16 +433,14 @@
                 continue;
             }
 
-            // Bullet
-            if (line.charAt(0) === '\u2022' || line.charAt(0) === '-') {
+            if (line.charAt(0) === '•' || line.charAt(0) === '-') {
                 if (!inList) { html += '<ul class="cv-bullets">'; inList = true; }
-                html += '<li>' + escapeHtml(line.replace(/^[\u2022\-]\s*/, '')) + '</li>';
+                html += '<li>' + escapeHtml(line.replace(/^[•\-]\s*/, '')) + '</li>';
                 continue;
             }
 
             if (inList) { html += '</ul>'; inList = false; }
 
-            // Header lines
             if (headerIdx === 0) {
                 html += '<h2 class="cv-name">' + escapeHtml(line) + '</h2>';
                 headerIdx = 1;
