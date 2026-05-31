@@ -3,6 +3,7 @@ import os
 from flask import Blueprint, request, Response, session, jsonify
 from werkzeug.utils import secure_filename
 
+from src.app import limiter
 from src.config import UPLOAD_FOLDER, MAX_UPLOAD_BYTES
 from src.services.model import stream_resposta
 from src.utils import allowed_file, carregar_arquivo, get_file_size, sanitize_text, has_prompt_injection
@@ -28,6 +29,7 @@ def chat_page():
 
 
 @bp.route("/chat", methods=["POST"])
+@limiter.limit("20 per minute; 100 per hour")
 def chat():
     data = request.get_json()
     mensagem = sanitize_text(data.get("mensagem", ""))
@@ -63,6 +65,7 @@ def chat():
 
 
 @bp.route("/upload", methods=["POST"])
+@limiter.limit("10 per minute")
 def upload():
     if "arquivo" not in request.files:
         return jsonify({"error": "Nenhum arquivo enviado"}), 400

@@ -3,6 +3,7 @@ import os
 from flask import Blueprint, render_template, request, session, jsonify, send_file
 from werkzeug.utils import secure_filename
 
+from src.app import limiter
 from src.config import UPLOAD_FOLDER, MAX_UPLOAD_BYTES
 from src.services.model import call_model
 from src.services.parser import extrair_json, extrair_texto_curriculo
@@ -14,6 +15,7 @@ bp = Blueprint("analisar", __name__)
 
 
 @bp.route("/analisar", methods=["GET", "POST"])
+@limiter.limit("5 per minute; 30 per hour", methods=["POST"])
 def analisar():
     if request.method == "GET":
         return render_template("analisar.html")
@@ -54,6 +56,7 @@ def analisar():
 
 
 @bp.route("/otimizar", methods=["POST"])
+@limiter.limit("5 per minute; 30 per hour")
 def otimizar():
     if "arquivo" not in request.files:
         return jsonify({"error": "Nenhum arquivo enviado"}), 400
@@ -102,6 +105,7 @@ def otimizar():
 
 
 @bp.route("/otimizar/pdf", methods=["GET", "POST"])
+@limiter.limit("10 per minute", methods=["POST"])
 def otimizar_pdf():
     if request.method == "POST":
         curriculo_texto = sanitize_text(request.form.get("texto", ""), max_length=20000)
