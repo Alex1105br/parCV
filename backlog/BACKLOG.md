@@ -44,14 +44,18 @@ class: cover
 
 | | Título | Label | Pontos |
 |-|:-------|:-----:|:------:|
-|  | Validação de tamanho máximo de upload e sanitização de input | security | 3 |
-|  | Rate limiting nas rotas /analisar e /otimizar | security | 3 |
-|  | 3 templates visuais de PDF (minimalista, moderno, acadêmico) | feature | 7 |
-|  | Edição manual do currículo otimizado antes de gerar PDF | feature | 5 |
-|  | Preview do PDF no navegador antes do download | ux | 3 |
-|  | Incluir foto e links clicáveis no PDF gerado | feature | 5 |
+| ✓ | Validação de tamanho máximo de upload e sanitização de input | security | 3 |
+| ✓ | Rate limiting nas rotas /analisar e /otimizar | security | 3 |
+| ✓ | 3 templates visuais de PDF (minimalista, moderno, acadêmico) | feature | 7 |
+| ✓ | Edição manual do currículo otimizado antes de gerar PDF | feature | 5 |
+| ✓ | Preview do PDF no navegador antes do download | ux | 3 |
+| ✓ | Incluir foto e links clicáveis no PDF gerado | feature | 5 |
 
 > Foco: segurança, regra de negócio e UX.
+
+---
+
+![](rate-lims.png)
 
 ---
 
