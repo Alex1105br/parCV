@@ -101,13 +101,21 @@ def otimizar():
     })
 
 
-@bp.route("/otimizar/pdf")
+@bp.route("/otimizar/pdf", methods=["GET", "POST"])
 def otimizar_pdf():
-    curriculo_texto = session.get("curriculo_otimizado")
-    if not curriculo_texto:
-        return jsonify({"error": "Nenhum currículo otimizado disponível."}), 400
+    if request.method == "POST":
+        curriculo_texto = sanitize_text(request.form.get("texto", ""), max_length=20000)
+        if not curriculo_texto:
+            return jsonify({"error": "Nenhum texto enviado."}), 400
+        if has_prompt_injection(curriculo_texto):
+            return jsonify({"error": "Conteúdo inválido detectado"}), 422
+        template = request.form.get("template", "classico")
+    else:
+        curriculo_texto = session.get("curriculo_otimizado")
+        if not curriculo_texto:
+            return jsonify({"error": "Nenhum currículo otimizado disponível."}), 400
+        template = request.args.get("template", "classico")
 
-    template = request.args.get("template", "classico")
     if template not in ("classico", "moderno", "executivo"):
         template = "classico"
 

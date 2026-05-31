@@ -253,6 +253,18 @@
                     '</div>' +
                 '</div>' +
             '</div>' +
+            '<div class="cv-edit-section" id="cv-edit-section">' +
+                '<button type="button" class="btn btn--secondary cv-edit-toggle" id="btn-toggle-edit">' +
+                    '<i data-lucide="pencil"></i> Editar texto antes do PDF' +
+                '</button>' +
+                '<div id="cv-edit-wrapper" class="cv-edit-wrapper hidden">' +
+                    '<p class="cv-edit-hint">Edite livremente. Use <code>---SECAO: nome---</code>, <code>---EMPRESA: nome---</code>, <code>---CARGO: nome---</code> para estruturar seções.</p>' +
+                    '<textarea id="textarea-curriculo" class="cv-edit-textarea" spellcheck="false"></textarea>' +
+                    '<div class="cv-edit-actions">' +
+                        '<button type="button" class="btn btn--primary" id="btn-salvar-edit"><i data-lucide="save"></i> Salvar e atualizar prévia</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
             '<div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px;">' +
                 '<button type="button" class="btn btn--primary" id="btn-pdf"><i data-lucide="file-down"></i> Baixar PDF</button>' +
                 '<button type="button" class="btn btn--secondary" id="btn-copiar"><i data-lucide="clipboard"></i> Copiar texto</button>' +
@@ -303,6 +315,41 @@
             '</div>';
 
         if (window.lucide) lucide.createIcons({ nodes: [panel] });
+
+        // Populate editable textarea
+        var textareaEl = document.getElementById('textarea-curriculo');
+        if (textareaEl) textareaEl.value = curriculo;
+
+        // Toggle edit section
+        document.getElementById('btn-toggle-edit').addEventListener('click', function () {
+            var wrapper = document.getElementById('cv-edit-wrapper');
+            var isHidden = wrapper.classList.toggle('hidden');
+            this.innerHTML = isHidden
+                ? '<i data-lucide="pencil"></i> Editar texto antes do PDF'
+                : '<i data-lucide="x"></i> Fechar editor';
+            if (window.lucide) lucide.createIcons({ nodes: [this] });
+        });
+
+        // Save + update preview
+        document.getElementById('btn-salvar-edit').addEventListener('click', function () {
+            var novoTexto = document.getElementById('textarea-curriculo').value;
+            // Re-render optimized pane in slider
+            var previewEl = document.getElementById('curriculo-text');
+            if (previewEl) previewEl.innerHTML = renderStructuredCV(novoTexto);
+            // Invalidate template modal preview so it regenerates on next open
+            var tplPane = document.getElementById('tpl-preview-pane');
+            if (tplPane) {
+                tplPane.innerHTML = renderStructuredCV(novoTexto);
+                tplPane.dataset.rendered = '1';
+            }
+            var btn = this;
+            btn.innerHTML = '<i data-lucide="check"></i> Salvo!';
+            if (window.lucide) lucide.createIcons({ nodes: [btn] });
+            setTimeout(function () {
+                btn.innerHTML = '<i data-lucide="save"></i> Salvar e atualizar prévia';
+                if (window.lucide) lucide.createIcons({ nodes: [btn] });
+            }, 2000);
+        });
 
         // Enable + switch to Otimização tab
         var tabComp = document.getElementById('tab-otimizacao');
@@ -393,7 +440,13 @@
             btn.disabled = true;
             btn.textContent = 'Gerando...';
 
-            fetch('/otimizar/pdf?template=' + encodeURIComponent(tpl))
+            var taEl = document.getElementById('textarea-curriculo');
+            var textoFinal = taEl ? taEl.value : curriculo;
+            var fd = new FormData();
+            fd.append('template', tpl);
+            fd.append('texto', textoFinal);
+
+            fetch('/otimizar/pdf', { method: 'POST', body: fd })
                 .then(function (res) {
                     if (!res.ok) throw new Error('Erro ao gerar PDF');
                     return res.blob();
