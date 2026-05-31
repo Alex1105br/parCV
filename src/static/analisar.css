@@ -651,3 +651,247 @@
         height: 480px;
     }
 }
+
+/* ===== Template Picker Modal ===== */
+
+.tpl-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tpl-modal.hidden {
+    display: none;
+}
+
+.tpl-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+}
+
+.tpl-modal__box {
+    position: relative;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl, 12px);
+    padding: 24px 28px 20px;
+    width: min(860px, 94vw);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.tpl-modal__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 16px;
+}
+
+.tpl-modal__title i {
+    width: 18px;
+    height: 18px;
+    color: var(--color-primary);
+}
+
+/* Side-by-side layout */
+.tpl-layout {
+    display: flex;
+    gap: 16px;
+    height: 640px;
+    margin-bottom: 16px;
+}
+
+/* Left column: template cards */
+.tpl-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+    width: 190px;
+}
+
+.tpl-card {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 2px solid var(--color-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    transition: border-color 0.15s, background 0.15s;
+    background: transparent;
+    position: relative;
+}
+
+.tpl-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.tpl-card:has(input:checked) {
+    border-color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.tpl-card:hover {
+    border-color: color-mix(in srgb, var(--color-primary) 60%, transparent);
+}
+
+.tpl-swatch {
+    width: 28px;
+    height: 36px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.tpl-swatch--classico {
+    background: linear-gradient(to bottom, #2c5282 35%, #f4f4f4 35%);
+    border: 1px solid #ddd;
+}
+
+.tpl-swatch--moderno {
+    background: linear-gradient(to bottom, #0d7377 35%, #f0fafa 35%);
+    border: 1px solid #c8e8e8;
+}
+
+.tpl-swatch--executivo {
+    background: linear-gradient(to bottom, #6b2737 35%, #fdf5f6 35%);
+    border: 1px solid #e8d5d9;
+}
+
+.tpl-card__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.tpl-card__label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.tpl-card__desc {
+    font-size: 0.72rem;
+    color: var(--color-text-muted, #888);
+}
+
+.tpl-card__check {
+    flex-shrink: 0;
+    color: var(--color-primary);
+    opacity: 0;
+    transition: opacity 0.15s;
+    display: flex;
+    align-items: center;
+}
+
+.tpl-card__check i { width: 15px; height: 15px; }
+
+.tpl-card:has(input:checked) .tpl-card__check {
+    opacity: 1;
+}
+
+/* Right column: live preview */
+.tpl-preview-wrap {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 0 transparent;
+}
+
+/* CV preview pane (HTML rendering of the CV) */
+.cv-preview {
+    background: #ffffff;
+    padding: 24px 28px;
+    font-family: 'Liberation Sans', Arial, Helvetica, sans-serif;
+    font-size: 9pt;
+    color: #1a1a1a;
+    overflow-y: auto;
+    height: 100%;
+    line-height: 1.45;
+    box-sizing: border-box;
+}
+
+.cv-preview .cv-name    { font-size: 17px; font-weight: bold; margin: 0 0 6px; display: block; color: #1a1a1a; }
+.cv-preview .cv-title   { font-size: 10px; font-style: italic; margin: 0 0 2px; display: block; color: #444; }
+.cv-preview .cv-contact { font-size: 8.5px; color: #555; margin: 0 0 6px; display: block; }
+.cv-preview .cv-divider { margin: 3px 0 8px; border: none; }
+.cv-preview .cv-section { font-weight: bold; font-size: 8.5px; text-transform: uppercase; margin: 12px 0 3px; display: block; color: #1a1a1a; }
+.cv-preview .cv-company { font-weight: bold; font-size: 9px; margin: 6px 0 1px; display: block; color: #1a1a1a; }
+.cv-preview .cv-role    { font-style: italic; font-size: 8.5px; margin: 0 0 3px; display: block; color: #555; }
+.cv-preview .cv-bullets { margin: 2px 0 4px 14px; padding: 0; list-style-type: disc; }
+.cv-preview .cv-bullets li { font-size: 8.5px; margin-bottom: 1px; list-style-type: disc; color: #1a1a1a; }
+.cv-preview .cv-text    { font-size: 8.5px; margin: 0 0 3px; display: block; color: #1a1a1a; }
+
+/* Clássico theme */
+.cv-preview--classico .cv-title   { color: #2c5282; }
+.cv-preview--classico .cv-divider { border-top: 1px solid #1a1a1a; }
+.cv-preview--classico .cv-section { color: #2c5282; border-bottom: 0.5px solid #ccc; padding-bottom: 2px; }
+
+/* Moderno theme */
+.cv-preview--moderno .cv-name    { color: #0d7377; }
+.cv-preview--moderno .cv-divider { display: none; }
+.cv-preview--moderno .cv-section {
+    background: #0d7377;
+    color: #ffffff;
+    padding: 3px 8px;
+    margin-top: 22px;
+    margin-left: -28px;
+    margin-right: -28px;
+    width: calc(100% + 56px);
+    box-sizing: border-box;
+}
+
+/* Executivo theme */
+.cv-preview--executivo .cv-title   { color: #6b2737; }
+.cv-preview--executivo .cv-divider { border-top: 1.5px solid #6b2737; }
+.cv-preview--executivo .cv-section {
+    color: #6b2737;
+    border-left: 4px solid #6b2737;
+    padding-left: 8px;
+    border-bottom: 0.4px solid #ddd;
+    padding-bottom: 2px;
+    margin-top: 12px;
+}
+.cv-preview--executivo .cv-bullets li::marker { color: #6b2737; }
+
+.tpl-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+@media (max-width: 600px) {
+    .tpl-layout {
+        flex-direction: column;
+        height: auto;
+    }
+    .tpl-cards {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    .tpl-card {
+        flex: 1;
+        min-width: 120px;
+    }
+    .tpl-preview-wrap {
+        height: 320px;
+    }
+    .tpl-modal__box {
+        padding: 18px 16px 16px;
+    }
+}

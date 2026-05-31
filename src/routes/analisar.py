@@ -107,13 +107,17 @@ def otimizar_pdf():
     if not curriculo_texto:
         return jsonify({"error": "Nenhum currículo otimizado disponível."}), 400
 
+    template = request.args.get("template", "classico")
+    if template not in ("classico", "moderno", "executivo"):
+        template = "classico"
+
     try:
-        pdf_buffer = gerar_pdf_curriculo(curriculo_texto)
+        pdf_buffer = gerar_pdf_curriculo(curriculo_texto, template=template)
         return send_file(
             pdf_buffer,
             mimetype="application/pdf",
             as_attachment=True,
-            download_name="curriculo_otimizado.pdf",
+            download_name=f"curriculo_{template}.pdf",
         )
     except Exception as e:
         return jsonify({"error": f"Erro ao gerar PDF: {str(e)}"}), 500

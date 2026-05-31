@@ -229,11 +229,9 @@
             '<div class="cv-slide-wrapper">' +
                 '<div class="cv-slide-toggle-wrap">' +
                     '<button class="cv-slide-toggle" id="slide-toggle">' +
-                        '<i data-lucide="wand-2"></i>' +
                         '<span class="cv-slide-toggle__label" id="slide-toggle-left">Otimizado</span>' +
                         '<span class="cv-slide-toggle__divider" id="slide-toggle-divider"><i data-lucide="arrow-left-right"></i></span>' +
                         '<span class="cv-slide-toggle__label" id="slide-toggle-right">Original</span>' +
-                        '<i data-lucide="file-text"></i>' +
                     '</button>' +
                 '</div>' +
                 '<div class="cv-slide-compare" id="cv-slide-compare">' +
@@ -258,6 +256,50 @@
             '<div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px;">' +
                 '<button type="button" class="btn btn--primary" id="btn-pdf"><i data-lucide="file-down"></i> Baixar PDF</button>' +
                 '<button type="button" class="btn btn--secondary" id="btn-copiar"><i data-lucide="clipboard"></i> Copiar texto</button>' +
+            '</div>' +
+            '<div id="template-modal" class="tpl-modal hidden" role="dialog" aria-modal="true" aria-label="Escolher template de PDF">' +
+                '<div class="tpl-modal__backdrop"></div>' +
+                '<div class="tpl-modal__box">' +
+                    '<h3 class="tpl-modal__title"><i data-lucide="layout-template"></i> Escolha o template</h3>' +
+                    '<div class="tpl-layout">' +
+                        '<div class="tpl-cards">' +
+                            '<label class="tpl-card">' +
+                                '<input type="radio" name="tpl" value="classico" checked>' +
+                                '<div class="tpl-swatch tpl-swatch--classico"></div>' +
+                                '<div class="tpl-card__info">' +
+                                    '<span class="tpl-card__label">Clássico</span>' +
+                                    '<span class="tpl-card__desc">Azul e preto</span>' +
+                                '</div>' +
+                                '<span class="tpl-card__check"><i data-lucide="check"></i></span>' +
+                            '</label>' +
+                            '<label class="tpl-card">' +
+                                '<input type="radio" name="tpl" value="moderno">' +
+                                '<div class="tpl-swatch tpl-swatch--moderno"></div>' +
+                                '<div class="tpl-card__info">' +
+                                    '<span class="tpl-card__label">Moderno</span>' +
+                                    '<span class="tpl-card__desc">Teal, cabeçalhos</span>' +
+                                '</div>' +
+                                '<span class="tpl-card__check"><i data-lucide="check"></i></span>' +
+                            '</label>' +
+                            '<label class="tpl-card">' +
+                                '<input type="radio" name="tpl" value="executivo">' +
+                                '<div class="tpl-swatch tpl-swatch--executivo"></div>' +
+                                '<div class="tpl-card__info">' +
+                                    '<span class="tpl-card__label">Executivo</span>' +
+                                    '<span class="tpl-card__desc">Borgonha, barra lateral</span>' +
+                                '</div>' +
+                                '<span class="tpl-card__check"><i data-lucide="check"></i></span>' +
+                            '</label>' +
+                        '</div>' +
+                        '<div class="tpl-preview-wrap">' +
+                            '<div class="cv-preview cv-preview--classico" id="tpl-preview-pane"></div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="tpl-modal__actions">' +
+                        '<button type="button" class="btn btn--secondary" id="tpl-cancel">Cancelar</button>' +
+                        '<button type="button" class="btn btn--primary" id="tpl-confirm"><i data-lucide="download"></i> Baixar PDF</button>' +
+                    '</div>' +
+                '</div>' +
             '</div>';
 
         if (window.lucide) lucide.createIcons({ nodes: [panel] });
@@ -314,9 +356,44 @@
             updateToggleUI();
         });
 
-        // PDF download
+        // PDF download — open template picker with live preview
         document.getElementById('btn-pdf').addEventListener('click', function () {
-            fetch('/otimizar/pdf')
+            var modal = document.getElementById('template-modal');
+            var pane = document.getElementById('tpl-preview-pane');
+            if (!pane.dataset.rendered) {
+                pane.innerHTML = renderStructuredCV(curriculo);
+                pane.dataset.rendered = '1';
+            }
+            modal.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons({ nodes: [modal] });
+        });
+
+        // Live preview on card switch
+        document.getElementById('template-modal').querySelectorAll('input[name="tpl"]')
+            .forEach(function (radio) {
+                radio.addEventListener('change', function () {
+                    var pane = document.getElementById('tpl-preview-pane');
+                    pane.className = 'cv-preview cv-preview--' + this.value;
+                });
+            });
+
+        document.getElementById('tpl-cancel').addEventListener('click', function () {
+            document.getElementById('template-modal').classList.add('hidden');
+        });
+
+        document.getElementById('template-modal').querySelector('.tpl-modal__backdrop')
+            .addEventListener('click', function () {
+                document.getElementById('template-modal').classList.add('hidden');
+            });
+
+        document.getElementById('tpl-confirm').addEventListener('click', function () {
+            var selected = document.querySelector('input[name="tpl"]:checked');
+            var tpl = selected ? selected.value : 'classico';
+            var btn = document.getElementById('tpl-confirm');
+            btn.disabled = true;
+            btn.textContent = 'Gerando...';
+
+            fetch('/otimizar/pdf?template=' + encodeURIComponent(tpl))
                 .then(function (res) {
                     if (!res.ok) throw new Error('Erro ao gerar PDF');
                     return res.blob();
@@ -325,11 +402,17 @@
                     var url = URL.createObjectURL(blob);
                     var a = document.createElement('a');
                     a.href = url;
-                    a.download = 'curriculo_otimizado.pdf';
+                    a.download = 'curriculo_' + tpl + '.pdf';
                     a.click();
                     URL.revokeObjectURL(url);
+                    document.getElementById('template-modal').classList.add('hidden');
                 })
-                .catch(function (err) { alert(err.message); });
+                .catch(function (err) { alert(err.message); })
+                .finally(function () {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i data-lucide="download"></i> Baixar';
+                    if (window.lucide) lucide.createIcons({ nodes: [btn] });
+                });
         });
 
         // Copy text
@@ -402,7 +485,7 @@
     }
 
     function renderStructuredCV(texto) {
-        var lines = texto.split('\n');
+        var lines = texto.normalize('NFC').split('\n');
         var html = '';
         var headerIdx = 0;
         var inList = false;
