@@ -7,8 +7,11 @@
     const loader = document.getElementById('loader');
     const resultado = document.getElementById('resultado');
     const fileDrop = document.getElementById('file-drop');
+    const photoDrop = document.getElementById('photo-drop');
+    const photoInput = document.getElementById('photo-file');
 
     var textoOriginal = '';
+    var photoDataUrl = null;
     var _sliderCleanup = null;
 
     // ===== File Drop Zone =====
@@ -36,6 +39,31 @@
         fileInput.addEventListener('change', updateDropLabel);
     }
 
+    // ===== Photo Drop Zone =====
+    if (photoDrop && photoInput) {
+        photoDrop.addEventListener('click', function () { photoInput.click(); });
+
+        photoDrop.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            photoDrop.classList.add('file-drop--active');
+        });
+
+        photoDrop.addEventListener('dragleave', function () {
+            photoDrop.classList.remove('file-drop--active');
+        });
+
+        photoDrop.addEventListener('drop', function (e) {
+            e.preventDefault();
+            photoDrop.classList.remove('file-drop--active');
+            if (e.dataTransfer.files.length) {
+                photoInput.files = e.dataTransfer.files;
+                updatePhotoLabel();
+            }
+        });
+
+        photoInput.addEventListener('change', updatePhotoLabel);
+    }
+
     function updateDropLabel() {
         const textEl = fileDrop.querySelector('.file-drop__text');
         if (fileInput.files.length) {
@@ -44,6 +72,42 @@
         } else {
             textEl.textContent = 'Arraste ou clique para selecionar';
             fileDrop.classList.remove('file-drop--active');
+        }
+    }
+
+    function updatePhotoLabel() {
+        if (!photoDrop || !photoInput) return;
+        const textEl = photoDrop.querySelector('.file-drop__text');
+        if (photoInput.files.length) {
+            textEl.textContent = photoInput.files[0].name;
+            photoDrop.classList.add('file-drop--active');
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                photoDataUrl = e.target.result;
+                _refreshCVPreviews();
+            };
+            reader.readAsDataURL(photoInput.files[0]);
+        } else {
+            textEl.textContent = 'Adicionar foto (aparece no cabeçalho do PDF)';
+            photoDrop.classList.remove('file-drop--active');
+            photoDataUrl = null;
+            _refreshCVPreviews();
+        }
+    }
+
+    function _refreshCVPreviews() {
+        var taEl = document.getElementById('textarea-curriculo');
+        var texto = taEl ? taEl.value : '';
+        if (!texto) return;
+        var previewEl = document.getElementById('curriculo-text');
+        if (previewEl) previewEl.innerHTML = renderStructuredCV(texto, photoDataUrl);
+        var tplPane = document.getElementById('tpl-preview-pane');
+        if (tplPane) {
+            delete tplPane.dataset.rendered;
+            if (!document.getElementById('template-modal').classList.contains('hidden')) {
+                tplPane.innerHTML = renderStructuredCV(texto, photoDataUrl);
+                tplPane.dataset.rendered = '1';
+            }
         }
     }
 
@@ -242,7 +306,7 @@
                     // Optimized pane (clipped via wrapper)
                     '<div class="cv-slide-clipper" id="slide-clipper">' +
                         '<div class="cv-slide-pane cv-slide-pane--optimized" id="slide-pane-optimized">' +
-                            '<div class="cv-structured cv-structured--preview" id="curriculo-text">' + renderStructuredCV(curriculo) + '</div>' +
+                            '<div class="cv-structured cv-structured--preview" id="curriculo-text">' + renderStructuredCV(curriculo, photoDataUrl) + '</div>' +
                         '</div>' +
                     '</div>' +
                     // Drag handle
@@ -335,11 +399,11 @@
             var novoTexto = document.getElementById('textarea-curriculo').value;
             // Re-render optimized pane in slider
             var previewEl = document.getElementById('curriculo-text');
-            if (previewEl) previewEl.innerHTML = renderStructuredCV(novoTexto);
+            if (previewEl) previewEl.innerHTML = renderStructuredCV(novoTexto, photoDataUrl);
             // Invalidate template modal preview so it regenerates on next open
             var tplPane = document.getElementById('tpl-preview-pane');
             if (tplPane) {
-                tplPane.innerHTML = renderStructuredCV(novoTexto);
+                tplPane.innerHTML = renderStructuredCV(novoTexto, photoDataUrl);
                 tplPane.dataset.rendered = '1';
             }
             var btn = this;
@@ -408,7 +472,7 @@
             var modal = document.getElementById('template-modal');
             var pane = document.getElementById('tpl-preview-pane');
             if (!pane.dataset.rendered) {
-                pane.innerHTML = renderStructuredCV(curriculo);
+                pane.innerHTML = renderStructuredCV(curriculo, photoDataUrl);
                 pane.dataset.rendered = '1';
             }
             modal.classList.remove('hidden');
@@ -445,6 +509,9 @@
             var fd = new FormData();
             fd.append('template', tpl);
             fd.append('texto', textoFinal);
+            if (photoInput && photoInput.files.length) {
+                fd.append('foto', photoInput.files[0]);
+            }
 
             fetch('/otimizar/pdf', { method: 'POST', body: fd })
                 .then(function (res) {
@@ -537,10 +604,19 @@
         return '<pre class="cv-original-pre">' + escapeHtml(texto) + '</pre>';
     }
 
-    function renderStructuredCV(texto) {
+    function _wrapHeader(headerHtml, photoUrl) {
+        if (!photoUrl) return headerHtml;
+        return '<div class="cv-header-row">' +
+            '<div class="cv-header-text">' + headerHtml + '</div>' +
+            '<img class="cv-header-photo" src="' + photoUrl + '" alt="">' +
+            '</div>';
+    }
+
+    function renderStructuredCV(texto, photoUrl) {
         var lines = texto.normalize('NFC').split('\n');
         var html = '';
         var headerIdx = 0;
+        var headerHtml = '';
         var inList = false;
 
         for (var i = 0; i < lines.length; i++) {
@@ -550,6 +626,7 @@
             var secMatch = line.match(/^---SECAO:\s*(.+?)\s*---$/);
             if (secMatch) {
                 if (inList) { html += '</ul>'; inList = false; }
+                if (headerHtml) { html += _wrapHeader(headerHtml, photoUrl); headerHtml = ''; headerIdx = 99; }
                 html += '<h3 class="cv-section">' + escapeHtml(secMatch[1]) + '</h3>';
                 headerIdx = 99;
                 continue;
@@ -558,6 +635,7 @@
             var empMatch = line.match(/^---EMPRESA:\s*(.+?)\s*---$/);
             if (empMatch) {
                 if (inList) { html += '</ul>'; inList = false; }
+                if (headerHtml) { html += _wrapHeader(headerHtml, photoUrl); headerHtml = ''; headerIdx = 99; }
                 html += '<div class="cv-company">' + escapeHtml(empMatch[1]) + '</div>';
                 continue;
             }
@@ -565,11 +643,13 @@
             var cargoMatch = line.match(/^---CARGO:\s*(.+?)\s*---$/);
             if (cargoMatch) {
                 if (inList) { html += '</ul>'; inList = false; }
+                if (headerHtml) { html += _wrapHeader(headerHtml, photoUrl); headerHtml = ''; headerIdx = 99; }
                 html += '<div class="cv-role">' + escapeHtml(cargoMatch[1]) + '</div>';
                 continue;
             }
 
             if (line.charAt(0) === '•' || line.charAt(0) === '-') {
+                if (headerHtml) { html += _wrapHeader(headerHtml, photoUrl); headerHtml = ''; headerIdx = 99; }
                 if (!inList) { html += '<ul class="cv-bullets">'; inList = true; }
                 html += '<li>' + escapeHtml(line.replace(/^[•\-]\s*/, '')) + '</li>';
                 continue;
@@ -578,22 +658,26 @@
             if (inList) { html += '</ul>'; inList = false; }
 
             if (headerIdx === 0) {
-                html += '<h2 class="cv-name">' + escapeHtml(line) + '</h2>';
+                headerHtml += '<h2 class="cv-name">' + escapeHtml(line) + '</h2>';
                 headerIdx = 1;
                 continue;
             }
             if (headerIdx === 1) {
                 if (line.indexOf('@') !== -1 || line.toLowerCase().indexOf('linkedin') !== -1) {
-                    html += '<p class="cv-contact">' + escapeHtml(line) + '</p><hr class="cv-divider">';
+                    headerHtml += '<p class="cv-contact">' + escapeHtml(line) + '</p>';
+                    html += _wrapHeader(headerHtml, photoUrl) + '<hr class="cv-divider">';
+                    headerHtml = '';
                     headerIdx = 99;
                 } else {
-                    html += '<p class="cv-title">' + escapeHtml(line) + '</p>';
+                    headerHtml += '<p class="cv-title">' + escapeHtml(line) + '</p>';
                     headerIdx = 2;
                 }
                 continue;
             }
             if (headerIdx === 2) {
-                html += '<p class="cv-contact">' + escapeHtml(line) + '</p><hr class="cv-divider">';
+                headerHtml += '<p class="cv-contact">' + escapeHtml(line) + '</p>';
+                html += _wrapHeader(headerHtml, photoUrl) + '<hr class="cv-divider">';
+                headerHtml = '';
                 headerIdx = 99;
                 continue;
             }
@@ -602,6 +686,7 @@
         }
 
         if (inList) html += '</ul>';
+        if (headerHtml) html += _wrapHeader(headerHtml, photoUrl);
         return html;
     }
 

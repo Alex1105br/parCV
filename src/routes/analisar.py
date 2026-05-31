@@ -119,8 +119,15 @@ def otimizar_pdf():
     if template not in ("classico", "moderno", "executivo"):
         template = "classico"
 
+    foto_bytes = None
+    foto_file = request.files.get("foto")
+    if foto_file and foto_file.filename:
+        ext = foto_file.filename.rsplit(".", 1)[-1].lower() if "." in foto_file.filename else ""
+        if ext in ("jpg", "jpeg", "png") and get_file_size(foto_file) <= 2 * 1024 * 1024:
+            foto_bytes = foto_file.read()
+
     try:
-        pdf_buffer = gerar_pdf_curriculo(curriculo_texto, template=template)
+        pdf_buffer = gerar_pdf_curriculo(curriculo_texto, template=template, foto_bytes=foto_bytes)
         return send_file(
             pdf_buffer,
             mimetype="application/pdf",

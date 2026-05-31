@@ -4,6 +4,56 @@ import re
 from src.services.parser import extrair_texto_curriculo
 from src.utils import escape_xml
 
+_URL_RE = re.compile(
+    r'https?://[^\s<>"\',;]+'
+    r'|(?:www\.|linkedin\.com|github\.com)[^\s<>"\',;]+'
+    r'|[\w.+-]+@[\w-]+(?:\.[\w-]+)*\.[a-z]{2,}',
+    re.IGNORECASE,
+)
+
+
+def _linkify(text):
+    """Wrap URLs/emails in ReportLab <link> markup."""
+    def repl(m):
+        raw = m.group(0)
+        if '@' in raw and not raw.startswith('http'):
+            href = 'mailto:' + raw
+        elif not raw.startswith('http'):
+            href = 'https://' + raw
+        else:
+            href = raw
+        return f'<link href="{href}">{raw}</link>'
+    return _URL_RE.sub(repl, text)
+
+
+def _photo_header(header_paras, foto_bytes, page_width):
+    """Return a Table with header paragraphs on the left and photo on the right."""
+    from PIL import Image as PILImage
+    from reportlab.lib.units import cm
+    from reportlab.platypus import Table, TableStyle
+    from reportlab.platypus import Image as RLImage
+
+    PHOTO_W = 2.4 * cm
+    pil_img = PILImage.open(io.BytesIO(foto_bytes))
+    w, h = pil_img.size
+    PHOTO_H = PHOTO_W if (w / h) >= 0.85 else PHOTO_W * (4 / 3)
+    TEXT_W = page_width - PHOTO_W - 0.4 * cm
+
+    photo = RLImage(io.BytesIO(foto_bytes), width=PHOTO_W, height=PHOTO_H)
+    tbl = Table(
+        [[header_paras, photo]],
+        colWidths=[TEXT_W, PHOTO_W + 0.4 * cm],
+    )
+    tbl.setStyle(TableStyle([
+        ("VALIGN",        (0, 0), (-1, -1), "TOP"),
+        ("ALIGN",         (1, 0), (1,  0), "RIGHT"),
+        ("TOPPADDING",    (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING",  (0, 0), (-1, -1), 0),
+    ]))
+    return tbl
+
 
 def _parse_curriculo(texto):
     blocks = []
@@ -122,7 +172,7 @@ def _make_doc(buffer):
 
 # ── Template: Clássico ────────────────────────────────────────────────────────
 
-def _build_classico(blocks):
+def _build_classico(blocks, foto_bytes=None):
     from reportlab.lib import colors
     from reportlab.lib.units import cm
     from reportlab.platypus import Paragraph, Spacer, HRFlowable
@@ -132,6 +182,7 @@ def _build_classico(blocks):
     CINZA = colors.HexColor("#555555")
     LINHA = colors.HexColor("#cccccc")
     AZUL  = colors.HexColor("#2c5282")
+    PAGE_WIDTH = 21 * cm - 3.6 * cm
 
     def S(name, **kw):
         d = dict(fontName="Sans", textColor=PRETO, spaceAfter=2, spaceBefore=0, leading=14)
@@ -139,7 +190,7 @@ def _build_classico(blocks):
         return ParagraphStyle(name, **d)
 
     styles = {
-        "nome":    S("nome",    fontName="Sans-Bold",   fontSize=18, spaceAfter=2),
+        "nome":    S("nome",    fontName="Sans-Bold",   fontSize=18, spaceAfter=6),
         "titulo":  S("titulo",  fontName="Sans-Italic", fontSize=10, spaceAfter=1, textColor=AZUL),
         "contato": S("contato", fontName="Sans",        fontSize=8.5, spaceAfter=8, textColor=CINZA),
         "secao":   S("secao",   fontName="Sans-Bold",   fontSize=9, spaceAfter=4, spaceBefore=14, textColor=AZUL),
@@ -150,40 +201,60 @@ def _build_classico(blocks):
     }
 
     story = []
+    header_paras = []
+    in_header = True
+
+    def _flush_header():
+        nonlocal in_header
+        if not in_header:
+            return
+        in_header = False
+        if foto_bytes and header_paras:
+            story.append(_photo_header(header_paras, foto_bytes, PAGE_WIDTH))
+        else:
+            story.extend(header_paras)
+
     for block in blocks:
         btype, text = block["type"], block["text"]
-        if btype == "nome":
-            story.append(Paragraph(text, styles["nome"]))
-        elif btype == "titulo":
-            story.append(Paragraph(text, styles["titulo"]))
-        elif btype == "contato":
-            story.append(Paragraph(text, styles["contato"]))
+        if in_header and btype == "nome":
+            header_paras.append(Paragraph(text, styles["nome"]))
+        elif in_header and btype == "titulo":
+            header_paras.append(Paragraph(text, styles["titulo"]))
+        elif in_header and btype == "contato":
+            header_paras.append(Paragraph(_linkify(text), styles["contato"]))
+            _flush_header()
             story.append(HRFlowable(width="100%", thickness=1, color=PRETO, spaceAfter=6))
         elif btype == "secao":
+            _flush_header()
             story.append(Paragraph(text, styles["secao"]))
             story.append(HRFlowable(width="100%", thickness=0.4, color=LINHA, spaceAfter=4))
         elif btype == "empresa":
+            _flush_header()
             story.append(Spacer(1, 2))
             story.append(Paragraph(text, styles["empresa"]))
         elif btype == "cargo":
+            _flush_header()
             story.append(Paragraph(text, styles["cargo"]))
         elif btype == "bullet":
+            _flush_header()
             story.append(Paragraph(f"•  {text}", styles["bullet"]))
         else:
+            _flush_header()
             story.append(Paragraph(text, styles["texto"]))
+
+    _flush_header()
     return story
 
 
 # ── Template: Moderno ─────────────────────────────────────────────────────────
 
-def _build_moderno(blocks):
+def _build_moderno(blocks, foto_bytes=None):
     from reportlab.lib import colors
     from reportlab.lib.units import cm
     from reportlab.platypus import Paragraph, Spacer, Table, TableStyle
     from reportlab.lib.styles import ParagraphStyle
 
     TEAL     = colors.HexColor("#0d7377")
-    TEAL_LT  = colors.HexColor("#e8f7f7")
     PRETO    = colors.HexColor("#1a1a1a")
     CINZA    = colors.HexColor("#555555")
     BRANCO   = colors.HexColor("#ffffff")
@@ -194,7 +265,7 @@ def _build_moderno(blocks):
         return ParagraphStyle(name, **d)
 
     styles = {
-        "nome":    S("nome-m",    fontName="Sans-Bold",   fontSize=20, spaceAfter=1, textColor=TEAL),
+        "nome":    S("nome-m",    fontName="Sans-Bold",   fontSize=20, spaceAfter=6, textColor=TEAL),
         "titulo":  S("titulo-m",  fontName="Sans-Italic", fontSize=10, spaceAfter=1, textColor=CINZA),
         "contato": S("contato-m", fontName="Sans",        fontSize=8.5, spaceAfter=10, textColor=CINZA),
         "secao":   S("secao-m",   fontName="Sans-Bold",   fontSize=8.5, spaceAfter=0, spaceBefore=0, textColor=BRANCO),
@@ -204,22 +275,37 @@ def _build_moderno(blocks):
         "texto":   S("texto-m",   fontName="Sans",        fontSize=9, spaceAfter=3, leading=13),
     }
 
-    PAGE_WIDTH = 21 * cm - 3.6 * cm  # A4 minus margins
+    PAGE_WIDTH = 21 * cm - 3.6 * cm
 
     story = []
+    header_paras = []
+    in_header = True
+
+    def _flush_header():
+        nonlocal in_header
+        if not in_header:
+            return
+        in_header = False
+        if foto_bytes and header_paras:
+            story.append(_photo_header(header_paras, foto_bytes, PAGE_WIDTH))
+        else:
+            story.extend(header_paras)
+
     for block in blocks:
         btype, text = block["type"], block["text"]
-        if btype == "nome":
-            story.append(Paragraph(text, styles["nome"]))
-        elif btype == "titulo":
-            story.append(Paragraph(text, styles["titulo"]))
-        elif btype == "contato":
-            story.append(Paragraph(text, styles["contato"]))
+        if in_header and btype == "nome":
+            header_paras.append(Paragraph(text, styles["nome"]))
+        elif in_header and btype == "titulo":
+            header_paras.append(Paragraph(text, styles["titulo"]))
+        elif in_header and btype == "contato":
+            header_paras.append(Paragraph(_linkify(text), styles["contato"]))
+            _flush_header()
         elif btype == "secao":
+            _flush_header()
             p = Paragraph(f"  {text}", styles["secao"])
             tbl = Table([[p]], colWidths=[PAGE_WIDTH], rowHeights=[16])
             tbl.setStyle(TableStyle([
-                ("BACKGROUND", (0, 0), (-1, -1), TEAL),
+                ("BACKGROUND",    (0, 0), (-1, -1), TEAL),
                 ("TOPPADDING",    (0, 0), (-1, -1), 3),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
                 ("LEFTPADDING",   (0, 0), (-1, -1), 6),
@@ -228,27 +314,32 @@ def _build_moderno(blocks):
             story.append(tbl)
             story.append(Spacer(1, 4))
         elif btype == "empresa":
+            _flush_header()
             story.append(Spacer(1, 2))
             story.append(Paragraph(text, styles["empresa"]))
         elif btype == "cargo":
+            _flush_header()
             story.append(Paragraph(text, styles["cargo"]))
         elif btype == "bullet":
+            _flush_header()
             story.append(Paragraph(f"•  {text}", styles["bullet"]))
         else:
+            _flush_header()
             story.append(Paragraph(text, styles["texto"]))
+
+    _flush_header()
     return story
 
 
 # ── Template: Executivo ───────────────────────────────────────────────────────
 
-def _build_executivo(blocks):
+def _build_executivo(blocks, foto_bytes=None):
     from reportlab.lib import colors
     from reportlab.lib.units import cm
     from reportlab.platypus import Paragraph, Spacer, Table, TableStyle, HRFlowable
     from reportlab.lib.styles import ParagraphStyle
 
     BURG     = colors.HexColor("#6b2737")
-    BURG_LT  = colors.HexColor("#f7eaed")
     CINZA_ESC= colors.HexColor("#2d2d2d")
     CINZA    = colors.HexColor("#666666")
     LINHA    = colors.HexColor("#dddddd")
@@ -259,7 +350,7 @@ def _build_executivo(blocks):
         return ParagraphStyle(name, **d)
 
     styles = {
-        "nome":    S("nome-e",    fontName="Sans-Bold",   fontSize=19, spaceAfter=2, textColor=CINZA_ESC),
+        "nome":    S("nome-e",    fontName="Sans-Bold",   fontSize=19, spaceAfter=6, textColor=CINZA_ESC),
         "titulo":  S("titulo-e",  fontName="Sans-Italic", fontSize=10, spaceAfter=1, textColor=BURG),
         "contato": S("contato-e", fontName="Sans",        fontSize=8.5, spaceAfter=8, textColor=CINZA),
         "secao":   S("secao-e",   fontName="Sans-Bold",   fontSize=9, spaceAfter=0, spaceBefore=0, textColor=BURG),
@@ -272,18 +363,32 @@ def _build_executivo(blocks):
     PAGE_WIDTH = 21 * cm - 3.6 * cm
 
     story = []
+    header_paras = []
+    in_header = True
+
+    def _flush_header():
+        nonlocal in_header
+        if not in_header:
+            return
+        in_header = False
+        if foto_bytes and header_paras:
+            story.append(_photo_header(header_paras, foto_bytes, PAGE_WIDTH))
+        else:
+            story.extend(header_paras)
+
     for block in blocks:
         btype, text = block["type"], block["text"]
-        if btype == "nome":
-            story.append(Paragraph(text, styles["nome"]))
-        elif btype == "titulo":
-            story.append(Paragraph(text, styles["titulo"]))
-        elif btype == "contato":
-            story.append(Paragraph(text, styles["contato"]))
+        if in_header and btype == "nome":
+            header_paras.append(Paragraph(text, styles["nome"]))
+        elif in_header and btype == "titulo":
+            header_paras.append(Paragraph(text, styles["titulo"]))
+        elif in_header and btype == "contato":
+            header_paras.append(Paragraph(_linkify(text), styles["contato"]))
+            _flush_header()
             story.append(HRFlowable(width="100%", thickness=1.5, color=BURG, spaceAfter=6))
         elif btype == "secao":
+            _flush_header()
             story.append(Spacer(1, 10))
-            # Left accent bar via 2-column table
             accent = Table([[" ", Paragraph(text, styles["secao"])]], colWidths=[5, PAGE_WIDTH - 5])
             accent.setStyle(TableStyle([
                 ("BACKGROUND",    (0, 0), (0, 0), BURG),
@@ -297,14 +402,20 @@ def _build_executivo(blocks):
             story.append(accent)
             story.append(HRFlowable(width="100%", thickness=0.4, color=LINHA, spaceAfter=4))
         elif btype == "empresa":
+            _flush_header()
             story.append(Spacer(1, 2))
             story.append(Paragraph(text, styles["empresa"]))
         elif btype == "cargo":
+            _flush_header()
             story.append(Paragraph(text, styles["cargo"]))
         elif btype == "bullet":
+            _flush_header()
             story.append(Paragraph(f"▸  {text}", styles["bullet"]))
         else:
+            _flush_header()
             story.append(Paragraph(text, styles["texto"]))
+
+    _flush_header()
     return story
 
 
@@ -317,7 +428,7 @@ TEMPLATES = {
 }
 
 
-def gerar_pdf_curriculo(texto_ou_json, template="classico"):
+def gerar_pdf_curriculo(texto_ou_json, template="classico", foto_bytes=None):
     texto, _ = extrair_texto_curriculo(texto_ou_json)
     texto = escape_xml(texto)
     blocks = _parse_curriculo(texto)
@@ -326,7 +437,7 @@ def gerar_pdf_curriculo(texto_ou_json, template="classico"):
     _register_fonts(FONT_DIR)
 
     build_fn = TEMPLATES.get(template, _build_classico)
-    story = build_fn(blocks)
+    story = build_fn(blocks, foto_bytes=foto_bytes)
 
     buffer = io.BytesIO()
     doc = _make_doc(buffer)

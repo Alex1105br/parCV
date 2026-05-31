@@ -42,6 +42,15 @@
         </div>
 
         <div class="form-group">
+            <label for="photo-file" class="form-label">Foto para o PDF (opcional, JPG/PNG)</label>
+            <div class="file-drop file-drop--photo" id="photo-drop">
+                <i data-lucide="user-circle" class="file-drop__icon"></i>
+                <p class="file-drop__text">Adicionar foto (aparece no cabeçalho do PDF)</p>
+                <input type="file" id="photo-file" class="file-drop__input" accept=".jpg,.jpeg,.png">
+            </div>
+        </div>
+
+        <div class="form-group">
             <label for="ats-vaga" class="form-label">Descrição da vaga (opcional)</label>
             <textarea id="ats-vaga" class="form-textarea" placeholder="Cole a descrição da vaga aqui..." rows="5" spellcheck="false"></textarea>
         </div>

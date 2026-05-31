@@ -179,6 +179,16 @@
     display: none;
 }
 
+/* Photo drop zone — compact variant */
+.file-drop--photo {
+    padding: var(--spacing-md) var(--spacing-xl);
+}
+
+.file-drop--photo .file-drop__icon {
+    width: 24px;
+    height: 24px;
+}
+
 /* Score Box */
 .score-box {
     border: 1px solid var(--color-border);
@@ -322,7 +332,27 @@
     font-size: 1.4rem;
     font-weight: 700;
     color: var(--color-text);
-    margin-bottom: 2px;
+    margin-bottom: 6px;
+}
+
+.cv-header-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.cv-header-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.cv-header-photo {
+    max-width: 72px;
+    max-height: 96px;
+    width: auto;
+    height: auto;
+    border-radius: 4px;
+    flex-shrink: 0;
 }
 
 .cv-title {
@@ -889,6 +919,9 @@
     box-sizing: border-box;
 }
 
+.cv-preview .cv-header-row  { display: flex; align-items: flex-start; gap: 10px; }
+.cv-preview .cv-header-text { flex: 1; min-width: 0; }
+.cv-preview .cv-header-photo { max-width: 46px; max-height: 61px; width: auto; height: auto; border-radius: 3px; flex-shrink: 0; }
 .cv-preview .cv-name    { font-size: 17px; font-weight: bold; margin: 0 0 6px; display: block; color: #1a1a1a; }
 .cv-preview .cv-title   { font-size: 10px; font-style: italic; margin: 0 0 2px; display: block; color: #444; }
 .cv-preview .cv-contact { font-size: 8.5px; color: #555; margin: 0 0 6px; display: block; }
