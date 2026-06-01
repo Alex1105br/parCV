@@ -627,7 +627,7 @@
             if (secMatch) {
                 if (inList) { html += '</ul>'; inList = false; }
                 if (headerHtml) { html += _wrapHeader(headerHtml, photoUrl); headerHtml = ''; headerIdx = 99; }
-                html += '<h3 class="cv-section">' + escapeHtml(secMatch[1]) + '</h3>';
+                html += '<h3 class="cv-section">' + linkifyText(secMatch[1]) + '</h3>';
                 headerIdx = 99;
                 continue;
             }
@@ -636,7 +636,7 @@
             if (empMatch) {
                 if (inList) { html += '</ul>'; inList = false; }
                 if (headerHtml) { html += _wrapHeader(headerHtml, photoUrl); headerHtml = ''; headerIdx = 99; }
-                html += '<div class="cv-company">' + escapeHtml(empMatch[1]) + '</div>';
+                html += '<div class="cv-company">' + linkifyText(empMatch[1]) + '</div>';
                 continue;
             }
 
@@ -644,45 +644,45 @@
             if (cargoMatch) {
                 if (inList) { html += '</ul>'; inList = false; }
                 if (headerHtml) { html += _wrapHeader(headerHtml, photoUrl); headerHtml = ''; headerIdx = 99; }
-                html += '<div class="cv-role">' + escapeHtml(cargoMatch[1]) + '</div>';
+                html += '<div class="cv-role">' + linkifyText(cargoMatch[1]) + '</div>';
                 continue;
             }
 
             if (line.charAt(0) === '•' || line.charAt(0) === '-') {
                 if (headerHtml) { html += _wrapHeader(headerHtml, photoUrl); headerHtml = ''; headerIdx = 99; }
                 if (!inList) { html += '<ul class="cv-bullets">'; inList = true; }
-                html += '<li>' + escapeHtml(line.replace(/^[•\-]\s*/, '')) + '</li>';
+                html += '<li>' + linkifyText(line.replace(/^[•\-]\s*/, '')) + '</li>';
                 continue;
             }
 
             if (inList) { html += '</ul>'; inList = false; }
 
             if (headerIdx === 0) {
-                headerHtml += '<h2 class="cv-name">' + escapeHtml(line) + '</h2>';
+                headerHtml += '<h2 class="cv-name">' + linkifyText(line) + '</h2>';
                 headerIdx = 1;
                 continue;
             }
             if (headerIdx === 1) {
                 if (line.indexOf('@') !== -1 || line.toLowerCase().indexOf('linkedin') !== -1) {
-                    headerHtml += '<p class="cv-contact">' + escapeHtml(line) + '</p>';
+                    headerHtml += '<p class="cv-contact">' + linkifyText(line) + '</p>';
                     html += _wrapHeader(headerHtml, photoUrl) + '<hr class="cv-divider">';
                     headerHtml = '';
                     headerIdx = 99;
                 } else {
-                    headerHtml += '<p class="cv-title">' + escapeHtml(line) + '</p>';
+                    headerHtml += '<p class="cv-title">' + linkifyText(line) + '</p>';
                     headerIdx = 2;
                 }
                 continue;
             }
             if (headerIdx === 2) {
-                headerHtml += '<p class="cv-contact">' + escapeHtml(line) + '</p>';
+                headerHtml += '<p class="cv-contact">' + linkifyText(line) + '</p>';
                 html += _wrapHeader(headerHtml, photoUrl) + '<hr class="cv-divider">';
                 headerHtml = '';
                 headerIdx = 99;
                 continue;
             }
 
-            html += '<p class="cv-text">' + escapeHtml(line) + '</p>';
+            html += '<p class="cv-text">' + linkifyText(line) + '</p>';
         }
 
         if (inList) html += '</ul>';
@@ -720,5 +720,21 @@
         var div = document.createElement('div');
         div.appendChild(document.createTextNode(text));
         return div.innerHTML;
+    }
+
+    function linkifyText(text) {
+        // First escape the HTML
+        var escaped = escapeHtml(text);
+        
+        // Pattern to match URLs
+        var urlPattern = /(https?:\/\/[^\s<>"{}|\\^`\[\]]*[a-zA-Z0-9]|www\.[^\s<>"{}|\\^`\[\]]*[a-zA-Z0-9])/g;
+        
+        // Replace URLs with clickable links
+        var linkedText = escaped.replace(urlPattern, function(url) {
+            var href = url.startsWith('http') ? url : 'https://' + url;
+            return '<a href="' + href + '" target="_blank" rel="noopener noreferrer" class="cv-link">' + url + '</a>';
+        });
+        
+        return linkedText;
     }
 })();

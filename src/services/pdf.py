@@ -13,7 +13,7 @@ _URL_RE = re.compile(
 
 
 def _linkify(text):
-    """Wrap URLs/emails in ReportLab <link> markup."""
+    """Wrap URLs/emails in ReportLab <link> markup and style them."""
     def repl(m):
         raw = m.group(0)
         if '@' in raw and not raw.startswith('http'):
@@ -22,7 +22,7 @@ def _linkify(text):
             href = 'https://' + raw
         else:
             href = raw
-        return f'<link href="{href}">{raw}</link>'
+        return f'<font color="#2c5282"><u><link href="{href}">{raw}</link></u></font>'
     return _URL_RE.sub(repl, text)
 
 
