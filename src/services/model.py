@@ -2,6 +2,7 @@ import json
 import time
 import requests
 
+from src.logging_config import logger
 from src.config import (
     LLM_BACKEND,
     GROQ_API_KEY,
@@ -163,6 +164,7 @@ def stream_resposta(historico, mensagem, skip_append_user=False):
 
         total = time.time() - inicio
         historico.append({"role": "assistant", "content": conteudo})
+        logger.info("llm_stream_done", extra={"backend": LLM_BACKEND, "duration_ms": int(total * 1000), "chars": len(conteudo)})
         yield f"data: {json.dumps({'done': True, 'tempo': f'{int(total//60)}m {int(total%60)}s', 'full_response': conteudo})}\n\n"
 
     except requests.exceptions.ConnectionError:
@@ -174,10 +176,16 @@ def stream_resposta(historico, mensagem, skip_append_user=False):
 
 def call_model(prompt, num_predict=1200):
     """Synchronous single-prompt call. Returns (response_text, error)."""
+    t0 = time.time()
     try:
         if LLM_BACKEND == "groq":
-            return _groq_call(prompt, max_tokens=num_predict)
+            result, error = _groq_call(prompt, max_tokens=num_predict)
         else:
-            return _ollama_call(prompt, num_predict)
+            result, error = _ollama_call(prompt, num_predict)
+        duration_ms = int((time.time() - t0) * 1000)
+        logger.info("llm_call_done", extra={"backend": LLM_BACKEND, "duration_ms": duration_ms, "error": error is not None})
+        return result, error
     except Exception as e:
+        duration_ms = int((time.time() - t0) * 1000)
+        logger.error("llm_call_error", extra={"backend": LLM_BACKEND, "duration_ms": duration_ms, "exc": str(e)})
         return None, str(e)
