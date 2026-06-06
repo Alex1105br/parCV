@@ -34,6 +34,7 @@ def create_app():
 
     import src.models.analise  # noqa: F401 — register models with Alembic
     import src.models.otimizacao  # noqa: F401
+    import src.models.chat_session  # noqa: F401
 
     limiter.init_app(app)
 

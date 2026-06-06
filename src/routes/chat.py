@@ -1,10 +1,13 @@
 import os
+from datetime import datetime, timezone
 
 from flask import Blueprint, request, Response, session, jsonify
 from werkzeug.utils import secure_filename
 
 from src.app import limiter
 from src.config import UPLOAD_FOLDER, MAX_UPLOAD_BYTES
+from src.models.db import db
+from src.models.chat_session import ChatSession
 from src.services.model import stream_resposta
 from src.utils import allowed_file, carregar_arquivo, get_file_size, sanitize_text, has_prompt_injection
 
@@ -20,10 +23,28 @@ SYSTEM_PROMPT = (
 )
 
 
+def _get_or_create_chat_session():
+    sid = session.get("chat_sid")
+    if sid:
+        cs = db.session.get(ChatSession, sid)
+        if cs:
+            return cs
+    cs = ChatSession()
+    db.session.add(cs)
+    db.session.commit()
+    session["chat_sid"] = cs.id
+    return cs
+
+
+def _save_chat_session(cs, mensagens):
+    cs.mensagens = mensagens
+    cs.atualizado_em = datetime.now(timezone.utc)
+    db.session.commit()
+
+
 @bp.route("/chat")
 def chat_page():
-    if "historico" not in session:
-        session["historico"] = []
+    _get_or_create_chat_session()
     from flask import render_template
     return render_template("chat.html")
 
@@ -39,23 +60,19 @@ def chat():
     if has_prompt_injection(mensagem):
         return jsonify({"error": "Conteúdo inválido detectado"}), 422
 
-    historico = session.get("historico", [])
+    cs = _get_or_create_chat_session()
+    historico = list(cs.mensagens or [])
 
-    # Inject system prompt if not already present
     if not historico or historico[0].get("role") != "system":
         historico.insert(0, {"role": "system", "content": SYSTEM_PROMPT})
 
-    # Pre-append user message and save session before streaming
     historico.append({"role": "user", "content": mensagem})
-    session["historico"] = historico
-    session.modified = True
+    _save_chat_session(cs, historico)
 
     def generate():
         yield from stream_resposta(historico, mensagem, skip_append_user=True)
-        # stream_resposta appends assistant response to historico (by reference)
-        # Session was already saved before streaming; assistant msg will be
-        # picked up on next request since historico is the same list object
-        # stored in session (Flask cookie-based sessions serialize on response)
+        # stream_resposta appended assistant msg to historico by reference
+        _save_chat_session(cs, historico)
 
     resp = Response(generate(), mimetype="text/event-stream")
     resp.headers["Cache-Control"] = "no-cache"
@@ -86,16 +103,17 @@ def upload():
     if erro:
         return jsonify({"error": erro}), 400
 
-    historico = session.get("historico", [])
+    cs = _get_or_create_chat_session()
+    historico = list(cs.mensagens or [])
     historico.append({"role": "user", "content": f"Documento:\n\n{texto}\n\nUse para responder."})
     historico.append({"role": "assistant", "content": "Documento recebido."})
-    session["historico"] = historico
+    _save_chat_session(cs, historico)
 
     return jsonify({"success": True, "filename": filename, "chars": len(texto)})
 
 
 @bp.route("/limpar", methods=["POST"])
 def limpar():
-    session["historico"] = []
+    cs = _get_or_create_chat_session()
+    _save_chat_session(cs, [])
     return jsonify({"success": True})
-
