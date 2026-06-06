@@ -79,6 +79,60 @@ def analisar():
     return jsonify(result)
 
 
+@bp.route("/analises", methods=["GET"])
+def list_analises():
+    page = request.args.get("page", 1, type=int)
+    per_page = min(request.args.get("per_page", 20, type=int), 50)
+    pagination = (
+        Analise.query
+        .order_by(Analise.criado_em.desc())
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
+    return jsonify({
+        "analises": [
+            {
+                "id": a.id,
+                "score_total": a.score_total,
+                "criado_em": a.criado_em.isoformat(),
+                "vaga": a.vaga,
+            }
+            for a in pagination.items
+        ],
+        "total": pagination.total,
+        "page": pagination.page,
+        "pages": pagination.pages,
+    })
+
+
+@bp.route("/historico")
+def historico():
+    return render_template("historico.html")
+
+
+@bp.route("/historico/<string:analise_id>")
+def historico_detalhe(analise_id):
+    return render_template("historico_detalhe.html", analise_id=analise_id)
+
+
+@bp.route("/analises/<string:analise_id>", methods=["GET"])
+def get_analise(analise_id):
+    analise = db.session.get(Analise, analise_id)
+    if analise is None:
+        return jsonify({"error": "Análise não encontrada"}), 404
+    return jsonify({
+        "id": analise.id,
+        "criado_em": analise.criado_em.isoformat(),
+        "score_total": analise.score_total,
+        "criterios": analise.criterios,
+        "pontos_fortes": analise.pontos_fortes,
+        "pontos_fracos": analise.pontos_fracos,
+        "sugestoes": analise.sugestoes,
+        "palavras_chave_faltando": analise.palavras_chave_faltando,
+        "certificados_sugeridos": analise.certificados_sugeridos,
+        "vaga": analise.vaga,
+    })
+
+
 @bp.route("/otimizar", methods=["POST"])
 @limiter.limit("5 per minute; 30 per hour")
 def otimizar():
