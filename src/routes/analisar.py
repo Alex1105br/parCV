@@ -5,6 +5,10 @@ from werkzeug.utils import secure_filename
 
 from src.app import limiter
 from src.config import UPLOAD_FOLDER, MAX_UPLOAD_BYTES
+from src.logging_config import logger
+from src.models.analise import Analise
+from src.models.db import db
+from src.models.otimizacao import Otimizacao
 from src.services.model import call_model
 from src.services.parser import extrair_json, extrair_texto_curriculo
 from src.services.prompts import build_prompt_ats, build_prompt_otimizar
@@ -52,6 +56,26 @@ def analisar():
 
     result = extrair_json(resposta)
     result["texto_original"] = texto
+
+    try:
+        analise = Analise(
+            score_total=result.get("score_total", 0),
+            criterios=result.get("criterios", {}),
+            pontos_fortes=result.get("pontos_fortes", []),
+            pontos_fracos=result.get("pontos_fracos", []),
+            sugestoes=result.get("sugestoes", []),
+            palavras_chave_faltando=result.get("palavras_chave_faltando", []),
+            certificados_sugeridos=result.get("certificados_sugeridos", []),
+            texto_original=texto,
+            vaga=vaga or None,
+        )
+        db.session.add(analise)
+        db.session.commit()
+        result["id"] = analise.id
+    except Exception as e:
+        db.session.rollback()
+        logger.error("db_error", extra={"op": "salvar_analise", "erro": str(e)})
+
     return jsonify(result)
 
 
@@ -97,11 +121,27 @@ def otimizar():
 
     session["curriculo_otimizado"] = curriculo_texto
 
-    return jsonify({
+    response_data = {
         "curriculo_original": texto,
         "curriculo_otimizado": curriculo_texto,
-        "melhorias": melhorias
-    })
+        "melhorias": melhorias,
+    }
+
+    try:
+        otimizacao = Otimizacao(
+            curriculo_original=texto,
+            curriculo_otimizado=curriculo_texto,
+            melhorias=melhorias,
+            vaga=vaga or None,
+        )
+        db.session.add(otimizacao)
+        db.session.commit()
+        response_data["id"] = otimizacao.id
+    except Exception as e:
+        db.session.rollback()
+        logger.error("db_error", extra={"op": "salvar_otimizacao", "erro": str(e)})
+
+    return jsonify(response_data)
 
 
 @bp.route("/otimizar/pdf", methods=["GET", "POST"])

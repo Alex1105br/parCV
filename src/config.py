@@ -37,3 +37,6 @@ ALLOWED_EXTENSIONS = {"txt", "pdf", "docx"}
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024  # 5 MB
 
 SECRET_KEY = env.str("SECRET_KEY", default=None)
+
+# DATABASE_URL = env.str("DATABASE_URL", default="sqlite:///parcv.db")
+DATABASE_URL = env.str("DATABASE_URL", default="postgresql://parcv:parcv@localhost:5432/parcv")

@@ -6,8 +6,11 @@ from flask import Flask, jsonify, g, request
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-from src.config import UPLOAD_FOLDER, SECRET_KEY
+from flask_migrate import Migrate
+
+from src.config import UPLOAD_FOLDER, SECRET_KEY, DATABASE_URL
 from src.logging_config import setup_logging, logger, request_id_var
+from src.models.db import db
 
 limiter = Limiter(
     key_func=get_remote_address,
@@ -22,7 +25,15 @@ def create_app():
     app = Flask(__name__)
     app.secret_key = SECRET_KEY or os.urandom(24)
     app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+    app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+    db.init_app(app)
+    Migrate(app, db)
+
+    import src.models.analise  # noqa: F401 — register models with Alembic
+    import src.models.otimizacao  # noqa: F401
 
     limiter.init_app(app)
 
