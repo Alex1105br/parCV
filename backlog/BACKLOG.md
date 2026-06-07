@@ -57,7 +57,7 @@ class: cover
 
 ---
 
-## Sprint 4 - Atual
+## Sprint 4
 
 | | título | label | pts |
 | - | :- | :-: | :-: |
