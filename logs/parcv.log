@@ -1,0 +1,118 @@
+{"ts": "2026-06-06T21:27:26", "level": "WARNING", "request_id": "-", "msg": " * Debugger is active!"}
+{"ts": "2026-06-06T21:27:57", "level": "INFO", "request_id": "738dd8a6", "msg": "request", "status": 200, "duration_ms": 63, "method": "GET", "path": "/"}
+{"ts": "2026-06-06T21:27:57", "level": "INFO", "request_id": "a2b2cc34", "msg": "request", "status": 200, "duration_ms": 15, "method": "GET", "path": "/static/base.css"}
+{"ts": "2026-06-06T21:27:57", "level": "INFO", "request_id": "ff3b56c2", "msg": "request", "status": 200, "duration_ms": 18, "method": "GET", "path": "/static/home.css"}
+{"ts": "2026-06-06T21:27:57", "level": "INFO", "request_id": "52f27ad0", "msg": "request", "status": 200, "duration_ms": 27, "method": "GET", "path": "/static/home.js"}
+{"ts": "2026-06-06T21:27:57", "level": "INFO", "request_id": "e80e85e1", "msg": "request", "status": 404, "duration_ms": 0, "method": "GET", "path": "/favicon.ico"}
+{"ts": "2026-06-06T21:28:11", "level": "INFO", "request_id": "858bae5f", "msg": "request", "status": 200, "duration_ms": 25, "method": "GET", "path": "/historico"}
+{"ts": "2026-06-06T21:28:11", "level": "INFO", "request_id": "70085de7", "msg": "request", "status": 304, "duration_ms": 15, "method": "GET", "path": "/static/base.css"}
+{"ts": "2026-06-06T21:28:11", "level": "INFO", "request_id": "7a6bebbd", "msg": "request", "status": 200, "duration_ms": 20, "method": "GET", "path": "/static/historico.css"}
+{"ts": "2026-06-06T21:28:11", "level": "INFO", "request_id": "ca47486e", "msg": "request", "status": 200, "duration_ms": 51, "method": "GET", "path": "/static/historico.js"}
+{"ts": "2026-06-06T21:28:13", "level": "INFO", "request_id": "bdfbe819", "msg": "request", "status": 200, "duration_ms": 8, "method": "GET", "path": "/"}
+{"ts": "2026-06-06T21:28:13", "level": "INFO", "request_id": "47056383", "msg": "request", "status": 304, "duration_ms": 9, "method": "GET", "path": "/static/home.css"}
+{"ts": "2026-06-06T21:28:13", "level": "INFO", "request_id": "7d517d5e", "msg": "request", "status": 304, "duration_ms": 15, "method": "GET", "path": "/static/base.css"}
+{"ts": "2026-06-06T21:28:13", "level": "INFO", "request_id": "d5c70194", "msg": "request", "status": 304, "duration_ms": 9, "method": "GET", "path": "/static/home.js"}
+{"ts": "2026-06-06T21:28:14", "level": "INFO", "request_id": "c1752819", "msg": "request", "status": 200, "duration_ms": 17, "method": "GET", "path": "/analisar"}
+{"ts": "2026-06-06T21:28:14", "level": "INFO", "request_id": "77f3ae44", "msg": "request", "status": 304, "duration_ms": 10, "method": "GET", "path": "/static/base.css"}
+{"ts": "2026-06-06T21:28:14", "level": "INFO", "request_id": "d03e8428", "msg": "request", "status": 200, "duration_ms": 23, "method": "GET", "path": "/static/analisar.css"}
+{"ts": "2026-06-06T21:28:14", "level": "INFO", "request_id": "765aaa25", "msg": "request", "status": 200, "duration_ms": 65, "method": "GET", "path": "/static/analisar.js"}
+{"ts": "2026-06-06T21:28:15", "level": "INFO", "request_id": "c00c2001", "msg": "request", "status": 200, "duration_ms": 8, "method": "GET", "path": "/"}
+{"ts": "2026-06-06T21:28:15", "level": "INFO", "request_id": "f12645d7", "msg": "request", "status": 304, "duration_ms": 11, "method": "GET", "path": "/static/base.css"}
+{"ts": "2026-06-06T21:28:15", "level": "INFO", "request_id": "2813287f", "msg": "request", "status": 304, "duration_ms": 4, "method": "GET", "path": "/static/home.js"}
+{"ts": "2026-06-06T21:28:15", "level": "INFO", "request_id": "fdd8e6d9", "msg": "request", "status": 304, "duration_ms": 7, "method": "GET", "path": "/static/home.css"}
+{"ts": "2026-06-06T21:28:16", "level": "INFO", "request_id": "00cb38ff", "msg": "request", "status": 200, "duration_ms": 5, "method": "GET", "path": "/analisar"}
+{"ts": "2026-06-06T21:28:16", "level": "INFO", "request_id": "6971c569", "msg": "request", "status": 304, "duration_ms": 15, "method": "GET", "path": "/static/base.css"}
+{"ts": "2026-06-06T21:28:16", "level": "INFO", "request_id": "a8cc3f76", "msg": "request", "status": 304, "duration_ms": 10, "method": "GET", "path": "/static/analisar.css"}
+{"ts": "2026-06-06T21:28:16", "level": "INFO", "request_id": "aa4a1e5e", "msg": "request", "status": 304, "duration_ms": 9, "method": "GET", "path": "/static/analisar.js"}
+{"ts": "2026-06-06T21:28:19", "level": "INFO", "request_id": "d682b397", "msg": "request", "status": 200, "duration_ms": 7, "method": "GET", "path": "/"}
+{"ts": "2026-06-06T21:28:19", "level": "INFO", "request_id": "ffb794f8", "msg": "request", "status": 304, "duration_ms": 13, "method": "GET", "path": "/static/base.css"}
+{"ts": "2026-06-06T21:28:19", "level": "INFO", "request_id": "8bd65ca4", "msg": "request", "status": 304, "duration_ms": 9, "method": "GET", "path": "/static/home.css"}
+{"ts": "2026-06-06T21:28:19", "level": "INFO", "request_id": "086e6848", "msg": "request", "status": 304, "duration_ms": 7, "method": "GET", "path": "/static/home.js"}
+{"ts": "2026-06-06T21:28:23", "level": "INFO", "request_id": "909209f3", "msg": "request", "status": 200, "duration_ms": 4, "method": "GET", "path": "/analisar"}
+{"ts": "2026-06-06T21:28:23", "level": "INFO", "request_id": "ec2a948c", "msg": "request", "status": 304, "duration_ms": 6, "method": "GET", "path": "/static/analisar.css"}
+{"ts": "2026-06-06T21:28:23", "level": "INFO", "request_id": "4314fa2b", "msg": "request", "status": 304, "duration_ms": 13, "method": "GET", "path": "/static/base.css"}
+{"ts": "2026-06-06T21:28:23", "level": "INFO", "request_id": "18131115", "msg": "request", "status": 304, "duration_ms": 5, "method": "GET", "path": "/static/analisar.js"}
+{"ts": "2026-06-06T21:33:00", "level": "WARNING", "request_id": "-", "msg": " * Debugger is active!"}
+{"ts": "2026-06-06T21:33:20", "level": "WARNING", "request_id": "-", "msg": " * Debugger is active!"}
+{"ts": "2026-06-06T21:38:39", "level": "WARNING", "request_id": "-", "msg": " * Debugger is active!"}
+{"ts": "2026-06-06T21:38:46", "level": "INFO", "request_id": "cc155f19", "msg": "request", "duration_ms": 17, "method": "GET", "status": 200, "path": "/"}
+{"ts": "2026-06-06T21:38:46", "level": "INFO", "request_id": "8749700c", "msg": "request", "duration_ms": 9, "method": "GET", "status": 304, "path": "/static/base.css"}
+{"ts": "2026-06-06T21:38:46", "level": "INFO", "request_id": "6710c9b4", "msg": "request", "duration_ms": 8, "method": "GET", "status": 304, "path": "/static/home.css"}
+{"ts": "2026-06-06T21:38:46", "level": "INFO", "request_id": "fbd9c577", "msg": "request", "duration_ms": 5, "method": "GET", "status": 304, "path": "/static/home.js"}
+{"ts": "2026-06-06T21:38:48", "level": "INFO", "request_id": "79667c70", "msg": "request", "duration_ms": 12, "method": "GET", "status": 200, "path": "/analisar"}
+{"ts": "2026-06-06T21:38:48", "level": "INFO", "request_id": "a8012eb4", "msg": "request", "duration_ms": 13, "method": "GET", "status": 304, "path": "/static/analisar.css"}
+{"ts": "2026-06-06T21:38:48", "level": "INFO", "request_id": "f1cf8806", "msg": "request", "duration_ms": 18, "method": "GET", "status": 304, "path": "/static/base.css"}
+{"ts": "2026-06-06T21:38:48", "level": "INFO", "request_id": "d1cdbc54", "msg": "request", "duration_ms": 13, "method": "GET", "status": 304, "path": "/static/analisar.js"}
+{"ts": "2026-06-06T21:38:51", "level": "INFO", "request_id": "eb1e06be", "msg": "request", "duration_ms": 1179, "method": "GET", "status": 200, "path": "/chat"}
+{"ts": "2026-06-06T21:38:53", "level": "INFO", "request_id": "a39f48dd", "msg": "request", "duration_ms": 2616, "method": "GET", "status": 200, "path": "/chat"}
+{"ts": "2026-06-06T21:38:54", "level": "INFO", "request_id": "e74984d8", "msg": "request", "duration_ms": 9, "method": "GET", "status": 304, "path": "/static/base.css"}
+{"ts": "2026-06-06T21:38:54", "level": "INFO", "request_id": "9430aff9", "msg": "request", "duration_ms": 28, "method": "GET", "status": 200, "path": "/static/chat.css"}
+{"ts": "2026-06-06T21:38:54", "level": "INFO", "request_id": "35ae6a3b", "msg": "request", "duration_ms": 51, "method": "GET", "status": 200, "path": "/static/chat.js"}
+{"ts": "2026-06-06T21:39:05", "level": "INFO", "request_id": "2bb5462f", "msg": "request", "duration_ms": 922, "method": "POST", "status": 200, "path": "/chat"}
+{"ts": "2026-06-06T21:39:05", "level": "INFO", "request_id": "2bb5462f", "msg": "llm_stream_done", "duration_ms": 626, "chars": 91, "backend": "groq"}
+{"ts": "2026-06-06T21:40:16", "level": "INFO", "request_id": "7e1102d7", "msg": "request", "duration_ms": 918, "method": "POST", "status": 200, "path": "/chat"}
+{"ts": "2026-06-06T21:40:16", "level": "INFO", "request_id": "7e1102d7", "msg": "llm_stream_done", "duration_ms": 884, "chars": 588, "backend": "groq"}
+{"ts": "2026-06-06T21:41:30", "level": "INFO", "request_id": "4e0e1ce1", "msg": "request", "duration_ms": 1760, "method": "POST", "status": 200, "path": "/upload"}
+{"ts": "2026-06-06T21:46:40", "level": "INFO", "request_id": "0e3fde5a", "msg": "request", "duration_ms": 5, "method": "GET", "status": 200, "path": "/"}
+{"ts": "2026-06-06T21:46:40", "level": "INFO", "request_id": "a67895db", "msg": "request", "duration_ms": 8, "method": "GET", "status": 304, "path": "/static/base.css"}
+{"ts": "2026-06-06T21:46:40", "level": "INFO", "request_id": "4ad9ba46", "msg": "request", "duration_ms": 5, "method": "GET", "status": 304, "path": "/static/home.css"}
+{"ts": "2026-06-06T21:46:40", "level": "INFO", "request_id": "3978f5e1", "msg": "request", "duration_ms": 6, "method": "GET", "status": 304, "path": "/static/home.js"}
+{"ts": "2026-06-06T21:46:44", "level": "INFO", "request_id": "0ab66f6d", "msg": "request", "duration_ms": 12, "method": "GET", "status": 200, "path": "/analisar"}
+{"ts": "2026-06-06T21:46:44", "level": "INFO", "request_id": "a7416a03", "msg": "request", "duration_ms": 12, "method": "GET", "status": 304, "path": "/static/base.css"}
+{"ts": "2026-06-06T21:46:44", "level": "INFO", "request_id": "1e880ea2", "msg": "request", "duration_ms": 6, "method": "GET", "status": 304, "path": "/static/analisar.js"}
+{"ts": "2026-06-06T21:46:44", "level": "INFO", "request_id": "8ecddc4c", "msg": "request", "duration_ms": 6, "method": "GET", "status": 304, "path": "/static/analisar.css"}
+{"ts": "2026-06-06T21:46:57", "level": "INFO", "request_id": "4e97813a", "msg": "llm_call_done", "duration_ms": 1192, "error": false, "backend": "groq"}
+{"ts": "2026-06-06T21:47:01", "level": "INFO", "request_id": "4e97813a", "msg": "request", "duration_ms": 5934, "method": "POST", "status": 200, "path": "/analisar"}
+{"ts": "2026-06-06T21:47:06", "level": "INFO", "request_id": "df078247", "msg": "llm_call_done", "duration_ms": 1290, "error": false, "backend": "groq"}
+{"ts": "2026-06-06T21:47:08", "level": "INFO", "request_id": "df078247", "msg": "request", "duration_ms": 2459, "method": "POST", "status": 200, "path": "/otimizar"}
+{"ts": "2026-06-06T21:47:15", "level": "INFO", "request_id": "8dd6703b", "msg": "request", "duration_ms": 9, "method": "GET", "status": 200, "path": "/"}
+{"ts": "2026-06-06T21:47:15", "level": "INFO", "request_id": "9a0898b4", "msg": "request", "duration_ms": 29, "method": "GET", "status": 304, "path": "/static/base.css"}
+{"ts": "2026-06-06T21:47:15", "level": "INFO", "request_id": "dbb1325a", "msg": "request", "duration_ms": 23, "method": "GET", "status": 304, "path": "/static/home.js"}
+{"ts": "2026-06-06T21:47:15", "level": "INFO", "request_id": "48a0ae1d", "msg": "request", "duration_ms": 23, "method": "GET", "status": 304, "path": "/static/home.css"}
+{"ts": "2026-06-06T21:47:18", "level": "INFO", "request_id": "332cd941", "msg": "request", "duration_ms": 16, "method": "GET", "status": 200, "path": "/historico"}
+{"ts": "2026-06-06T21:47:18", "level": "INFO", "request_id": "c34c1f31", "msg": "request", "duration_ms": 15, "method": "GET", "status": 304, "path": "/static/base.css"}
+{"ts": "2026-06-06T21:47:18", "level": "INFO", "request_id": "1803d146", "msg": "request", "duration_ms": 9, "method": "GET", "status": 304, "path": "/static/historico.css"}
+{"ts": "2026-06-06T21:47:18", "level": "INFO", "request_id": "9f2c76af", "msg": "request", "duration_ms": 7, "method": "GET", "status": 304, "path": "/static/historico.js"}
+{"ts": "2026-06-06T21:47:19", "level": "INFO", "request_id": "25ae271a", "msg": "request", "duration_ms": 702, "method": "GET", "status": 200, "path": "/analises"}
+{"ts": "2026-06-06T21:47:21", "level": "INFO", "request_id": "fad28d38", "msg": "request", "duration_ms": 38, "method": "GET", "status": 200, "path": "/historico/58661e25-a56d-47e8-8514-9cca74ddec93"}
+{"ts": "2026-06-06T21:47:21", "level": "INFO", "request_id": "14b4fc7e", "msg": "request", "duration_ms": 15, "method": "GET", "status": 304, "path": "/static/base.css"}
+{"ts": "2026-06-06T21:47:21", "level": "INFO", "request_id": "da93cbbd", "msg": "request", "duration_ms": 8, "method": "GET", "status": 304, "path": "/static/analisar.css"}
+{"ts": "2026-06-06T21:47:21", "level": "INFO", "request_id": "f89352c6", "msg": "request", "duration_ms": 6, "method": "GET", "status": 304, "path": "/static/historico.css"}
+{"ts": "2026-06-06T21:47:22", "level": "INFO", "request_id": "834092e6", "msg": "request", "duration_ms": 59, "method": "GET", "status": 200, "path": "/static/historico_detalhe.js"}
+{"ts": "2026-06-06T21:47:22", "level": "INFO", "request_id": "7415be28", "msg": "request", "duration_ms": 461, "method": "GET", "status": 200, "path": "/analises/58661e25-a56d-47e8-8514-9cca74ddec93"}
+{"ts": "2026-06-06T21:47:41", "level": "INFO", "request_id": "3dc4d134", "msg": "request", "duration_ms": 6, "method": "GET", "status": 200, "path": "/historico/260bad0e-2d2e-40b4-9010-eb6acf0a14ce"}
+{"ts": "2026-06-06T21:47:41", "level": "INFO", "request_id": "76edb700", "msg": "request", "duration_ms": 10, "method": "GET", "status": 304, "path": "/static/analisar.css"}
+{"ts": "2026-06-06T21:47:41", "level": "INFO", "request_id": "b6bbb7db", "msg": "request", "duration_ms": 8, "method": "GET", "status": 304, "path": "/static/historico_detalhe.js"}
+{"ts": "2026-06-06T21:47:41", "level": "INFO", "request_id": "bd8ef60e", "msg": "request", "duration_ms": 7, "method": "GET", "status": 304, "path": "/static/historico.css"}
+{"ts": "2026-06-06T21:47:41", "level": "INFO", "request_id": "1c535458", "msg": "request", "duration_ms": 17, "method": "GET", "status": 304, "path": "/static/base.css"}
+{"ts": "2026-06-06T21:47:41", "level": "INFO", "request_id": "81a5ea05", "msg": "request", "duration_ms": 458, "method": "GET", "status": 200, "path": "/analises/260bad0e-2d2e-40b4-9010-eb6acf0a14ce"}
+{"ts": "2026-06-06T21:47:46", "level": "INFO", "request_id": "7a7804e0", "msg": "request", "duration_ms": 8, "method": "GET", "status": 200, "path": "/historico"}
+{"ts": "2026-06-06T21:47:46", "level": "INFO", "request_id": "788d0b4b", "msg": "request", "duration_ms": 5, "method": "GET", "status": 304, "path": "/static/historico.css"}
+{"ts": "2026-06-06T21:47:46", "level": "INFO", "request_id": "637c4f5e", "msg": "request", "duration_ms": 8, "method": "GET", "status": 304, "path": "/static/base.css"}
+{"ts": "2026-06-06T21:47:46", "level": "INFO", "request_id": "b642c623", "msg": "request", "duration_ms": 5, "method": "GET", "status": 304, "path": "/static/historico.js"}
+{"ts": "2026-06-06T21:47:47", "level": "INFO", "request_id": "454f08da", "msg": "request", "duration_ms": 677, "method": "GET", "status": 200, "path": "/analises"}
+{"ts": "2026-06-06T21:47:48", "level": "INFO", "request_id": "50ed2b0d", "msg": "request", "duration_ms": 5, "method": "GET", "status": 200, "path": "/"}
+{"ts": "2026-06-06T21:47:48", "level": "INFO", "request_id": "9bc5a9f6", "msg": "request", "duration_ms": 12, "method": "GET", "status": 304, "path": "/static/base.css"}
+{"ts": "2026-06-06T21:47:48", "level": "INFO", "request_id": "01180e9a", "msg": "request", "duration_ms": 4, "method": "GET", "status": 304, "path": "/static/home.css"}
+{"ts": "2026-06-06T21:47:48", "level": "INFO", "request_id": "800c5a7d", "msg": "request", "duration_ms": 3, "method": "GET", "status": 304, "path": "/static/home.js"}
+{"ts": "2026-06-06T21:47:50", "level": "INFO", "request_id": "c8f16844", "msg": "request", "duration_ms": 11, "method": "GET", "status": 200, "path": "/historico"}
+{"ts": "2026-06-06T21:47:50", "level": "INFO", "request_id": "8250037f", "msg": "request", "duration_ms": 15, "method": "GET", "status": 304, "path": "/static/base.css"}
+{"ts": "2026-06-06T21:47:50", "level": "INFO", "request_id": "3d65b1a0", "msg": "request", "duration_ms": 10, "method": "GET", "status": 304, "path": "/static/historico.css"}
+{"ts": "2026-06-06T21:47:50", "level": "INFO", "request_id": "2924598d", "msg": "request", "duration_ms": 9, "method": "GET", "status": 304, "path": "/static/historico.js"}
+{"ts": "2026-06-06T21:47:51", "level": "INFO", "request_id": "ce449f4f", "msg": "request", "duration_ms": 670, "method": "GET", "status": 200, "path": "/analises"}
+{"ts": "2026-06-06T21:47:52", "level": "INFO", "request_id": "f74cbb5a", "msg": "request", "duration_ms": 7, "method": "GET", "status": 200, "path": "/"}
+{"ts": "2026-06-06T21:47:52", "level": "INFO", "request_id": "fcb1339d", "msg": "request", "duration_ms": 12, "method": "GET", "status": 304, "path": "/static/base.css"}
+{"ts": "2026-06-06T21:47:52", "level": "INFO", "request_id": "f9e545f8", "msg": "request", "duration_ms": 5, "method": "GET", "status": 304, "path": "/static/home.css"}
+{"ts": "2026-06-06T21:47:52", "level": "INFO", "request_id": "6dbbf06e", "msg": "request", "duration_ms": 7, "method": "GET", "status": 304, "path": "/static/home.js"}
+{"ts": "2026-06-06T21:50:22", "level": "INFO", "request_id": "4d0f7da4", "msg": "request", "duration_ms": 900, "method": "POST", "status": 200, "path": "/chat"}
+{"ts": "2026-06-06T21:50:23", "level": "INFO", "request_id": "4d0f7da4", "msg": "llm_stream_done", "duration_ms": 1247, "chars": 1288, "backend": "groq"}
+{"ts": "2026-06-06T21:50:49", "level": "INFO", "request_id": "8bdb9d21", "msg": "request", "duration_ms": 3251, "method": "POST", "status": 200, "path": "/upload"}
+{"ts": "2026-06-06T21:51:07", "level": "INFO", "request_id": "4e43b8fb", "msg": "request", "duration_ms": 1337, "method": "POST", "status": 200, "path": "/chat"}
+{"ts": "2026-06-06T21:51:13", "level": "INFO", "request_id": "4e43b8fb", "msg": "llm_stream_done", "duration_ms": 5144, "chars": 1206, "backend": "groq"}
+{"ts": "2026-06-06T21:51:25", "level": "INFO", "request_id": "accd2026", "msg": "request", "duration_ms": 1362, "method": "POST", "status": 200, "path": "/upload"}
+{"ts": "2026-06-06T21:51:31", "level": "INFO", "request_id": "4708827d", "msg": "request", "duration_ms": 1358, "method": "POST", "status": 200, "path": "/chat"}
+{"ts": "2026-06-06T21:51:32", "level": "INFO", "request_id": "4708827d", "msg": "llm_stream_done", "duration_ms": 1684, "chars": 1348, "backend": "groq"}
+{"ts": "2026-06-06T21:53:53", "level": "INFO", "request_id": "3631b2e3", "msg": "request", "duration_ms": 4, "method": "GET", "status": 200, "path": "/"}
+{"ts": "2026-06-06T21:53:53", "level": "INFO", "request_id": "dabad3c0", "msg": "request", "duration_ms": 8, "method": "GET", "status": 304, "path": "/static/base.css"}
+{"ts": "2026-06-06T21:53:53", "level": "INFO", "request_id": "e574e02d", "msg": "request", "duration_ms": 4, "method": "GET", "status": 304, "path": "/static/home.css"}
+{"ts": "2026-06-06T21:53:53", "level": "INFO", "request_id": "7a9dbe97", "msg": "request", "duration_ms": 3, "method": "GET", "status": 304, "path": "/static/home.js"}
