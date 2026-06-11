@@ -1,15 +1,16 @@
 import os
+import re
 from datetime import datetime, timezone
 
-from flask import Blueprint, request, Response, session, jsonify
+from flask import Blueprint, request, Response, session, jsonify, render_template, current_app
 from werkzeug.utils import secure_filename
 
 from src.app import limiter
 from src.config import UPLOAD_FOLDER, MAX_UPLOAD_BYTES
 from src.models.db import db
 from src.models.chat_session import ChatSession
-from src.services.model import stream_resposta
-from src.utils import allowed_file, carregar_arquivo, get_file_size, sanitize_text, has_prompt_injection
+from src.services.model import stream_resposta, call_model
+from src.utils import allowed_file, carregar_arquivo, get_file_size, sanitize_text, has_prompt_injection, login_required
 
 bp = Blueprint("chat", __name__)
 
@@ -24,12 +25,15 @@ SYSTEM_PROMPT = (
 
 
 def _get_or_create_chat_session():
+    """Busca ou cria uma ChatSession vinculada ao usuário logado."""
     sid = session.get("chat_sid")
+    user_id = session["user_id"]
     if sid:
         cs = db.session.get(ChatSession, sid)
-        if cs:
+        # Garante que a sessão pertence ao usuário atual
+        if cs and cs.user_id == user_id:
             return cs
-    cs = ChatSession()
+    cs = ChatSession(user_id=user_id)
     db.session.add(cs)
     db.session.commit()
     session["chat_sid"] = cs.id
@@ -43,13 +47,24 @@ def _save_chat_session(cs, mensagens):
 
 
 @bp.route("/chat")
+@login_required
 def chat_page():
-    _get_or_create_chat_session()
-    from flask import render_template
-    return render_template("chat.html")
+    user_id = session["user_id"]
+    sessao_atual = session.get("chat_sid")
+    sessoes_fixadas = (ChatSession.query
+                       .filter_by(user_id=user_id, fixado=True)
+                       .filter(ChatSession.titulo != "")
+                       .order_by(ChatSession.atualizado_em.desc()).all())
+    sessoes_recentes = (ChatSession.query
+                        .filter_by(user_id=user_id, fixado=False)
+                        .filter(ChatSession.titulo != "")
+                        .order_by(ChatSession.atualizado_em.desc()).all())
+    return render_template("chat.html", sessao_atual=sessao_atual,
+                           sessoes_fixadas=sessoes_fixadas, sessoes_recentes=sessoes_recentes)
 
 
 @bp.route("/chat", methods=["POST"])
+@login_required
 @limiter.limit("20 per minute; 100 per hour")
 def chat():
     data = request.get_json()
@@ -69,19 +84,28 @@ def chat():
     historico.append({"role": "user", "content": mensagem})
     _save_chat_session(cs, historico)
 
+    app = current_app._get_current_object()
+    cs_id = cs.id
+
     def generate():
-        yield from stream_resposta(historico, mensagem, skip_append_user=True)
-        # stream_resposta appended assistant msg to historico by reference
-        _save_chat_session(cs, historico)
+        try:
+            yield from stream_resposta(historico, mensagem, skip_append_user=True)
+        finally:
+            with app.app_context():
+                fresh_cs = db.session.get(ChatSession, cs_id)
+                if fresh_cs:
+                    _save_chat_session(fresh_cs, historico)
 
     resp = Response(generate(), mimetype="text/event-stream")
     resp.headers["Cache-Control"] = "no-cache"
     resp.headers["X-Accel-Buffering"] = "no"
     resp.headers["Connection"] = "keep-alive"
+    resp.headers["X-Session-Id"] = cs.id
     return resp
 
 
 @bp.route("/upload", methods=["POST"])
+@login_required
 @limiter.limit("10 per minute")
 def upload():
     if "arquivo" not in request.files:
@@ -94,6 +118,8 @@ def upload():
     if get_file_size(arquivo) > MAX_UPLOAD_BYTES:
         return jsonify({"error": "Arquivo muito grande. Limite: 5 MB"}), 413
 
+    mensagem = sanitize_text(request.form.get("mensagem", ""))
+
     filename = secure_filename(arquivo.filename)
     caminho = os.path.join(UPLOAD_FOLDER, filename)
     arquivo.save(caminho)
@@ -105,15 +131,183 @@ def upload():
 
     cs = _get_or_create_chat_session()
     historico = list(cs.mensagens or [])
-    historico.append({"role": "user", "content": f"Documento:\n\n{texto}\n\nUse para responder."})
+
+    if not historico or historico[0].get("role") != "system":
+        historico.insert(0, {"role": "system", "content": SYSTEM_PROMPT})
+
+    historico.append({"role": "user", "content": f"Documento:\n\n{texto}\n\nUse para responder.", "filename": filename})
+
+    if mensagem and not has_prompt_injection(mensagem):
+        historico.append({"role": "assistant", "content": "Documento recebido."})
+        historico.append({"role": "user", "content": mensagem})
+        _save_chat_session(cs, historico)
+
+        app = current_app._get_current_object()
+        cs_id = cs.id
+
+        def generate():
+            try:
+                yield from stream_resposta(historico, mensagem, skip_append_user=True)
+            finally:
+                with app.app_context():
+                    fresh_cs = db.session.get(ChatSession, cs_id)
+                    if fresh_cs:
+                        _save_chat_session(fresh_cs, historico)
+
+        resp = Response(generate(), mimetype="text/event-stream")
+        resp.headers["Cache-Control"] = "no-cache"
+        resp.headers["X-Accel-Buffering"] = "no"
+        resp.headers["Connection"] = "keep-alive"
+        resp.headers["X-Session-Id"] = cs.id
+        return resp
+
     historico.append({"role": "assistant", "content": "Documento recebido."})
     _save_chat_session(cs, historico)
 
-    return jsonify({"success": True, "filename": filename, "chars": len(texto)})
+    return jsonify({"success": True, "filename": filename, "chars": len(texto), "session_id": cs.id})
 
 
 @bp.route("/limpar", methods=["POST"])
+@login_required
 def limpar():
     cs = _get_or_create_chat_session()
     _save_chat_session(cs, [])
+    return jsonify({"success": True})
+
+
+@bp.route("/chat/nova", methods=["POST"])
+@login_required
+def nova_conversa():
+    sid = session.pop("chat_sid", None)
+    if sid:
+        cs = db.session.get(ChatSession, sid)
+        if cs and cs.user_id == session["user_id"] and not cs.mensagens and not cs.titulo:
+            db.session.delete(cs)
+            db.session.commit()
+    return jsonify({"ok": True})
+
+
+@bp.route("/chat/sessoes")
+@login_required
+def listar_sessoes():
+    sessoes = (ChatSession.query
+               .filter_by(user_id=session["user_id"])
+               .order_by(ChatSession.atualizado_em.desc()).all())
+    return jsonify([
+        {"id": s.id, "titulo": s.titulo, "fixado": s.fixado, "atualizado_em": s.atualizado_em.isoformat()}
+        for s in sessoes
+    ])
+
+
+@bp.route("/chat/sessao/<sid>", methods=["POST"])
+@login_required
+def trocar_sessao(sid):
+    cs = db.session.get(ChatSession, sid)
+    if not cs or cs.user_id != session["user_id"]:
+        return jsonify({"error": "Sessão não encontrada"}), 404
+    session["chat_sid"] = cs.id
+    visible = []
+    for m in (cs.mensagens or []):
+        role = m.get("role", "")
+        content = m.get("content", "")
+        if role == "system":
+            continue
+        if role == "user" and content.startswith("Documento:\n\n"):
+            fname = m.get("filename", "")
+            label = f'"{fname}" carregado.' if fname else "Documento carregado."
+            visible.append({"role": "system", "content": label})
+            continue
+        if role == "assistant" and content == "Documento recebido.":
+            continue
+        visible.append(m)
+    return jsonify({"id": cs.id, "titulo": cs.titulo, "mensagens": visible})
+
+
+@bp.route("/chat/sessao/<sid>/titulo", methods=["PATCH"])
+@login_required
+def renomear_sessao(sid):
+    cs = db.session.get(ChatSession, sid)
+    if not cs or cs.user_id != session["user_id"]:
+        return jsonify({"error": "Sessão não encontrada"}), 404
+    data = request.get_json()
+    titulo = sanitize_text(data.get("titulo", ""))[:100].strip()
+    if not titulo:
+        return jsonify({"error": "Título vazio"}), 400
+    cs.titulo = titulo
+    db.session.commit()
+    return jsonify({"id": cs.id, "titulo": cs.titulo})
+
+
+_UUID_RE = re.compile(
+    r'^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$|^[0-9a-f]{32}$|^[0-9a-f]{40}$',
+    re.IGNORECASE,
+)
+
+
+def _doc_label(filename: str) -> str | None:
+    stem = os.path.splitext(filename)[0]
+    stem = stem.replace('_', ' ').replace('-', ' ').strip()
+    if len(stem) < 3 or len(stem) > 80:
+        return None
+    if _UUID_RE.match(stem.replace(' ', '')):
+        return None
+    return stem
+
+
+@bp.route("/chat/sessao/<sid>/auto-titulo", methods=["POST"])
+@login_required
+def auto_titulo_sessao(sid):
+    cs = db.session.get(ChatSession, sid)
+    if not cs or cs.user_id != session["user_id"]:
+        return jsonify({"error": "Sessão não encontrada"}), 404
+    data = request.get_json()
+    mensagem = sanitize_text(data.get("mensagem", ""))[:500]
+    raw_filename = data.get("filename", "")
+    doc_label = _doc_label(sanitize_text(raw_filename)) if raw_filename else None
+
+    if not mensagem and not doc_label:
+        return jsonify({"error": "Mensagem vazia"}), 400
+
+    context_parts = []
+    if doc_label:
+        context_parts.append(f"Documento: {doc_label}")
+    if mensagem:
+        context_parts.append(f"Mensagem: {mensagem}")
+    context = "\n".join(context_parts)
+
+    prompt = (
+        f"Crie um título curto (máximo 50 caracteres) para uma conversa que começa com o seguinte contexto. "
+        f"Responda APENAS com o título, sem aspas, sem explicações.\n\n{context}"
+    )
+    titulo, error = call_model(prompt, num_predict=60)
+    if error or not titulo:
+        titulo = (doc_label or mensagem)[:60].split('\n')[0]
+    titulo = sanitize_text(titulo.strip().strip('"\''))[:100]
+    cs.titulo = titulo
+    db.session.commit()
+    return jsonify({"id": cs.id, "titulo": cs.titulo})
+
+
+@bp.route("/chat/sessao/<sid>/fixar", methods=["PATCH"])
+@login_required
+def fixar_sessao(sid):
+    cs = db.session.get(ChatSession, sid)
+    if not cs or cs.user_id != session["user_id"]:
+        return jsonify({"error": "Sessão não encontrada"}), 404
+    cs.fixado = not cs.fixado
+    db.session.commit()
+    return jsonify({"id": cs.id, "fixado": cs.fixado})
+
+
+@bp.route("/chat/sessao/<sid>", methods=["DELETE"])
+@login_required
+def excluir_sessao(sid):
+    cs = db.session.get(ChatSession, sid)
+    if not cs or cs.user_id != session["user_id"]:
+        return jsonify({"error": "Sessão não encontrada"}), 404
+    is_current = session.get("chat_sid") == sid
+    db.session.delete(cs)
+    db.session.commit()
+    if is_current:
+        session.pop("chat_sid", None)
     return jsonify({"success": True})

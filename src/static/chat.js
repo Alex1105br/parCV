@@ -3,14 +3,49 @@
 
     const chatContainer = document.getElementById('chat-container');
     const msgInput = document.getElementById('msg-input');
-    const sendBtn = document.getElementById('send-btn');
     const fileInput = document.getElementById('file-input');
     const fileNameLabel = document.getElementById('file-name');
     const welcome = document.getElementById('welcome');
     const form = document.getElementById('input-area');
-    const btnLimpar = document.getElementById('btn-limpar');
+    const btnNovaConversa = document.getElementById('btn-nova-conversa');
+    const sessionList = document.getElementById('session-list');
+    const pinnedList = document.getElementById('pinned-list');
+    const sidebar = document.getElementById('sidebar');
+    const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
 
     let selectedFile = null;
+    const uploadedFileNames = new Set();
+    let messageCount = 0;
+    let isSending = false;
+    let isCreatingSession = false;
+    let pendingSid = null;
+
+    const welcomeMsgs = [
+        'Como posso ajudar?',
+        'No que posso ajudar hoje?',
+        'Olá! Pronto para melhorar seu currículo?',
+        'Vamos otimizar sua candidatura?',
+        'Em que posso te ajudar?',
+    ];
+
+    const welcomeTips = [
+        'Pergunte sobre uma vaga...',
+        'Cole a descrição de uma vaga para análise',
+        'Envie seu currículo em PDF ou TXT',
+        'Peça sugestões de palavras-chave',
+        'Pergunte como destacar sua experiência',
+        'Peça dicas para entrevistas',
+        'Pergunte sobre certificações relevantes',
+    ];
+
+    function randomItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+    function showWelcome() {
+        var msgEl = document.getElementById('welcome-msg');
+        if (msgEl) msgEl.textContent = randomItem(welcomeMsgs);
+        msgInput.placeholder = randomItem(welcomeTips);
+    }
+    showWelcome();
 
     function escapeHtml(text) {
         var d = document.createElement('div');
@@ -63,17 +98,25 @@
         return s;
     }
 
+    function activateChat() {
+        var w = document.getElementById('welcome');
+        if (w) w.remove();
+        // Move input to bottom of chat-main if not already there
+        var chatMain = chatContainer.parentElement;
+        if (form.parentElement !== chatMain) {
+            chatMain.appendChild(form);
+            form.classList.add('input-area--bottom');
+        }
+    }
+
     function addMessage(content, role, tempo) {
-        if (welcome) welcome.style.display = 'none';
+        activateChat();
         const div = document.createElement('div');
         div.classList.add('message', 'message--' + role);
         if (role === 'assistant') {
             div.innerHTML = renderMarkdown(content);
         } else {
             div.textContent = content;
-        }
-        if (role === 'user') {
-            addCopyButton(div, content);
         }
         if (tempo) {
             const t = document.createElement('div');
@@ -107,16 +150,29 @@
 
     function setInputEnabled(enabled) {
         msgInput.disabled = !enabled;
-        sendBtn.disabled = !enabled;
         if (enabled) msgInput.focus();
+    }
+
+    function showTypingIndicator() {
+        const div = document.createElement('div');
+        div.classList.add('typing-indicator');
+        div.innerHTML = '<span></span><span></span><span></span>';
+        chatContainer.appendChild(div);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        return div;
     }
 
     async function enviarMensagem() {
         const msg = msgInput.value.trim();
         if (!msg && !selectedFile) return;
+        if (isSending) return;
+        isSending = true;
 
         msgInput.value = '';
-        if (msg) addMessage(msg, 'user');
+        if (msg && !selectedFile) {
+            addMessage(msg, 'user');
+            messageCount++;
+        }
         setInputEnabled(false);
 
         if (selectedFile) {
@@ -124,6 +180,7 @@
             return;
         }
 
+        const typingDiv = showTypingIndicator();
         const assistantDiv = addMessage('', 'assistant');
 
         try {
@@ -132,6 +189,23 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ mensagem: msg })
             });
+
+            const sessionId = response.headers.get('X-Session-Id');
+            if (sessionId) pendingSid = sessionId;
+            if (msg) autoTitle(msg);
+
+            if (!response.ok) {
+                typingDiv.remove();
+                try {
+                    const errData = await response.json();
+                    assistantDiv.classList.replace('message--assistant', 'message--error');
+                    assistantDiv.textContent = 'Erro: ' + (errData.error || 'Erro desconhecido');
+                } catch (_) {
+                    assistantDiv.remove();
+                }
+                setInputEnabled(true);
+                return;
+            }
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
@@ -155,6 +229,7 @@
                     }
 
                     if (data.token) {
+                        if (typingDiv.parentNode) typingDiv.remove();
                         fullText += data.token;
                         assistantDiv.innerHTML = renderMarkdown(fullText);
                         chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -169,18 +244,26 @@
                     }
                 }
             }
+
+            typingDiv.remove();
+            if (!fullText && assistantDiv.classList.contains('message--assistant')) {
+                assistantDiv.remove();
+            }
         } catch (err) {
+            typingDiv.remove();
             assistantDiv.classList.replace('message--assistant', 'message--error');
             assistantDiv.textContent = 'Erro de conexão: ' + err.message;
         }
 
+        isSending = false;
         setInputEnabled(true);
     }
 
     async function sendFileAndMessage(file, msg) {
-        const assistantDiv = msg ? addMessage('', 'assistant') : null;
-        addMessage('Enviando documento: ' + file.name + (msg ? ' e mensagem...' : '...'), 'system');
+        let assistantDiv = null;
+        // addMessage('Enviando documento: ' + file.name + (msg ? ' e mensagem...' : '...'), 'system');
 
+        uploadedFileNames.add(file.name);
         const formData = new FormData();
         formData.append('arquivo', file);
         if (msg) formData.append('mensagem', msg);
@@ -192,7 +275,14 @@
             });
 
             const contentType = response.headers.get('Content-Type') || '';
+            const uploadSessionId = response.headers.get('X-Session-Id');
+            if (uploadSessionId) pendingSid = uploadSessionId;
+
             if (contentType.includes('text/event-stream')) {
+                addMessage('"' + file.name + '" carregado.', 'system');
+                if (msg) { addMessage(msg, 'user'); messageCount++; }
+                const typingDiv = showTypingIndicator();
+                assistantDiv = addMessage('', 'assistant');
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let fullText = '';
@@ -209,6 +299,7 @@
                         const data = JSON.parse(line.substring(6));
 
                         if (data.error) {
+                            typingDiv.remove();
                             if (assistantDiv) {
                                 assistantDiv.classList.replace('message--assistant', 'message--error');
                                 assistantDiv.textContent = 'Erro: ' + data.error;
@@ -219,6 +310,7 @@
                         }
 
                         if (data.token && assistantDiv) {
+                            if (typingDiv.parentNode) typingDiv.remove();
                             fullText += data.token;
                             assistantDiv.innerHTML = renderMarkdown(fullText);
                             chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -233,12 +325,15 @@
                         }
                     }
                 }
+                typingDiv.remove();
+                if (messageCount <= 1) autoTitle(msg, file.name);
             } else {
                 const data = await response.json();
+                if (data.session_id) pendingSid = data.session_id;
                 if (data.error) {
                     addMessage('Erro: ' + data.error, 'error');
                 } else {
-                    addMessage('Documento "' + data.filename + '" carregado (' + data.chars + ' caracteres).', 'system');
+                    addMessage('"' + file.name + '" carregado.', 'system');
                 }
             }
         } catch (err) {
@@ -250,24 +345,9 @@
             }
         }
 
-        selectedFile = null;
-        fileNameLabel.textContent = '';
+        setSelectedFile(null);
+        isSending = false;
         setInputEnabled(true);
-    }
-
-    async function limparChat() {
-        try {
-            await fetch('/limpar', { method: 'POST' });
-            chatContainer.innerHTML = '';
-            const w = document.createElement('div');
-            w.classList.add('chat__welcome');
-            w.id = 'welcome';
-            w.innerHTML = '<i data-lucide="message-square" class="chat__welcome-icon"></i><h2>Chat</h2><p>Digite uma mensagem ou envie um documento para começar.</p>';
-            if (window.lucide) lucide.createIcons({ nodes: [w] });
-            chatContainer.appendChild(w);
-        } catch (err) {
-            addMessage('Erro ao limpar: ' + err.message, 'error');
-        }
     }
 
     // Query history
@@ -318,15 +398,325 @@
         }
     });
 
+    function setSelectedFile(file) {
+        selectedFile = file;
+        if (!file) {
+            fileNameLabel.textContent = '';
+            fileNameLabel.innerHTML = '';
+            return;
+        }
+        fileNameLabel.textContent = file.name;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'input-area__filename-clear';
+        btn.setAttribute('aria-label', 'Remover arquivo');
+        btn.innerHTML = '&times;';
+        btn.addEventListener('click', function () { setSelectedFile(null); });
+        fileNameLabel.appendChild(btn);
+    }
+
+    function showDuplicateToast(name) {
+        const existing = document.getElementById('duplicate-toast');
+        if (existing) existing.remove();
+        const toast = document.createElement('div');
+        toast.id = 'duplicate-toast';
+        toast.className = 'duplicate-toast';
+        toast.textContent = '"' + name + '" já foi enviado antes.';
+        document.body.appendChild(toast);
+        requestAnimationFrame(function () { toast.classList.add('duplicate-toast--show'); });
+        setTimeout(function () {
+            toast.classList.remove('duplicate-toast--show');
+            toast.addEventListener('transitionend', function () { toast.remove(); }, { once: true });
+        }, 3000);
+    }
+
     fileInput.addEventListener('change', function () {
         const file = fileInput.files[0];
         if (!file) return;
-        selectedFile = file;
-        fileNameLabel.textContent = file.name;
+        if (uploadedFileNames.has(file.name)) {
+            showDuplicateToast(file.name);
+            fileInput.value = '';
+            return;
+        }
+        setSelectedFile(file);
         fileInput.value = '';
     });
 
-    btnLimpar.addEventListener('click', limparChat);
+    // --- Sidebar logic ---
+    btnToggleSidebar.addEventListener('click', function () {
+        sidebar.classList.toggle('sidebar--collapsed');
+    });
+
+    function allSessionItems() {
+        var items = Array.from(sessionList.querySelectorAll('.sidebar__item'));
+        if (pinnedList) items = Array.from(pinnedList.querySelectorAll('.sidebar__item')).concat(items);
+        return items;
+    }
+
+    async function novaConversa() {
+        if (isCreatingSession) return;
+        const hasActiveSession = allSessionItems().some(function (el) { return el.classList.contains('sidebar__item--active'); });
+        if (!hasActiveSession && messageCount === 0) return;
+        isCreatingSession = true;
+        try {
+            await fetch('/chat/nova', { method: 'POST' });
+            allSessionItems().forEach(function (el) {
+                el.classList.remove('sidebar__item--active');
+            });
+            pendingSid = null;
+            clearChatUI();
+        } catch (err) {
+            addMessage('Erro ao criar conversa: ' + err.message, 'error');
+        } finally {
+            isCreatingSession = false;
+        }
+    }
+
+    btnNovaConversa.addEventListener('click', novaConversa);
+
+    // Close any open action menus when clicking outside
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.sidebar__item-menu') && !e.target.closest('.sidebar__item-actions')) {
+            document.querySelectorAll('.sidebar__item-actions--open').forEach(function (el) {
+                el.classList.remove('sidebar__item-actions--open');
+            });
+        }
+    });
+
+    async function handleSidebarClick(e) {
+        // 3-dot menu button
+        const menuBtn = e.target.closest('.sidebar__item-menu');
+        if (menuBtn) {
+            e.stopPropagation();
+            document.querySelectorAll('.sidebar__item-actions--open').forEach(function (el) {
+                el.classList.remove('sidebar__item-actions--open');
+            });
+            const actions = menuBtn.nextElementSibling;
+            if (actions) actions.classList.toggle('sidebar__item-actions--open');
+            return;
+        }
+
+        // Pin/unpin action
+        const pinBtn = e.target.closest('.sidebar__action--pin');
+        if (pinBtn) {
+            e.stopPropagation();
+            const item = pinBtn.closest('.sidebar__item');
+            const sid = item.dataset.sid;
+            pinBtn.closest('.sidebar__item-actions').classList.remove('sidebar__item-actions--open');
+            try {
+                const res = await fetch('/chat/sessao/' + sid + '/fixar', { method: 'PATCH' });
+                const data = await res.json();
+                if (data.error) return;
+                moveItemToList(item, data.fixado);
+            } catch (_) {}
+            return;
+        }
+
+        // Rename action
+        const renameBtn = e.target.closest('.sidebar__action--rename');
+        if (renameBtn) {
+            e.stopPropagation();
+            const item = renameBtn.closest('.sidebar__item');
+            const sid = item.dataset.sid;
+            const titleEl = item.querySelector('.sidebar__item-title');
+            renameBtn.closest('.sidebar__item-actions').classList.remove('sidebar__item-actions--open');
+            startInlineRename(item, sid, titleEl);
+            return;
+        }
+
+        // Delete action
+        const deleteBtn = e.target.closest('.sidebar__action--delete');
+        if (deleteBtn) {
+            e.stopPropagation();
+            const item = deleteBtn.closest('.sidebar__item');
+            const sid = item.dataset.sid;
+            try {
+                await fetch('/chat/sessao/' + sid, { method: 'DELETE' });
+                const wasActive = item.classList.contains('sidebar__item--active');
+                item.remove();
+                if (wasActive) clearChatUI();
+            } catch (err) {
+                addMessage('Erro ao excluir: ' + err.message, 'error');
+            }
+            return;
+        }
+
+        // Click on item itself → switch session
+        const item = e.target.closest('.sidebar__item');
+        if (!item || e.target.closest('.sidebar__item-actions')) return;
+
+        const sid = item.dataset.sid;
+        try {
+            const res = await fetch('/chat/sessao/' + sid, { method: 'POST' });
+            const data = await res.json();
+            if (data.error) {
+                addMessage('Erro: ' + data.error, 'error');
+                return;
+            }
+            setActiveSession(data.id, data.titulo, item.dataset.fixado === 'true');
+            loadMessages(data.mensagens);
+        } catch (err) {
+            addMessage('Erro ao trocar conversa: ' + err.message, 'error');
+        }
+    }
+
+    sessionList.addEventListener('click', handleSidebarClick);
+    if (pinnedList) pinnedList.addEventListener('click', handleSidebarClick);
+
+    function buildItemHTML(titulo, fixado) {
+        var pinIcon = fixado ? '<i data-lucide="pin" class="sidebar__item-pin-icon"></i>' : '';
+        var pinLabel = fixado ? 'Desafixar' : 'Fixar';
+        var pinLucide = fixado ? 'pin-off' : 'pin';
+        return pinIcon +
+            '<span class="sidebar__item-title">' + escapeHtml(titulo) + '</span>' +
+            '<button class="sidebar__item-menu" title="Opções" aria-label="Opções da conversa"><i data-lucide="ellipsis"></i></button>' +
+            '<div class="sidebar__item-actions">' +
+                '<button class="sidebar__action sidebar__action--pin" title="' + pinLabel + '"><i data-lucide="' + pinLucide + '"></i><span>' + pinLabel + '</span></button>' +
+                '<button class="sidebar__action sidebar__action--rename" title="Renomear"><i data-lucide="pencil"></i><span>Renomear</span></button>' +
+                '<button class="sidebar__action sidebar__action--delete" title="Excluir"><i data-lucide="trash-2"></i><span>Excluir</span></button>' +
+            '</div>';
+    }
+
+    function moveItemToList(item, fixado) {
+        item.dataset.fixado = fixado ? 'true' : 'false';
+        item.innerHTML = buildItemHTML(item.querySelector('.sidebar__item-title').textContent, fixado);
+        if (window.lucide) lucide.createIcons({ nodes: [item] });
+        var targetList = fixado ? pinnedList : sessionList;
+        if (!targetList) return;
+        targetList.prepend(item);
+        updatePinnedSectionVisibility();
+    }
+
+    function updatePinnedSectionVisibility() {
+        if (!pinnedList) return;
+        var section = pinnedList.previousElementSibling;
+        if (pinnedList.children.length === 0) {
+            if (section) section.style.display = 'none';
+            pinnedList.style.display = 'none';
+        } else {
+            if (section) section.style.display = '';
+            pinnedList.style.display = '';
+        }
+    }
+
+    function setActiveSession(sid, titulo, fixado) {
+        allSessionItems().forEach(function (el) {
+            el.classList.remove('sidebar__item--active');
+        });
+        var isPinned = fixado === true;
+        var existing = document.querySelector('[data-sid="' + sid + '"]');
+        if (!existing) {
+            existing = document.createElement('li');
+            existing.classList.add('sidebar__item');
+            existing.dataset.sid = sid;
+            existing.dataset.fixado = isPinned ? 'true' : 'false';
+            existing.innerHTML = buildItemHTML(titulo, isPinned);
+            sessionList.prepend(existing);
+            if (window.lucide) lucide.createIcons({ nodes: [existing] });
+        }
+        existing.classList.add('sidebar__item--active');
+        existing.querySelector('.sidebar__item-title').textContent = titulo;
+    }
+
+    function startInlineRename(item, sid, titleEl) {
+        if (item.querySelector('.sidebar__item-rename-input')) return;
+        const currentTitle = titleEl.textContent;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentTitle;
+        input.className = 'sidebar__item-rename-input';
+        item.appendChild(input);
+        input.focus();
+        input.select();
+
+        let done = false;
+
+        async function commit() {
+            if (done) return;
+            done = true;
+            const novoTitulo = input.value.trim();
+            input.remove();
+            if (novoTitulo && novoTitulo !== currentTitle) {
+                try {
+                    await fetch('/chat/sessao/' + sid + '/titulo', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ titulo: novoTitulo })
+                    });
+                    titleEl.textContent = novoTitulo;
+                } catch (_) {}
+            }
+        }
+
+        function cancel() {
+            if (done) return;
+            done = true;
+            input.remove();
+        }
+
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); commit(); }
+            if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+        });
+        input.addEventListener('blur', commit);
+    }
+
+    function clearChatUI() {
+        chatContainer.innerHTML = '';
+        const w = document.createElement('div');
+        w.classList.add('chat__welcome');
+        w.id = 'welcome';
+        w.innerHTML = '<h2 id="welcome-msg"></h2>';
+        w.appendChild(form);
+        form.classList.remove('input-area--bottom');
+        if (window.lucide) lucide.createIcons({ nodes: [w] });
+        chatContainer.appendChild(w);
+        showWelcome();
+        messageCount = 0;
+    }
+
+    function loadMessages(mensagens) {
+        chatContainer.innerHTML = '';
+        messageCount = 0;
+        if (!mensagens || mensagens.length === 0) {
+            clearChatUI();
+            return;
+        }
+        var welcomeEl = document.getElementById('welcome');
+        if (welcomeEl) welcomeEl.style.display = 'none';
+        mensagens.forEach(function (m) {
+            if (m.role === 'user' || m.role === 'assistant' || m.role === 'system') {
+                var msgDiv = addMessage(m.content, m.role);
+                if (m.role === 'user') messageCount++;
+                if (m.role === 'assistant') addCopyButton(msgDiv, m.content);
+            }
+        });
+    }
+
+    async function autoTitle(mensagem, filename) {
+        if (messageCount > 1) return;
+        var active = allSessionItems().find(function (el) { return el.classList.contains('sidebar__item--active'); }) || null;
+        var sid = active ? active.dataset.sid : pendingSid;
+        if (!sid) return;
+        try {
+            const body = { mensagem: mensagem || '' };
+            if (filename) body.filename = filename;
+            const res = await fetch('/chat/sessao/' + sid + '/auto-titulo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (data.titulo) {
+                if (active) {
+                    active.querySelector('.sidebar__item-title').textContent = data.titulo;
+                } else {
+                    setActiveSession(sid, data.titulo);
+                    if (pendingSid === sid) pendingSid = null;
+                }
+            }
+        } catch (_) {}
+    }
 
     msgInput.focus();
 })();

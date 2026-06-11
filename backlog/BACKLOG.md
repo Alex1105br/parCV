@@ -57,7 +57,7 @@ class: cover
 
 ---
 
-## Sprint 4
+## Sprint 4 - Atual
 
 | | título | label | pts |
 | - | :- | :-: | :-: |
@@ -71,13 +71,14 @@ class: cover
 
 ---
 
-## Sprint 5 - Atual
+## Sprint 5
 
 | | título | label | pts |
 | - | :- | :-: | :-: |
-| | Botão Nova conversa e listagem de conversas na sidebar | ux | 5 |
-| | Upload de currículo no chat para perguntas contextuais | feature | 5 |
-| | Indicador de digitando e tratamento de erro inline no chat | ux | 3 |
+| ✓ | Indicador de digitando e tratamento de erro inline no chat | ux | 3 |
+| ✓ | sanitização de input + proteção contra *prompt injection* | security | 5 |
+| ✓ | Botão Nova conversa e listagem de conversas na sidebar | ux | 5 |
+| ✓ | Upload de currículo no chat para perguntas contextuais | feature | 5 |
 | | Simulação de entrevista com IA | feature | 7 |
 
 > Foco: UX de chat.
@@ -88,24 +89,7 @@ class: cover
 
 | | título | label | pts |
 | - | :- | :-: | :-: |
-| | Registro e login de usuário (email + senha) | feature | 5 |
-| | Proteção de rotas autenticadas (JWT / sessão) | security | 3 |
-| | Tela de perfil do usuário | ux | 3 |
-| | Integração com Stripe (checkout + webhook) | feature | 8 |
-| | Plano gratuito com limite de análises e plano pago (pay per analisys) | feature | 5 |
-| | Tela de assinatura / upgrade | ux | 3 |
-
-> Foco: autenticação de usuários e monetização.
-
----
-
-## Sprint 7
-
-| | título | label | pts |
-| - | :- | :-: | :-: |
-| | Landing page com explicação do produto e CTA | ux | 5 |
-| | CI/CD com GitHub Actions (lint, testes, build Docker) | infra | 5 |
-| | Deploy em VPS ou Railway/Render com HTTPS | infra | 5 |
+| | Sign-in/up | feature | 5 |
 | | README atualizado com screenshots, arquitetura e contribuição | docs | 3 |
 
-> Foco: documentação + pipeline de qualidade automatizado + deploy do MVP.
+> Foco: autenticação + deploy + documentação.

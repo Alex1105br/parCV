@@ -1,11 +1,31 @@
 import os
 import re
 import subprocess
+from functools import wraps
 
 import docx
+from flask import session, redirect, url_for
 
 from src.config import ALLOWED_EXTENSIONS
 
+
+# ---------------------------------------------------------------------------
+# Auth
+# ---------------------------------------------------------------------------
+
+def login_required(f):
+    """Decorator: redireciona para login se o usuário não estiver autenticado."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("auth.login"))
+        return f(*args, **kwargs)
+    return decorated
+
+
+# ---------------------------------------------------------------------------
+# File helpers
+# ---------------------------------------------------------------------------
 
 def allowed_file(filename):
     """Check if filename has an allowed extension."""
@@ -13,7 +33,7 @@ def allowed_file(filename):
 
 
 def carregar_arquivo(caminho):
-    """Load text content from a .txt or .pdf file. Returns (text, error)."""
+    """Load text content from a .txt, .pdf or .docx file. Returns (text, error)."""
     if not os.path.isfile(caminho):
         return None, "Arquivo não encontrado."
 
@@ -63,6 +83,10 @@ def get_file_size(arquivo):
     return size
 
 
+# ---------------------------------------------------------------------------
+# Security helpers
+# ---------------------------------------------------------------------------
+
 _INJECTION_PATTERNS = re.compile(
     r"ignore\s+(all\s+)?(previous|above|prior|these)?\s*(instructions?|rules?|context|prompt)"
     r"|(?:forget|disregard|override)\s+(?:everything|all|above|previous|prior|these|your)"
@@ -85,6 +109,5 @@ def has_prompt_injection(text):
 def sanitize_text(text, max_length=5000):
     """Strip HTML tags and control characters. Limit length."""
     text = re.sub(r"<[^>]+>", "", text)
-    # Remove null bytes and non-printable control chars (keep \t \n \r)
     text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
     return text[:max_length].strip()

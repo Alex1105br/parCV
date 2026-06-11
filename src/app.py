@@ -5,7 +5,6 @@ import uuid
 from flask import Flask, jsonify, g, request
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-
 from flask_migrate import Migrate
 
 from src.config import UPLOAD_FOLDER, SECRET_KEY, DATABASE_URL
@@ -32,8 +31,10 @@ def create_app():
     db.init_app(app)
     Migrate(app, db)
 
-    import src.models.analise  # noqa: F401 — register models with Alembic
-    import src.models.otimizacao  # noqa: F401
+    # Registra todos os models com o Alembic
+    import src.models.user          # noqa: F401
+    import src.models.analise       # noqa: F401
+    import src.models.otimizacao    # noqa: F401
     import src.models.chat_session  # noqa: F401
 
     limiter.init_app(app)
@@ -64,10 +65,12 @@ def create_app():
     def ratelimit_handler(e):
         return jsonify({"error": "Muitas requisições. Aguarde antes de tentar novamente."}), 429
 
+    from src.routes.auth import bp as auth_bp
     from src.routes.home import bp as home_bp
     from src.routes.chat import bp as chat_bp
     from src.routes.analisar import bp as analisar_bp
 
+    app.register_blueprint(auth_bp)
     app.register_blueprint(home_bp)
     app.register_blueprint(chat_bp)
     app.register_blueprint(analisar_bp)

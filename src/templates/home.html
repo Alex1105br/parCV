@@ -10,7 +10,9 @@
 <div class="layout">
     <aside class="sidebar" id="sidebar" aria-label="Menu de navegação">
         <div class="sidebar__brand">
-            <i data-lucide="brain-circuit" class="sidebar__logo"></i>
+            <button class="sidebar__toggle" id="sidebar-toggle" aria-label="Contrair menu" aria-expanded="true">
+                <i data-lucide="panel-left-close"></i>
+            </button>
             <span class="sidebar__brand-text">parCV</span>
         </div>
         <nav class="sidebar__nav">
@@ -31,10 +33,18 @@
                 <span>Histórico</span>
             </a>
         </nav>
+
         <div class="sidebar__footer">
-            <button class="sidebar__toggle" id="sidebar-toggle" aria-label="Contrair menu" aria-expanded="true">
-                <i data-lucide="panel-left-close"></i>
-            </button>
+            <span class="sidebar__user">
+                <i data-lucide="user"></i>
+                <span>{{ user_name }}</span>
+            </span>
+            <form method="post" action="{{ url_for('auth.logout') }}">
+                <button type="submit" class="sidebar__logout" aria-label="Sair">
+                    <i data-lucide="log-out"></i>
+                    <span>Sair</span>
+                </button>
+            </form>
         </div>
     </aside>
 

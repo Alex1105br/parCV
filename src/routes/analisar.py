@@ -13,12 +13,13 @@ from src.services.model import call_model
 from src.services.parser import extrair_json, extrair_texto_curriculo
 from src.services.prompts import build_prompt_ats, build_prompt_otimizar
 from src.services.pdf import gerar_pdf_curriculo
-from src.utils import allowed_file, carregar_arquivo, get_file_size, sanitize_text, has_prompt_injection
+from src.utils import allowed_file, carregar_arquivo, get_file_size, sanitize_text, has_prompt_injection, login_required
 
 bp = Blueprint("analisar", __name__)
 
 
 @bp.route("/analisar", methods=["GET", "POST"])
+@login_required
 @limiter.limit("5 per minute; 30 per hour", methods=["POST"])
 def analisar():
     if request.method == "GET":
@@ -68,6 +69,7 @@ def analisar():
             certificados_sugeridos=result.get("certificados_sugeridos", []),
             texto_original=texto,
             vaga=vaga or None,
+            user_id=session["user_id"],
         )
         db.session.add(analise)
         db.session.commit()
@@ -80,11 +82,13 @@ def analisar():
 
 
 @bp.route("/analises", methods=["GET"])
+@login_required
 def list_analises():
     page = request.args.get("page", 1, type=int)
     per_page = min(request.args.get("per_page", 20, type=int), 50)
     pagination = (
         Analise.query
+        .filter_by(user_id=session["user_id"])
         .order_by(Analise.criado_em.desc())
         .paginate(page=page, per_page=per_page, error_out=False)
     )
@@ -105,19 +109,22 @@ def list_analises():
 
 
 @bp.route("/historico")
+@login_required
 def historico():
     return render_template("historico.html")
 
 
 @bp.route("/historico/<string:analise_id>")
+@login_required
 def historico_detalhe(analise_id):
     return render_template("historico_detalhe.html", analise_id=analise_id)
 
 
 @bp.route("/analises/<string:analise_id>", methods=["GET"])
+@login_required
 def get_analise(analise_id):
     analise = db.session.get(Analise, analise_id)
-    if analise is None:
+    if analise is None or analise.user_id != session["user_id"]:
         return jsonify({"error": "Análise não encontrada"}), 404
     return jsonify({
         "id": analise.id,
@@ -134,6 +141,7 @@ def get_analise(analise_id):
 
 
 @bp.route("/otimizar", methods=["POST"])
+@login_required
 @limiter.limit("5 per minute; 30 per hour")
 def otimizar():
     if "arquivo" not in request.files:
@@ -187,6 +195,7 @@ def otimizar():
             curriculo_otimizado=curriculo_texto,
             melhorias=melhorias,
             vaga=vaga or None,
+            user_id=session["user_id"],
         )
         db.session.add(otimizacao)
         db.session.commit()
@@ -199,6 +208,7 @@ def otimizar():
 
 
 @bp.route("/otimizar/pdf", methods=["GET", "POST"])
+@login_required
 @limiter.limit("10 per minute", methods=["POST"])
 def otimizar_pdf():
     if request.method == "POST":

@@ -146,10 +146,11 @@ def stream_resposta(historico, mensagem, skip_append_user=False):
     inicio = time.time()
 
     try:
+        api_msgs = [{"role": m["role"], "content": m["content"]} for m in historico]
         if LLM_BACKEND == "groq":
-            stream = _groq_stream(historico)
+            stream = _groq_stream(api_msgs)
         else:
-            stream = _ollama_stream(historico)
+            stream = _ollama_stream(api_msgs)
 
         conteudo = ""
         for token, done, error in stream:

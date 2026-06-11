@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Criar Conta - parCV{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="card">
+        <div class="brand">
+            <i data-lucide="brain-circuit" class="brand__logo"></i>
+            <span class="brand__text">parCV</span>
+        </div>
+
+        <h1>Criar conta</h1>
+
+        {% if error %}
+        <div class="alert">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('auth.register') }}" novalidate>
+            <input type="text" name="name" placeholder="Nome completo" value="{{ request.form.name or '' }}" required>
+            <input type="email" name="email" placeholder="Email" value="{{ request.form.email or '' }}" required>
+            <input type="password" name="password" placeholder="Senha" required>
+            <input type="password" name="confirm_password" placeholder="Confirmar senha" required>
+            <button class="btn-primary" type="submit">Registrar</button>
+        </form>
+
+        <a class="btn-secondary" href="{{ url_for('auth.login') }}">Já tenho conta</a>
+    </div>
+</div>
+{% endblock %}
