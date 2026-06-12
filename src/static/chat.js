@@ -19,6 +19,7 @@
     let isSending = false;
     let isCreatingSession = false;
     let pendingSid = null;
+    let titleGenerated = false;
 
     const welcomeMsgs = [
         'Como posso ajudar?',
@@ -191,8 +192,11 @@
             });
 
             const sessionId = response.headers.get('X-Session-Id');
-            if (sessionId) pendingSid = sessionId;
-            if (msg) autoTitle(msg);
+            if (sessionId) {
+                pendingSid = sessionId;
+                // Adiciona na sidebar imediatamente com título provisório
+                setActiveSession(sessionId, 'Nova conversa');
+            }
 
             if (!response.ok) {
                 typingDiv.remove();
@@ -248,6 +252,8 @@
             typingDiv.remove();
             if (!fullText && assistantDiv.classList.contains('message--assistant')) {
                 assistantDiv.remove();
+            } else if (fullText) {
+                autoTitle(msg, null, pendingSid);
             }
         } catch (err) {
             typingDiv.remove();
@@ -276,7 +282,10 @@
 
             const contentType = response.headers.get('Content-Type') || '';
             const uploadSessionId = response.headers.get('X-Session-Id');
-            if (uploadSessionId) pendingSid = uploadSessionId;
+            if (uploadSessionId) {
+                pendingSid = uploadSessionId;
+                setActiveSession(uploadSessionId, 'Nova conversa');
+            }
 
             if (contentType.includes('text/event-stream')) {
                 addMessage('"' + file.name + '" carregado.', 'system');
@@ -326,7 +335,7 @@
                     }
                 }
                 typingDiv.remove();
-                if (messageCount <= 1) autoTitle(msg, file.name);
+                autoTitle(msg, file.name, pendingSid);
             } else {
                 const data = await response.json();
                 if (data.session_id) pendingSid = data.session_id;
@@ -443,9 +452,25 @@
     });
 
     // --- Sidebar logic ---
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    function isMobile() { return window.innerWidth <= 768; }
+
     btnToggleSidebar.addEventListener('click', function () {
-        sidebar.classList.toggle('sidebar--collapsed');
+        if (isMobile()) {
+            sidebar.classList.toggle('sidebar--mobile-open');
+            sidebarOverlay.classList.toggle('sidebar-overlay--visible');
+        } else {
+            sidebar.classList.toggle('sidebar--collapsed');
+        }
     });
+
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', function () {
+            sidebar.classList.remove('sidebar--mobile-open');
+            sidebarOverlay.classList.remove('sidebar-overlay--visible');
+        });
+    }
 
     function allSessionItems() {
         var items = Array.from(sessionList.querySelectorAll('.sidebar__item'));
@@ -455,8 +480,6 @@
 
     async function novaConversa() {
         if (isCreatingSession) return;
-        const hasActiveSession = allSessionItems().some(function (el) { return el.classList.contains('sidebar__item--active'); });
-        if (!hasActiveSession && messageCount === 0) return;
         isCreatingSession = true;
         try {
             await fetch('/chat/nova', { method: 'POST' });
@@ -464,6 +487,8 @@
                 el.classList.remove('sidebar__item--active');
             });
             pendingSid = null;
+            titleGenerated = false;
+            messageCount = 0;
             clearChatUI();
         } catch (err) {
             addMessage('Erro ao criar conversa: ' + err.message, 'error');
@@ -553,8 +578,15 @@
                 addMessage('Erro: ' + data.error, 'error');
                 return;
             }
-            setActiveSession(data.id, data.titulo, item.dataset.fixado === 'true');
+            const tituloExibido = data.titulo || item.querySelector('.sidebar__item-title').textContent;
+            setActiveSession(data.id, tituloExibido, item.dataset.fixado === 'true');
+            titleGenerated = !!data.titulo;
             loadMessages(data.mensagens);
+            // Fecha sidebar no mobile
+            if (isMobile()) {
+                sidebar.classList.remove('sidebar--mobile-open');
+                if (sidebarOverlay) sidebarOverlay.classList.remove('sidebar-overlay--visible');
+            }
         } catch (err) {
             addMessage('Erro ao trocar conversa: ' + err.message, 'error');
         }
@@ -610,12 +642,23 @@
             existing.classList.add('sidebar__item');
             existing.dataset.sid = sid;
             existing.dataset.fixado = isPinned ? 'true' : 'false';
-            existing.innerHTML = buildItemHTML(titulo, isPinned);
+            existing.innerHTML = buildItemHTML(titulo || 'Carregando título...', isPinned);
             sessionList.prepend(existing);
             if (window.lucide) lucide.createIcons({ nodes: [existing] });
+        } else {
+            // Move para o topo da lista se não estiver lá
+            var targetList = isPinned ? pinnedList : sessionList;
+            if (targetList && existing.parentElement !== targetList) {
+                targetList.prepend(existing);
+            } else if (existing.previousElementSibling) {
+                existing.parentElement.prepend(existing);
+            }
+            // Só atualiza o título se o novo não for vazio
+            if (titulo) {
+                existing.querySelector('.sidebar__item-title').textContent = titulo;
+            }
         }
         existing.classList.add('sidebar__item--active');
-        existing.querySelector('.sidebar__item-title').textContent = titulo;
     }
 
     function startInlineRename(item, sid, titleEl) {
@@ -693,11 +736,19 @@
         });
     }
 
-    async function autoTitle(mensagem, filename) {
-        if (messageCount > 1) return;
-        var active = allSessionItems().find(function (el) { return el.classList.contains('sidebar__item--active'); }) || null;
-        var sid = active ? active.dataset.sid : pendingSid;
-        if (!sid) return;
+    async function autoTitle(mensagem, filename, forceSid) {
+        if (titleGenerated) return;
+        // Captura o sid imediatamente antes de qualquer await
+        var sid = forceSid || pendingSid;
+        if (!sid) {
+            var activeItem = allSessionItems().find(function (el) { return el.classList.contains('sidebar__item--active'); });
+            if (activeItem) sid = activeItem.dataset.sid;
+        }
+        if (!sid) {
+            console.warn('[autoTitle] sem sid disponível, ignorando');
+            return;
+        }
+        titleGenerated = true;
         try {
             const body = { mensagem: mensagem || '' };
             if (filename) body.filename = filename;
@@ -708,14 +759,22 @@
             });
             const data = await res.json();
             if (data.titulo) {
-                if (active) {
-                    active.querySelector('.sidebar__item-title').textContent = data.titulo;
+                // Sempre busca pelo sid no DOM — não usa active que pode ter mudado
+                var itemToUpdate = document.querySelector('[data-sid="' + sid + '"]');
+                if (itemToUpdate) {
+                    itemToUpdate.querySelector('.sidebar__item-title').textContent = data.titulo;
                 } else {
                     setActiveSession(sid, data.titulo);
-                    if (pendingSid === sid) pendingSid = null;
                 }
+                if (pendingSid === sid) pendingSid = null;
+            } else {
+                console.warn('[autoTitle] resposta sem título:', data);
+                titleGenerated = false;
             }
-        } catch (_) {}
+        } catch (err) {
+            console.error('[autoTitle] erro:', err);
+            titleGenerated = false;
+        }
     }
 
     msgInput.focus();

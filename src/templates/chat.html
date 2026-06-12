@@ -8,6 +8,7 @@
 
 {% block body %}
 <div class="chat-layout">
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
     <aside class="sidebar sidebar--collapsed" id="sidebar">
         <div class="sidebar__top">
             <button class="sidebar__toggle" id="btn-toggle-sidebar" type="button" aria-label="Expandir/Contrair barra lateral">
@@ -32,7 +33,7 @@
                 {% for s in sessoes_fixadas %}
                 <li class="sidebar__item{% if s.id == sessao_atual %} sidebar__item--active{% endif %}" data-sid="{{ s.id }}" data-fixado="true">
                     <i data-lucide="pin" class="sidebar__item-pin-icon"></i>
-                    <span class="sidebar__item-title">{{ s.titulo }}</span>
+                    <span class="sidebar__item-title">{{ s.titulo if s.titulo else "Conversa " ~ s.criado_em.strftime('%d/%m %H:%M') }}</span>
                     <button class="sidebar__item-menu" title="Opções" aria-label="Opções da conversa">
                         <i data-lucide="ellipsis"></i>
                     </button>
@@ -60,7 +61,7 @@
             <ul class="sidebar__list" id="session-list">
                 {% for s in sessoes_recentes %}
                 <li class="sidebar__item{% if s.id == sessao_atual %} sidebar__item--active{% endif %}" data-sid="{{ s.id }}" data-fixado="false">
-                    <span class="sidebar__item-title">{{ s.titulo }}</span>
+                    <span class="sidebar__item-title">{{ s.titulo if s.titulo else "Conversa " ~ s.criado_em.strftime('%d/%m %H:%M') }}</span>
                     <button class="sidebar__item-menu" title="Opções" aria-label="Opções da conversa">
                         <i data-lucide="ellipsis"></i>
                     </button>

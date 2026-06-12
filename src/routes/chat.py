@@ -53,11 +53,11 @@ def chat_page():
     sessao_atual = session.get("chat_sid")
     sessoes_fixadas = (ChatSession.query
                        .filter_by(user_id=user_id, fixado=True)
-                       .filter(ChatSession.titulo != "")
+                       .filter(ChatSession.mensagens != None)
                        .order_by(ChatSession.atualizado_em.desc()).all())
     sessoes_recentes = (ChatSession.query
                         .filter_by(user_id=user_id, fixado=False)
-                        .filter(ChatSession.titulo != "")
+                        .filter(ChatSession.mensagens != None)
                         .order_by(ChatSession.atualizado_em.desc()).all())
     return render_template("chat.html", sessao_atual=sessao_atual,
                            sessoes_fixadas=sessoes_fixadas, sessoes_recentes=sessoes_recentes)
@@ -179,11 +179,14 @@ def limpar():
 @login_required
 def nova_conversa():
     sid = session.pop("chat_sid", None)
+    # Deleta a sessão anterior apenas se estava vazia (sem mensagens e sem título)
     if sid:
         cs = db.session.get(ChatSession, sid)
-        if cs and cs.user_id == session["user_id"] and not cs.mensagens and not cs.titulo:
-            db.session.delete(cs)
-            db.session.commit()
+        if cs and cs.user_id == session["user_id"]:
+            mensagens_reais = [m for m in (cs.mensagens or []) if m.get("role") != "system"]
+            if not mensagens_reais and not cs.titulo:
+                db.session.delete(cs)
+                db.session.commit()
     return jsonify({"ok": True})
 
 
@@ -265,8 +268,13 @@ def auto_titulo_sessao(sid):
     raw_filename = data.get("filename", "")
     doc_label = _doc_label(sanitize_text(raw_filename)) if raw_filename else None
 
+    # Fallback: se não há contexto, usa data/hora
     if not mensagem and not doc_label:
-        return jsonify({"error": "Mensagem vazia"}), 400
+        from datetime import datetime
+        titulo = datetime.now().strftime("Conversa %d/%m %H:%M")
+        cs.titulo = titulo
+        db.session.commit()
+        return jsonify({"id": cs.id, "titulo": cs.titulo})
 
     context_parts = []
     if doc_label:
@@ -283,6 +291,9 @@ def auto_titulo_sessao(sid):
     if error or not titulo:
         titulo = (doc_label or mensagem)[:60].split('\n')[0]
     titulo = sanitize_text(titulo.strip().strip('"\''))[:100]
+    if not titulo:
+        from datetime import datetime
+        titulo = datetime.now().strftime("Conversa %d/%m %H:%M")
     cs.titulo = titulo
     db.session.commit()
     return jsonify({"id": cs.id, "titulo": cs.titulo})
