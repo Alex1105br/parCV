@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Simulador de Entrevista{% endblock %}
+
+{% block content %}
+<div class="entrevista-container">
+    <h1>Simulador de Entrevista</h1>
+    <p class="subtitle">Prepare-se para sua próxima entrevista técnica com ajuda da IA</p>
+    
+    <form id="form-planejamento" enctype="multipart/form-data" class="form-planejamento">
+        
+        <div class="form-group">
+            <label for="curriculo">📄 Carregue seu Currículo</label>
+            <input type="file" id="curriculo" name="curriculo" accept=".pdf,.doc,.docx" required>
+            <small>Formatos aceitos: PDF, DOC, DOCX | Máximo: 5MB</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="vaga_descricao">📋 Descrição da Vaga</label>
+            <textarea id="vaga_descricao" name="vaga_descricao" 
+                      placeholder="Cole aqui a descrição completa da vaga que você pretende se candidatar..."
+                      required></textarea>
+            <small>Inclua requisitos técnicos, responsabilidades e experiências desejadas</small>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-large" id="btn-gerar">
+            <span>Gerar Plano de Entrevista</span>
+        </button>
+    </form>
+    
+    <div id="resultado-plano" class="resultado-plano" style="display:none;">
+        <div class="alert alert-success">
+            <div class="alert-icon">✅</div>
+            <div class="alert-content">
+                <h3>Plano de Entrevista Gerado!</h3>
+                <p>A entrevista terá <strong id="num-perguntas">5</strong> perguntas sobre os seguintes tópicos:</p>
+                <ul id="topicos-list" class="topicos-list"></ul>
+                <p class="strategy-text" id="strategy-text"></p>
+            </div>
+        </div>
+        
+        <a href="#" class="btn btn-success btn-large" id="btn-iniciar">
+            Iniciar Entrevista →
+        </a>
+    </div>
+    
+    <div id="loading" class="loading" style="display:none;">
+        <div class="spinner"></div>
+        <p>Gerando plano de entrevista com IA...</p>
+    </div>
+    
+    <div id="error-message" class="alert alert-danger" style="display:none;"></div>
+</div>
+
+<style>
+.entrevista-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 30px;
+}
+
+.form-planejamento {
+    background: #f9f9f9;
+    padding: 30px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.form-group input[type="file"],
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 200px;
+}
+
+.form-group small {
+    display: block;
+    color: #999;
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+.btn-large {
+    padding: 14px 30px;
+    font-size: 16px;
+}
+
+.resultado-plano {
+    margin-top: 30px;
+}
+
+.alert {
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.alert-success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.alert-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.alert-content h3 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+}
+
+.alert-content p {
+    margin: 0 0 15px 0;
+}
+
+.topicos-list {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+}
+
+.topicos-list li {
+    padding: 8px 0;
+    padding-left: 25px;
+    position: relative;
+}
+
+.topicos-list li:before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: #007bff;
+    font-weight: bold;
+}
+
+.strategy-text {
+    margin-top: 15px;
+    font-style: italic;
+    background: rgba(255,255,255,0.5);
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 4px solid #007bff;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #007bff;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+document.getElementById('form-planejamento').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const curriculo = formData.get('curriculo');
+    const vaga = formData.get('vaga_descricao');
+    
+    // Validar arquivo
+    if (!curriculo) {
+        showError("Selecione um currículo");
+        return;
+    }
+    
+    if (!vaga.trim()) {
+        showError("Descreva a vaga");
+        return;
+    }
+    
+    // Mostrar loading
+    document.getElementById('form-planejamento').style.display = 'none';
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('error-message').style.display = 'none';
+    
+    try {
+        const res = await fetch('/entrevista/gerar-plano', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.error || 'Erro ao gerar plano');
+        }
+        
+        const data = await res.json();
+        
+        // Salvar ID para próxima tela
+        window.entrevistaId = data.entrevista_id;
+        
+        // Exibir plano
+        document.getElementById('num-perguntas').textContent = data.numero_perguntas;
+        document.getElementById('strategy-text').textContent = data.plano.estrategia;
+        document.getElementById('topicos-list').innerHTML = 
+            data.plano.topicos.map(t => `<li>${t}</li>`).join('');
+        
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('resultado-plano').style.display = 'block';
+        document.getElementById('btn-iniciar').href = `/entrevista/${data.entrevista_id}/executar`;
+        
+    } catch (err) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('form-planejamento').style.display = 'block';
+        showError(err.message);
+    }
+});
+
+function showError(message) {
+    const errorDiv = document.getElementById('error-message');
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+}
+</script>
+{% endblock %}

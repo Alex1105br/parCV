@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}Executar Entrevista{% endblock %}
+
+{% block content %}
+<div class="entrevista-container">
+    <div class="progresso-bar">
+        <span id="progresso-texto">Carregando pergunta...</span>
+        <div class="barra">
+            <div class="preenchimento" id="barra-preenchimento" style="width: 0%"></div>
+        </div>
+    </div>
+    
+    <div class="pergunta-card" id="pergunta-card">
+        <h2 id="pergunta-titulo"></h2>
+        
+        <form id="form-resposta" class="form-resposta">
+            <textarea id="resposta-input" placeholder="Digite sua resposta aqui..." required></textarea>
+            
+            <div class="botoes">
+                <button type="submit" class="btn btn-primary">Enviar Resposta</button>
+            </div>
+        </form>
+    </div>
+    
+    <div id="feedback-box" class="feedback-box" style="display:none;">
+        <h3>📊 Feedback da IA</h3>
+        <p id="feedback-texto"></p>
+        <div class="score">
+            Score: <strong id="score-valor">8</strong>/10
+        </div>
+    </div>
+    
+    <div id="aprofundamento-box" class="aprofundamento-box" style="display:none;">
+        <h3>🔍 Pergunta de Aprofundamento</h3>
+        <p id="pergunta-aprofundamento"></p>
+        <form id="form-aprofundamento" class="form-resposta">
+            <textarea id="resposta-aprofundamento" placeholder="Sua resposta..." required></textarea>
+            <button type="submit" class="btn btn-primary">Responder</button>
+        </form>
+    </div>
+    
+    <div id="proxima-pergunta" style="display:none;" class="proxima-pergunta-container">
+        <button class="btn btn-success" id="btn-proxima">Próxima Pergunta →</button>
+    </div>
+</div>
+
+<style>
+.entrevista-container {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 30px;
+}
+
+.progresso-bar {
+    margin-bottom: 30px;
+}
+
+#progresso-texto {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.barra {
+    width: 100%;
+    height: 12px;
+    background: #eee;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.preenchimento {
+    height: 100%;
+    background: linear-gradient(90deg, #007bff, #0056b3);
+    transition: width 0.3s ease;
+}
+
+.pergunta-card {
+    background: #f9f9f9;
+    padding: 30px;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+    margin-bottom: 20px;
+}
+
+.pergunta-card h2 {
+    margin-top: 0;
+    color: #333;
+    font-size: 20px;
+}
+
+.form-resposta {
+    margin-top: 20px;
+}
+
+.form-resposta textarea {
+    width: 100%;
+    min-height: 150px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.form-resposta textarea:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.botoes {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 12px 24px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+    padding: 14px 30px;
+    font-size: 16px;
+}
+
+.btn-success:hover {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.feedback-box {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.feedback-box h3 {
+    margin-top: 0;
+    color: #0c5420;
+}
+
+.feedback-box p {
+    margin: 10px 0;
+    line-height: 1.6;
+}
+
+.score {
+    margin-top: 15px;
+    font-size: 18px;
+    padding: 10px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 6px;
+    text-align: center;
+}
+
+.score strong {
+    font-size: 24px;
+    color: #007bff;
+}
+
+.aprofundamento-box {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.aprofundamento-box h3 {
+    margin-top: 0;
+    color: #654321;
+}
+
+.proxima-pergunta-container {
+    text-align: center;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+</style>
+
+<script>
+let entrevistaId = new URLSearchParams(window.location.search).get('id');
+let perguntaAtual = 1;
+let totalPerguntas = 5;
+let contadorAprofundamentos = 0;
+let aprofundamentosLista = [];
+
+async function carregarPergunta() {
+    try {
+        const res = await fetch(`/entrevista/${entrevistaId}/pergunta/${perguntaAtual}`);
+        if (!res.ok) throw new Error('Erro ao carregar pergunta');
+        
+        const data = await res.json();
+        totalPerguntas = data.total_perguntas;
+        
+        document.getElementById('pergunta-titulo').textContent = data.pergunta_principal;
+        document.getElementById('progresso-texto').textContent = 
+            `Pergunta ${perguntaAtual} de ${totalPerguntas}`;
+        document.getElementById('barra-preenchimento').style.width = 
+            `${(perguntaAtual / totalPerguntas) * 100}%`;
+        
+        // Resetar UI
+        document.getElementById('form-resposta').style.display = 'block';
+        document.getElementById('feedback-box').style.display = 'none';
+        document.getElementById('aprofundamento-box').style.display = 'none';
+        document.getElementById('proxima-pergunta').style.display = 'none';
+        document.getElementById('resposta-input').value = '';
+        document.getElementById('resposta-input').focus();
+        
+    } catch (err) {
+        alert('Erro ao carregar pergunta: ' + err.message);
+    }
+}
+
+document.getElementById('form-resposta').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const resposta = document.getElementById('resposta-input').value;
+    if (!resposta.trim() || resposta.length > 2000) {
+        alert('Resposta inválida');
+        return;
+    }
+    
+    const btn = e.target.querySelector('button');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+    
+    try {
+        const res = await fetch(`/entrevista/${entrevistaId}/responder`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                numero_sequencial: perguntaAtual,
+                resposta: resposta,
+                tipo: 'principal'
+            })
+        });
+        
+        if (!res.ok) throw new Error('Erro ao enviar resposta');
+        
+        const data = await res.json();
+        
+        // Esconder formulário, mostrar feedback
+        document.getElementById('form-resposta').style.display = 'none';
+        document.getElementById('feedback-box').style.display = 'block';
+        document.getElementById('feedback-texto').textContent = data.feedback_ia;
+        document.getElementById('score-valor').textContent = data.score;
+        
+        // Se tem aprofundamentos
+        if (data.aprofundamentos.length > 0) {
+            aprofundamentosLista = data.aprofundamentos;
+            contadorAprofundamentos = 0;
+            mostrarAprofundamento();
+        } else {
+            mostrarBotaoProxima();
+        }
+        
+    } catch (err) {
+        alert('Erro: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Enviar Resposta';
+    }
+});
+
+function mostrarAprofundamento() {
+    if (contadorAprofundamentos >= aprofundamentosLista.length) {
+        mostrarBotaoProxima();
+        return;
+    }
+    
+    const ap = aprofundamentosLista[contadorAprofundamentos];
+    document.getElementById('pergunta-aprofundamento').textContent = ap.pergunta;
+    document.getElementById('aprofundamento-box').style.display = 'block';
+    document.getElementById('resposta-aprofundamento').value = '';
+    document.getElementById('resposta-aprofundamento').focus();
+    
+    const form = document.getElementById('form-aprofundamento');
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        
+        const resposta = document.getElementById('resposta-aprofundamento').value;
+        if (!resposta.trim()) {
+            alert('Resposta inválida');
+            return;
+        }
+        
+        contadorAprofundamentos++;
+        mostrarAprofundamento();
+    };
+}
+
+function mostrarBotaoProxima() {
+    document.getElementById('aprofundamento-box').style.display = 'none';
+    
+    if (perguntaAtual < totalPerguntas) {
+        document.getElementById('proxima-pergunta').style.display = 'block';
+        document.getElementById('btn-proxima').textContent = 'Próxima Pergunta →';
+        document.getElementById('btn-proxima').onclick = proximaPergunta;
+    } else {
+        document.getElementById('proxima-pergunta').style.display = 'block';
+        document.getElementById('btn-proxima').textContent = 'Finalizar e Ver Relatório →';
+        document.getElementById('btn-proxima').onclick = finalizarEntrevista;
+    }
+}
+
+async function proximaPergunta() {
+    perguntaAtual++;
+    await carregarPergunta();
+}
+
+async function finalizarEntrevista() {
+    if (!confirm('Tem certeza que deseja finalizar a entrevista?')) return;
+    
+    try {
+        const res = await fetch(`/entrevista/${entrevistaId}/finalizar`, { method: 'POST' });
+        if (!res.ok) throw new Error('Erro ao finalizar');
+        
+        window.location.href = `/entrevista/${entrevistaId}/relatorio`;
+    } catch (err) {
+        alert('Erro: ' + err.message);
+    }
+}
+
+// Carregar primeira pergunta
+window.addEventListener('load', carregarPergunta);
+</script>
+{% endblock %}

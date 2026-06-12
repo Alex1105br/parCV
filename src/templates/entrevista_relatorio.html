@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+
+{% block title %}Relatório de Entrevista{% endblock %}
+
+{% block content %}
+<div class="entrevista-container">
+    <div class="relatorio-header">
+        <h1>Relatório de Entrevista</h1>
+        <div class="score-geral" id="score-display">
+            <span class="numero">-</span>
+            <span class="texto">/10</span>
+        </div>
+    </div>
+    
+    <div class="resumo">
+        <div class="coluna">
+            <h3>✅ Pontos Fortes</h3>
+            <ul id="pontos-fortes"></ul>
+        </div>
+        <div class="coluna">
+            <h3>⚠️ Pontos a Melhorar</h3>
+            <ul id="pontos-fracos"></ul>
+        </div>
+        <div class="coluna">
+            <h3>💡 Recomendações</h3>
+            <ul id="recomendacoes"></ul>
+        </div>
+    </div>
+    
+    <div class="parecer-section">
+        <h2>📝 Parecer Geral</h2>
+        <p id="parecer-final"></p>
+    </div>
+    
+    <div class="perguntas-detalhes">
+        <h2>Detalhes das Perguntas</h2>
+        <div id="perguntas-container"></div>
+    </div>
+    
+    <div class="botoes-finais">
+        <a href="/entrevista/exportar-pdf?id={{ entrevista_id }}" class="btn btn-primary">
+            📄 Exportar em PDF
+        </a>
+        <a href="/entrevista" class="btn btn-secondary">
+            + Nova Entrevista
+        </a>
+    </div>
+</div>
+
+<style>
+.entrevista-container {
+    max-width: 1000px;
+    margin: 30px auto;
+    padding: 30px;
+}
+
+.relatorio-header {
+    text-align: center;
+    margin-bottom: 40px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 30px;
+}
+
+.relatorio-header h1 {
+    margin: 0 0 20px 0;
+    color: #333;
+}
+
+.score-geral {
+    font-size: 48px;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.score-geral .numero {
+    font-size: 64px;
+}
+
+.score-geral .texto {
+    font-size: 32px;
+    color: #999;
+}
+
+.resumo {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.coluna {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.coluna h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 16px;
+}
+
+.coluna ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.coluna li {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    color: #555;
+}
+
+.coluna li:last-child {
+    border-bottom: none;
+}
+
+.parecer-section {
+    background: #f0f8ff;
+    padding: 25px;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+    margin-bottom: 40px;
+}
+
+.parecer-section p {
+    margin: 0;
+    line-height: 1.8;
+    color: #333;
+}
+
+.perguntas-detalhes {
+    margin-bottom: 40px;
+}
+
+.perguntas-detalhes h2 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.pergunta-acordeao {
+    border: 1px solid #ddd;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.pergunta-header {
+    padding: 15px 20px;
+    background: #f9f9f9;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.3s ease;
+}
+
+.pergunta-header:hover {
+    background: #f0f0f0;
+}
+
+.pergunta-header.active {
+    background: #e8f4f8;
+}
+
+.pergunta-numero {
+    font-weight: 600;
+    color: #333;
+    flex: 1;
+}
+
+.pergunta-score {
+    background: #007bff;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.pergunta-conteudo {
+    padding: 20px;
+    background: white;
+    display: none;
+}
+
+.pergunta-conteudo.active {
+    display: block;
+}
+
+.pergunta-conteudo h4 {
+    margin: 0 0 10px 0;
+    color: #007bff;
+    font-size: 14px;
+}
+
+.pergunta-conteudo p {
+    margin: 0 0 15px 0;
+    color: #555;
+    line-height: 1.6;
+}
+
+.aprofundamentos {
+    margin-top: 15px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.aprofundamento-item {
+    margin-bottom: 15px;
+    padding-left: 15px;
+    border-left: 3px solid #ffc107;
+}
+
+.aprofundamento-item h5 {
+    margin: 0 0 5px 0;
+    color: #ffc107;
+    font-size: 13px;
+}
+
+.botoes-finais {
+    text-align: center;
+    padding-top: 30px;
+    border-top: 2px solid #eee;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.btn {
+    padding: 12px 30px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+@media (max-width: 768px) {
+    .resumo {
+        grid-template-columns: 1fr;
+    }
+    
+    .botoes-finais {
+        flex-direction: column;
+    }
+}
+</style>
+
+<script>
+let entrevistaId = '{{ entrevista_id }}';
+
+async function carregarRelatorio() {
+    try {
+        const res = await fetch(`/entrevista/${entrevistaId}`);
+        if (!res.ok) throw new Error('Erro ao carregar relatório');
+        
+        const data = await res.json();
+        const relatorio = data.relatorio_final;
+        
+        if (!relatorio) {
+            alert('Relatório não disponível ainda');
+            return;
+        }
+        
+        // Popula score geral
+        const scoreElement = document.querySelector('.score-geral .numero');
+        scoreElement.textContent = relatorio.score_geral.toFixed(1);
+        
+        // Cor do score
+        const scoreGeral = relatorio.score_geral;
+        if (scoreGeral >= 7) {
+            document.querySelector('.score-geral').style.color = '#28a745';
+        } else if (scoreGeral >= 4) {
+            document.querySelector('.score-geral').style.color = '#ffc107';
+        } else {
+            document.querySelector('.score-geral').style.color = '#dc3545';
+        }
+        
+        // Popula resumo
+        document.getElementById('pontos-fortes').innerHTML = 
+            relatorio.pontos_fortes.map(p => `<li>• ${p}</li>`).join('');
+        document.getElementById('pontos-fracos').innerHTML = 
+            relatorio.pontos_fracos.map(p => `<li>• ${p}</li>`).join('');
+        document.getElementById('recomendacoes').innerHTML = 
+            relatorio.recomendacoes.map(r => `<li>• ${r}</li>`).join('');
+        
+        // Parecer
+        document.getElementById('parecer-final').textContent = relatorio.parecer_final;
+        
+        // Popula perguntas em acordeão
+        const container = document.getElementById('perguntas-container');
+        data.perguntas.forEach((p, i) => {
+            const score = p.avaliacao_resposta?.score || 5;
+            const scoreCor = score >= 7 ? '#28a745' : (score >= 4 ? '#ffc107' : '#dc3545');
+            
+            const div = document.createElement('div');
+            div.className = 'pergunta-acordeao';
+            
+            let aprofundamentosHtml = '';
+            if (p.perguntas_aprofundamento && p.perguntas_aprofundamento.length > 0) {
+                aprofundamentosHtml = '<div class="aprofundamentos"><h4>🔍 Aprofundamentos:</h4>';
+                p.perguntas_aprofundamento.forEach((ap, j) => {
+                    aprofundamentosHtml += `
+                        <div class="aprofundamento-item">
+                            <h5>Aprofundamento ${j + 1}:</h5>
+                            <p><strong>P:</strong> ${ap.pergunta}</p>
+                            <p><strong>R:</strong> ${ap.resposta || '[Não respondida]'}</p>
+                            ${ap.feedback ? `<p><strong>Feedback:</strong> ${ap.feedback}</p>` : ''}
+                        </div>
+                    `;
+                });
+                aprofundamentosHtml += '</div>';
+            }
+            
+            div.innerHTML = `
+                <div class="pergunta-header">
+                    <span class="pergunta-numero">
+                        <strong>Pergunta ${i + 1}:</strong> ${p.pergunta_principal.substring(0, 80)}...
+                    </span>
+                    <span class="pergunta-score" style="background: ${scoreCor}">
+                        ${score}/10
+                    </span>
+                </div>
+                <div class="pergunta-conteudo">
+                    <h4>Pergunta Principal</h4>
+                    <p>${p.pergunta_principal}</p>
+                    
+                    <h4>Sua Resposta</h4>
+                    <p>${p.resposta_usuario || '[Não respondida]'}</p>
+                    
+                    <h4>Feedback</h4>
+                    <p>${p.avaliacao_resposta?.feedback || 'Sem feedback'}</p>
+                    
+                    ${aprofundamentosHtml}
+                </div>
+            `;
+            
+            // Toggle acordeão
+            const header = div.querySelector('.pergunta-header');
+            const conteudo = div.querySelector('.pergunta-conteudo');
+            
+            header.addEventListener('click', () => {
+                header.classList.toggle('active');
+                conteudo.classList.toggle('active');
+            });
+            
+            container.appendChild(div);
+        });
+        
+    } catch (err) {
+        alert('Erro ao carregar relatório: ' + err.message);
+    }
+}
+
+// Carregar ao abrir página
+window.addEventListener('load', carregarRelatorio);
+</script>
+{% endblock %}
