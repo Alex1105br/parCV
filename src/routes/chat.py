@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from datetime import datetime, timezone
@@ -86,15 +87,37 @@ def chat():
 
     app = current_app._get_current_object()
     cs_id = cs.id
+    sid_for_stream = cs.id
+    gerar_titulo = not cs.titulo_gerado
+    if gerar_titulo:
+        # Marca imediatamente, antes de streamar, para que nenhuma outra
+        # mensagem da mesma sessão também tente gerar título (evita
+        # sobrescritas após o usuário editar o título manualmente).
+        cs.titulo_gerado = True
+        db.session.commit()
+    titulo_ctx = {"doc_label": None} if gerar_titulo else None
+    titulo_holder = {}
 
     def generate():
         try:
-            yield from stream_resposta(historico, mensagem, skip_append_user=True)
+            for chunk in stream_resposta(historico, mensagem, skip_append_user=True,
+                                          session_id=sid_for_stream, titulo_ctx=titulo_ctx):
+                if titulo_ctx is not None and '"titulo"' in chunk:
+                    try:
+                        payload = json.loads(chunk[len("data: "):].strip())
+                        if payload.get("titulo"):
+                            titulo_holder["titulo"] = payload["titulo"]
+                    except Exception:
+                        pass
+                yield chunk
         finally:
             with app.app_context():
                 fresh_cs = db.session.get(ChatSession, cs_id)
                 if fresh_cs:
                     _save_chat_session(fresh_cs, historico)
+                    if titulo_holder.get("titulo"):
+                        fresh_cs.titulo = titulo_holder["titulo"]
+                        db.session.commit()
 
     resp = Response(generate(), mimetype="text/event-stream")
     resp.headers["Cache-Control"] = "no-cache"
@@ -144,15 +167,35 @@ def upload():
 
         app = current_app._get_current_object()
         cs_id = cs.id
+        upload_sid_for_stream = cs.id
+        gerar_titulo = not cs.titulo_gerado
+        doc_label = _doc_label(filename) if gerar_titulo else None
+        if gerar_titulo:
+            cs.titulo_gerado = True
+            db.session.commit()
+        titulo_ctx = {"doc_label": doc_label} if gerar_titulo else None
+        titulo_holder = {}
 
         def generate():
             try:
-                yield from stream_resposta(historico, mensagem, skip_append_user=True)
+                for chunk in stream_resposta(historico, mensagem, skip_append_user=True,
+                                              session_id=upload_sid_for_stream, titulo_ctx=titulo_ctx):
+                    if titulo_ctx is not None and '"titulo"' in chunk:
+                        try:
+                            payload = json.loads(chunk[len("data: "):].strip())
+                            if payload.get("titulo"):
+                                titulo_holder["titulo"] = payload["titulo"]
+                        except Exception:
+                            pass
+                    yield chunk
             finally:
                 with app.app_context():
                     fresh_cs = db.session.get(ChatSession, cs_id)
                     if fresh_cs:
                         _save_chat_session(fresh_cs, historico)
+                        if titulo_holder.get("titulo"):
+                            fresh_cs.titulo = titulo_holder["titulo"]
+                            db.session.commit()
 
         resp = Response(generate(), mimetype="text/event-stream")
         resp.headers["Cache-Control"] = "no-cache"
@@ -164,7 +207,16 @@ def upload():
     historico.append({"role": "assistant", "content": "Documento recebido."})
     _save_chat_session(cs, historico)
 
-    return jsonify({"success": True, "filename": filename, "chars": len(texto), "session_id": cs.id})
+    if not cs.titulo_gerado:
+        doc_label = _doc_label(filename)
+        if doc_label:
+            cs.titulo = sanitize_text(doc_label)[:100]
+        else:
+            cs.titulo = datetime.now().strftime("Conversa %d/%m %H:%M")
+        cs.titulo_gerado = True
+        db.session.commit()
+
+    return jsonify({"success": True, "filename": filename, "chars": len(texto), "session_id": cs.id, "titulo": cs.titulo})
 
 
 @bp.route("/limpar", methods=["POST"])
@@ -237,6 +289,7 @@ def renomear_sessao(sid):
     if not titulo:
         return jsonify({"error": "Título vazio"}), 400
     cs.titulo = titulo
+    cs.titulo_gerado = True
     db.session.commit()
     return jsonify({"id": cs.id, "titulo": cs.titulo})
 
@@ -246,7 +299,6 @@ _UUID_RE = re.compile(
     re.IGNORECASE,
 )
 
-
 def _doc_label(filename: str) -> str | None:
     stem = os.path.splitext(filename)[0]
     stem = stem.replace('_', ' ').replace('-', ' ').strip()
@@ -255,51 +307,6 @@ def _doc_label(filename: str) -> str | None:
     if _UUID_RE.match(stem.replace(' ', '')):
         return None
     return stem
-
-
-@bp.route("/chat/sessao/<sid>/auto-titulo", methods=["POST"])
-@login_required
-def auto_titulo_sessao(sid):
-    cs = db.session.get(ChatSession, sid)
-    if not cs or cs.user_id != session["user_id"]:
-        return jsonify({"error": "Sessão não encontrada"}), 404
-    data = request.get_json()
-    mensagem = sanitize_text(data.get("mensagem", ""))[:500]
-    raw_filename = data.get("filename", "")
-    doc_label = _doc_label(sanitize_text(raw_filename)) if raw_filename else None
-
-    # Fallback: se não há contexto, usa data/hora
-    if not mensagem and not doc_label:
-        from datetime import datetime
-        titulo = datetime.now().strftime("Conversa %d/%m %H:%M")
-        cs.titulo = titulo
-        db.session.commit()
-        return jsonify({"id": cs.id, "titulo": cs.titulo})
-
-    context_parts = []
-    if doc_label:
-        context_parts.append(f"Documento: {doc_label}")
-    if mensagem:
-        context_parts.append(f"Mensagem: {mensagem}")
-    context = "\n".join(context_parts)
-
-    prompt = (
-        f"Crie um título curto (máximo 50 caracteres) para uma conversa que começa com o seguinte contexto. "
-        f"Responda APENAS com o título, sem aspas, sem explicações.\n\n{context}"
-    )
-    titulo, error = call_model(prompt, num_predict=60)
-    if error or not titulo:
-        titulo = (doc_label or mensagem)[:60].split('\n')[0]
-    titulo = sanitize_text(titulo.strip().strip('"\''))[:100]
-    if not titulo:
-        from datetime import datetime
-        titulo = datetime.now().strftime("Conversa %d/%m %H:%M")
-    cs.titulo = titulo
-    db.session.commit()
-    return jsonify({"id": cs.id, "titulo": cs.titulo})
-
-
-@bp.route("/chat/sessao/<sid>/fixar", methods=["PATCH"])
 @login_required
 def fixar_sessao(sid):
     cs = db.session.get(ChatSession, sid)

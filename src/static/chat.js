@@ -19,7 +19,7 @@
     let isSending = false;
     let isCreatingSession = false;
     let pendingSid = null;
-    let titleGenerated = false;
+    const titledSids = new Set(); // rastrea quais sids já tiveram título gerado
 
     const welcomeMsgs = [
         'Como posso ajudar?',
@@ -191,11 +191,11 @@
                 body: JSON.stringify({ mensagem: msg })
             });
 
-            const sessionId = response.headers.get('X-Session-Id');
-            if (sessionId) {
-                pendingSid = sessionId;
-                // Adiciona na sidebar imediatamente com título provisório
-                setActiveSession(sessionId, 'Nova conversa');
+            const headerSid = response.headers.get('X-Session-Id');
+            if (headerSid) {
+                pendingSid = headerSid;
+                var jaExiste = document.querySelector('[data-sid="' + headerSid + '"]');
+                setActiveSession(headerSid, jaExiste ? null : 'Gerando título...', false);
             }
 
             if (!response.ok) {
@@ -214,17 +214,22 @@
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let fullText = '';
+            let sseSid = null;
+            let sseBuffer = '';
 
             while (true) {
                 const { done, value } = await reader.read();
-                if (done) break;
 
-                const chunk = decoder.decode(value, { stream: true });
-                const lines = chunk.split('\n');
+                if (value) {
+                    sseBuffer += decoder.decode(value, { stream: !done });
+                }
+                const lines = sseBuffer.split('\n');
+                sseBuffer = done ? '' : lines.pop();
 
                 for (const line of lines) {
                     if (!line.startsWith('data: ')) continue;
-                    const data = JSON.parse(line.substring(6));
+                    let data;
+                    try { data = JSON.parse(line.substring(6)); } catch (_) { continue; }
 
                     if (data.error) {
                         assistantDiv.classList.replace('message--assistant', 'message--error');
@@ -240,6 +245,15 @@
                     }
 
                     if (data.done) {
+                        if (data.session_id) {
+                            sseSid = data.session_id;
+                            pendingSid = sseSid;
+                            var jaExisteSse = document.querySelector('[data-sid="' + sseSid + '"]');
+                            setActiveSession(sseSid, jaExisteSse ? null : 'Gerando título...', false);
+                        }
+                        if (data.titulo) {
+                            _applyTitle(sseSid || headerSid, data.titulo);
+                        }
                         addCopyButton(assistantDiv, fullText);
                         const t = document.createElement('div');
                         t.classList.add('message__time');
@@ -247,13 +261,12 @@
                         assistantDiv.appendChild(t);
                     }
                 }
+                if (done) break;
             }
 
             typingDiv.remove();
             if (!fullText && assistantDiv.classList.contains('message--assistant')) {
                 assistantDiv.remove();
-            } else if (fullText) {
-                autoTitle(msg, null, pendingSid);
             }
         } catch (err) {
             typingDiv.remove();
@@ -282,9 +295,12 @@
 
             const contentType = response.headers.get('Content-Type') || '';
             const uploadSessionId = response.headers.get('X-Session-Id');
+            const thisUploadSid = uploadSessionId || null;
             if (uploadSessionId) {
                 pendingSid = uploadSessionId;
-                setActiveSession(uploadSessionId, 'Nova conversa');
+                // Insere imediatamente na sidebar com placeholder; _applyTitle atualiza depois
+                var jaExisteUpload = document.querySelector('[data-sid="' + uploadSessionId + '"]');
+                setActiveSession(uploadSessionId, jaExisteUpload ? null : 'Gerando título...', false);
             }
 
             if (contentType.includes('text/event-stream')) {
@@ -295,23 +311,27 @@
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let fullText = '';
+                let uploadSseSid = null;
+                let uploadSseBuffer = '';
 
                 while (true) {
                     const { done, value } = await reader.read();
-                    if (done) break;
 
-                    const chunk = decoder.decode(value, { stream: true });
-                    const lines = chunk.split('\n');
+                    if (value) {
+                        uploadSseBuffer += decoder.decode(value, { stream: !done });
+                    }
+                    const lines = uploadSseBuffer.split('\n');
+                    uploadSseBuffer = done ? '' : lines.pop();
 
                     for (const line of lines) {
                         if (!line.startsWith('data: ')) continue;
-                        const data = JSON.parse(line.substring(6));
+                        let data;
+                        try { data = JSON.parse(line.substring(6)); } catch (_) { continue; }
 
                         if (data.error) {
                             typingDiv.remove();
                             if (assistantDiv) {
                                 assistantDiv.classList.replace('message--assistant', 'message--error');
-                                assistantDiv.textContent = 'Erro: ' + data.error;
                             } else {
                                 addMessage('Erro: ' + data.error, 'error');
                             }
@@ -325,24 +345,44 @@
                             chatContainer.scrollTop = chatContainer.scrollHeight;
                         }
 
-                        if (data.done && assistantDiv) {
-                            addCopyButton(assistantDiv, fullText);
-                            const t = document.createElement('div');
-                            t.classList.add('message__time');
-                            t.textContent = data.tempo;
-                            assistantDiv.appendChild(t);
+                        if (data.done) {
+                            console.log('[SSE upload done] session_id=', data.session_id, 'uploadSseSid antes=', uploadSseSid, 'thisUploadSid=', thisUploadSid);
+                            if (data.session_id) {
+                                uploadSseSid = data.session_id;
+                                pendingSid = uploadSseSid;
+                                var jaExisteSseUp = document.querySelector('[data-sid="' + uploadSseSid + '"]');
+                                setActiveSession(uploadSseSid, jaExisteSseUp ? null : 'Gerando título...', false);
+                            }
+                            if (data.titulo) {
+                                _applyTitle(uploadSseSid || thisUploadSid, data.titulo);
+                            }
+                            if (assistantDiv) {
+                                addCopyButton(assistantDiv, fullText);
+                                const t = document.createElement('div');
+                                t.classList.add('message__time');
+                                t.textContent = data.tempo;
+                                assistantDiv.appendChild(t);
+                            }
                         }
                     }
+                    if (done) break;
                 }
                 typingDiv.remove();
-                autoTitle(msg, file.name, pendingSid);
             } else {
                 const data = await response.json();
-                if (data.session_id) pendingSid = data.session_id;
+                const uploadOnlySid = data.session_id || null;
+                if (uploadOnlySid) {
+                    pendingSid = uploadOnlySid;
+                    var jaExisteOnly = document.querySelector('[data-sid="' + uploadOnlySid + '"]');
+                    setActiveSession(uploadOnlySid, jaExisteOnly ? null : 'Gerando título...', false);
+                }
                 if (data.error) {
                     addMessage('Erro: ' + data.error, 'error');
                 } else {
                     addMessage('"' + file.name + '" carregado.', 'system');
+                    if (data.titulo) {
+                        _applyTitle(uploadOnlySid, data.titulo);
+                    }
                 }
             }
         } catch (err) {
@@ -487,7 +527,7 @@
                 el.classList.remove('sidebar__item--active');
             });
             pendingSid = null;
-            titleGenerated = false;
+            // Não limpa titledSids — cada sid é único, não precisa resetar
             messageCount = 0;
             clearChatUI();
         } catch (err) {
@@ -580,7 +620,7 @@
             }
             const tituloExibido = data.titulo || item.querySelector('.sidebar__item-title').textContent;
             setActiveSession(data.id, tituloExibido, item.dataset.fixado === 'true');
-            titleGenerated = !!data.titulo;
+            if (data.titulo) titledSids.add(data.id);
             loadMessages(data.mensagens);
             // Fecha sidebar no mobile
             if (isMobile()) {
@@ -736,45 +776,20 @@
         });
     }
 
-    async function autoTitle(mensagem, filename, forceSid) {
-        if (titleGenerated) return;
-        // Captura o sid imediatamente antes de qualquer await
-        var sid = forceSid || pendingSid;
-        if (!sid) {
-            var activeItem = allSessionItems().find(function (el) { return el.classList.contains('sidebar__item--active'); });
-            if (activeItem) sid = activeItem.dataset.sid;
+    // ── Título da conversa ───────────────────────────────────────────────────
+    // O título agora é gerado de forma SÍNCRONA no backend (dentro da própria
+    // thread do SSE) e enviado no payload final 'done' como 'titulo'.
+    // _applyTitle apenas aplica o valor recebido na sidebar.
+    function _applyTitle(sid, titulo) {
+        if (!sid || !titulo || !titulo.trim()) return;
+        titledSids.add(sid);
+        var item = document.querySelector('[data-sid="' + sid + '"]');
+        if (item) {
+            item.querySelector('.sidebar__item-title').textContent = titulo;
+        } else {
+            setActiveSession(sid, titulo, false);
         }
-        if (!sid) {
-            console.warn('[autoTitle] sem sid disponível, ignorando');
-            return;
-        }
-        titleGenerated = true;
-        try {
-            const body = { mensagem: mensagem || '' };
-            if (filename) body.filename = filename;
-            const res = await fetch('/chat/sessao/' + sid + '/auto-titulo', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            const data = await res.json();
-            if (data.titulo) {
-                // Sempre busca pelo sid no DOM — não usa active que pode ter mudado
-                var itemToUpdate = document.querySelector('[data-sid="' + sid + '"]');
-                if (itemToUpdate) {
-                    itemToUpdate.querySelector('.sidebar__item-title').textContent = data.titulo;
-                } else {
-                    setActiveSession(sid, data.titulo);
-                }
-                if (pendingSid === sid) pendingSid = null;
-            } else {
-                console.warn('[autoTitle] resposta sem título:', data);
-                titleGenerated = false;
-            }
-        } catch (err) {
-            console.error('[autoTitle] erro:', err);
-            titleGenerated = false;
-        }
+        if (pendingSid === sid) pendingSid = null;
     }
 
     msgInput.focus();

@@ -62,7 +62,7 @@ def _groq_stream(messages, max_tokens=None):
             return
 
 
-def _groq_call(prompt, max_tokens=None):
+def _groq_call(prompt, max_tokens=None, timeout=None):
     """Synchronous single-prompt call via Groq. Returns (response_text, error)."""
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
@@ -77,7 +77,7 @@ def _groq_call(prompt, max_tokens=None):
     }
     try:
         response = requests.post(
-            GROQ_API_URL, headers=headers, json=payload, timeout=TIMEOUT
+            GROQ_API_URL, headers=headers, json=payload, timeout=timeout or TIMEOUT
         )
         if response.status_code != 200:
             error = response.json().get("error", {}).get("message", response.text)
@@ -118,7 +118,7 @@ def _ollama_stream(messages):
             return
 
 
-def _ollama_call(prompt, num_predict=1200):
+def _ollama_call(prompt, num_predict=1200, timeout=None):
     """Synchronous single-prompt call via Ollama."""
     response = requests.post(
         OLLAMA_GENERATE_URL,
@@ -132,15 +132,22 @@ def _ollama_call(prompt, num_predict=1200):
                 "num_predict": num_predict,
             },
         },
-        timeout=TIMEOUT,
+        timeout=timeout or TIMEOUT,
     )
     return response.json().get("response", ""), None
 
 
 # ===== Public API =====
 
-def stream_resposta(historico, mensagem, skip_append_user=False):
-    """Streaming chat via SSE — yields 'data: {...}\\n\\n' chunks."""
+def stream_resposta(historico, mensagem, skip_append_user=False, session_id=None, titulo_ctx=None):
+    """Streaming chat via SSE — yields 'data: {...}\\n\\n' chunks.
+
+    titulo_ctx: optional dict {"doc_label": str|None} — se fornecido e a sessão
+    ainda não tem título, gera o título de forma SÍNCRONA (na mesma thread do
+    SSE) e o inclui no payload final 'done' como 'titulo'. Isso elimina a
+    necessidade de polling/fetch separado no frontend, evitando race conditions
+    com F5/reload.
+    """
     if not skip_append_user:
         historico.append({"role": "user", "content": mensagem})
     inicio = time.time()
@@ -166,7 +173,16 @@ def stream_resposta(historico, mensagem, skip_append_user=False):
         total = time.time() - inicio
         historico.append({"role": "assistant", "content": conteudo})
         logger.info("llm_stream_done", extra={"backend": LLM_BACKEND, "duration_ms": int(total * 1000), "chars": len(conteudo)})
-        yield f"data: {json.dumps({'done': True, 'tempo': f'{int(total//60)}m {int(total%60)}s', 'full_response': conteudo})}\n\n"
+        done_payload = {'done': True, 'tempo': f'{int(total//60)}m {int(total%60)}s', 'full_response': conteudo}
+        if session_id:
+            done_payload['session_id'] = session_id
+
+        if titulo_ctx is not None:
+            titulo = _gerar_titulo_sync(mensagem, titulo_ctx.get("doc_label"))
+            if titulo:
+                done_payload['titulo'] = titulo
+
+        yield f"data: {json.dumps(done_payload)}\n\n"
 
     except requests.exceptions.ConnectionError:
         backend = "Groq" if LLM_BACKEND == "groq" else "Ollama"
@@ -175,14 +191,64 @@ def stream_resposta(historico, mensagem, skip_append_user=False):
         yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
 
-def call_model(prompt, num_predict=1200):
+def _gerar_titulo_sync(mensagem, doc_label):
+    """Gera um título curto de forma síncrona (chamada dentro da thread do SSE).
+
+    Não toca no banco — apenas retorna a string do título (ou None).
+    A persistência fica a cargo do chamador (rota), dentro do app_context.
+    """
+    from src.utils import sanitize_text
+    from datetime import datetime
+
+    mensagem = (mensagem or "").strip()
+
+    # Só arquivo sem mensagem: usa nome do arquivo, sem chamar IA
+    if doc_label and not mensagem:
+        return sanitize_text(doc_label)[:100]
+
+    if not mensagem and not doc_label:
+        return None
+
+    context_parts = []
+    if doc_label:
+        context_parts.append(f"Documento: {doc_label}")
+    if mensagem:
+        context_parts.append(f"Mensagem: {mensagem}")
+    context = "\n".join(context_parts)
+
+    prompt = (
+        "Crie um título curto (máximo 50 caracteres) para uma conversa "
+        "que começa com o seguinte contexto. "
+        "Responda APENAS com o título, sem aspas, sem explicações.\n\n"
+        + context
+    )
+
+    titulo = None
+    try:
+        titulo_raw, error = call_model(prompt, num_predict=60, timeout=15)
+        if not error and titulo_raw and titulo_raw.strip():
+            titulo = sanitize_text(titulo_raw.strip().strip('"\''))[:100]
+    except Exception:
+        pass
+
+    if not titulo:
+        fallback = mensagem[:60].split('\n')[0].strip() or (doc_label or "")
+        titulo = sanitize_text(fallback)[:100] if fallback else None
+
+    if not titulo:
+        titulo = datetime.now().strftime("Conversa %d/%m %H:%M")
+
+    return titulo
+
+
+def call_model(prompt, num_predict=1200, timeout=None):
     """Synchronous single-prompt call. Returns (response_text, error)."""
     t0 = time.time()
     try:
         if LLM_BACKEND == "groq":
-            result, error = _groq_call(prompt, max_tokens=num_predict)
+            result, error = _groq_call(prompt, max_tokens=num_predict, timeout=timeout)
         else:
-            result, error = _ollama_call(prompt, num_predict)
+            result, error = _ollama_call(prompt, num_predict, timeout=timeout)
         duration_ms = int((time.time() - t0) * 1000)
         logger.info("llm_call_done", extra={"backend": LLM_BACKEND, "duration_ms": duration_ms, "error": error is not None})
         return result, error
