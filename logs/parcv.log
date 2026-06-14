@@ -192,3 +192,131 @@
 {"ts": "2026-06-11T16:51:45", "level": "INFO", "request_id": "2253431e", "msg": "request", "path": "/login", "duration_ms": 4, "status": 200, "method": "GET"}
 {"ts": "2026-06-11T16:51:45", "level": "INFO", "request_id": "1491db70", "msg": "request", "path": "/static/base.css", "duration_ms": 11, "status": 304, "method": "GET"}
 {"ts": "2026-06-11T16:51:45", "level": "INFO", "request_id": "af5f892d", "msg": "request", "path": "/static/auth.css", "duration_ms": 4, "status": 304, "method": "GET"}
+{"ts": "2026-06-13T17:21:48", "level": "WARNING", "request_id": "-", "msg": " * Debugger is active!"}
+{"ts": "2026-06-13T17:21:48", "level": "INFO", "request_id": "2e8b576b", "msg": "request", "status": 302, "path": "/", "duration_ms": 0, "method": "GET"}
+{"ts": "2026-06-13T17:21:48", "level": "INFO", "request_id": "a1df0229", "msg": "request", "status": 200, "path": "/login", "duration_ms": 21, "method": "GET"}
+{"ts": "2026-06-13T17:21:48", "level": "INFO", "request_id": "c3871002", "msg": "request", "status": 304, "path": "/static/auth.css", "duration_ms": 12, "method": "GET"}
+{"ts": "2026-06-13T17:21:48", "level": "INFO", "request_id": "e3e0daf7", "msg": "request", "status": 304, "path": "/static/base.css", "duration_ms": 17, "method": "GET"}
+{"ts": "2026-06-13T17:21:49", "level": "INFO", "request_id": "333961b0", "msg": "request", "status": 404, "path": "/favicon.ico", "duration_ms": 0, "method": "GET"}
+{"ts": "2026-06-13T17:21:59", "level": "INFO", "request_id": "8f282756", "msg": "request", "status": 302, "path": "/login", "duration_ms": 643, "method": "POST"}
+{"ts": "2026-06-13T17:22:00", "level": "INFO", "request_id": "8417c6de", "msg": "request", "status": 200, "path": "/", "duration_ms": 20, "method": "GET"}
+{"ts": "2026-06-13T17:22:00", "level": "INFO", "request_id": "cdb4acf7", "msg": "request", "status": 304, "path": "/static/home.css", "duration_ms": 7, "method": "GET"}
+{"ts": "2026-06-13T17:22:00", "level": "INFO", "request_id": "ecd72549", "msg": "request", "status": 304, "path": "/static/base.css", "duration_ms": 9, "method": "GET"}
+{"ts": "2026-06-13T17:22:00", "level": "INFO", "request_id": "a2f7555a", "msg": "request", "status": 304, "path": "/static/home.js", "duration_ms": 6, "method": "GET"}
+{"ts": "2026-06-13T17:22:05", "level": "INFO", "request_id": "dd0977cc", "msg": "request", "status": 200, "path": "/analisar", "duration_ms": 27, "method": "GET"}
+{"ts": "2026-06-13T17:22:05", "level": "INFO", "request_id": "336c6c3c", "msg": "request", "status": 304, "path": "/static/base.css", "duration_ms": 22, "method": "GET"}
+{"ts": "2026-06-13T17:22:05", "level": "INFO", "request_id": "62bbddab", "msg": "request", "status": 304, "path": "/static/analisar.js", "duration_ms": 14, "method": "GET"}
+{"ts": "2026-06-13T17:22:05", "level": "INFO", "request_id": "ee1d4693", "msg": "request", "status": 304, "path": "/static/analisar.css", "duration_ms": 9, "method": "GET"}
+{"ts": "2026-06-13T17:22:10", "level": "INFO", "request_id": "1bac7c21", "msg": "request", "status": 200, "path": "/entrevista/", "duration_ms": 27, "method": "GET"}
+{"ts": "2026-06-13T17:22:10", "level": "INFO", "request_id": "0cf54ce8", "msg": "request", "status": 304, "path": "/static/base.css", "duration_ms": 23, "method": "GET"}
+{"ts": "2026-06-13T17:22:14", "level": "INFO", "request_id": "306520e5", "msg": "request", "status": 200, "path": "/entrevista/", "duration_ms": 9, "method": "GET"}
+{"ts": "2026-06-13T17:22:14", "level": "INFO", "request_id": "0dc3dfbe", "msg": "request", "status": 304, "path": "/static/base.css", "duration_ms": 15, "method": "GET"}
+{"ts": "2026-06-13T17:32:16", "level": "WARNING", "request_id": "-", "msg": " * Debugger is active!"}
+{"ts": "2026-06-13T17:32:17", "level": "INFO", "request_id": "500fe065", "msg": "request", "method": "GET", "path": "/", "duration_ms": 39, "status": 200}
+{"ts": "2026-06-13T17:32:17", "level": "INFO", "request_id": "f8ab64f4", "msg": "request", "method": "GET", "path": "/static/home.js", "duration_ms": 13, "status": 304}
+{"ts": "2026-06-13T17:32:17", "level": "INFO", "request_id": "41ec4190", "msg": "request", "method": "GET", "path": "/static/home.css", "duration_ms": 12, "status": 304}
+{"ts": "2026-06-13T17:32:17", "level": "INFO", "request_id": "885d330c", "msg": "request", "method": "GET", "path": "/static/base.css", "duration_ms": 20, "status": 304}
+{"ts": "2026-06-13T17:32:20", "level": "INFO", "request_id": "887535f0", "msg": "request", "method": "GET", "path": "/entrevista/", "duration_ms": 107, "status": 200}
+{"ts": "2026-06-13T17:32:20", "level": "INFO", "request_id": "c0d502fc", "msg": "request", "method": "GET", "path": "/static/base.css", "duration_ms": 9, "status": 304}
+{"ts": "2026-06-13T17:33:25", "level": "INFO", "request_id": "66e7a747", "msg": "Gerando plano de entrevista com IA"}
+{"ts": "2026-06-13T17:33:27", "level": "INFO", "request_id": "66e7a747", "msg": "llm_call_done", "error": false, "duration_ms": 1632, "backend": "groq"}
+{"ts": "2026-06-13T17:33:28", "level": "INFO", "request_id": "66e7a747", "msg": "Plano gerado para entrevista d7dc26d6-66f9-4f50-9c49-50d5a7ed1ee9"}
+{"ts": "2026-06-13T17:33:28", "level": "INFO", "request_id": "66e7a747", "msg": "request", "method": "POST", "path": "/entrevista/gerar-plano", "duration_ms": 3244, "status": 201}
+{"ts": "2026-06-13T17:33:37", "level": "INFO", "request_id": "3bdea814", "msg": "request", "method": "GET", "path": "/entrevista/d7dc26d6-66f9-4f50-9c49-50d5a7ed1ee9/executar", "duration_ms": 0, "status": 404}
+{"ts": "2026-06-13T17:35:04", "level": "INFO", "request_id": "b0591315", "msg": "Gerando plano de entrevista com IA"}
+{"ts": "2026-06-13T17:35:05", "level": "INFO", "request_id": "b0591315", "msg": "llm_call_done", "error": false, "duration_ms": 1290, "backend": "groq"}
+{"ts": "2026-06-13T17:35:07", "level": "INFO", "request_id": "b0591315", "msg": "Plano gerado para entrevista 8f8c647d-83f3-4d7e-b64d-dce34d494f30"}
+{"ts": "2026-06-13T17:35:07", "level": "INFO", "request_id": "b0591315", "msg": "request", "method": "POST", "path": "/entrevista/gerar-plano", "duration_ms": 2912, "status": 201}
+{"ts": "2026-06-13T17:35:34", "level": "INFO", "request_id": "e6ccd4c8", "msg": "request", "method": "GET", "path": "/entrevista/8f8c647d-83f3-4d7e-b64d-dce34d494f30/executar", "duration_ms": 0, "status": 404}
+{"ts": "2026-06-13T17:39:52", "level": "WARNING", "request_id": "-", "msg": " * Debugger is active!"}
+{"ts": "2026-06-13T17:40:17", "level": "WARNING", "request_id": "-", "msg": " * Debugger is active!"}
+{"ts": "2026-06-13T17:40:17", "level": "INFO", "request_id": "1aae0232", "msg": "request", "status": 200, "path": "/", "method": "GET", "duration_ms": 13}
+{"ts": "2026-06-13T17:40:17", "level": "INFO", "request_id": "42d5c941", "msg": "request", "status": 304, "path": "/static/base.css", "method": "GET", "duration_ms": 15}
+{"ts": "2026-06-13T17:40:17", "level": "INFO", "request_id": "bc51550a", "msg": "request", "status": 304, "path": "/static/home.js", "method": "GET", "duration_ms": 12}
+{"ts": "2026-06-13T17:40:17", "level": "INFO", "request_id": "13d21207", "msg": "request", "status": 304, "path": "/static/home.css", "method": "GET", "duration_ms": 14}
+{"ts": "2026-06-13T17:40:21", "level": "INFO", "request_id": "56413833", "msg": "request", "status": 200, "path": "/entrevista/", "method": "GET", "duration_ms": 25}
+{"ts": "2026-06-13T17:40:21", "level": "INFO", "request_id": "8fd95a0b", "msg": "request", "status": 304, "path": "/static/base.css", "method": "GET", "duration_ms": 11}
+{"ts": "2026-06-13T17:40:37", "level": "INFO", "request_id": "f60f7e7d", "msg": "Gerando plano de entrevista com IA"}
+{"ts": "2026-06-13T17:40:38", "level": "INFO", "request_id": "f60f7e7d", "msg": "llm_call_done", "error": false, "duration_ms": 1332, "backend": "groq"}
+{"ts": "2026-06-13T17:40:40", "level": "INFO", "request_id": "f60f7e7d", "msg": "Plano gerado para entrevista d29b9788-f7ce-47de-b6eb-8efdb561feae"}
+{"ts": "2026-06-13T17:40:40", "level": "INFO", "request_id": "f60f7e7d", "msg": "request", "status": 201, "path": "/entrevista/gerar-plano", "method": "POST", "duration_ms": 2742}
+{"ts": "2026-06-13T17:40:42", "level": "INFO", "request_id": "5c7067cf", "msg": "request", "status": 200, "path": "/entrevista/d29b9788-f7ce-47de-b6eb-8efdb561feae/executar", "method": "GET", "duration_ms": 503}
+{"ts": "2026-06-13T17:40:42", "level": "INFO", "request_id": "cfa3e605", "msg": "request", "status": 304, "path": "/static/base.css", "method": "GET", "duration_ms": 17}
+{"ts": "2026-06-13T17:40:42", "level": "INFO", "request_id": "a8bd79de", "msg": "request", "status": 404, "path": "/entrevista/null/pergunta/1", "method": "GET", "duration_ms": 385}
+{"ts": "2026-06-13T17:47:53", "level": "WARNING", "request_id": "-", "msg": " * Debugger is active!"}
+{"ts": "2026-06-13T17:48:18", "level": "WARNING", "request_id": "-", "msg": " * Debugger is active!"}
+{"ts": "2026-06-13T17:48:19", "level": "INFO", "request_id": "bb9fce83", "msg": "request", "path": "/", "method": "GET", "status": 200, "duration_ms": 17}
+{"ts": "2026-06-13T17:48:19", "level": "INFO", "request_id": "7ca8c068", "msg": "request", "path": "/static/home.css", "method": "GET", "status": 304, "duration_ms": 18}
+{"ts": "2026-06-13T17:48:19", "level": "INFO", "request_id": "32f0bdc6", "msg": "request", "path": "/static/base.css", "method": "GET", "status": 304, "duration_ms": 17}
+{"ts": "2026-06-13T17:48:19", "level": "INFO", "request_id": "372be032", "msg": "request", "path": "/static/home.js", "method": "GET", "status": 304, "duration_ms": 15}
+{"ts": "2026-06-13T17:48:21", "level": "INFO", "request_id": "e2a3cb23", "msg": "request", "path": "/entrevista/", "method": "GET", "status": 200, "duration_ms": 25}
+{"ts": "2026-06-13T17:48:21", "level": "INFO", "request_id": "c8496912", "msg": "request", "path": "/static/base.css", "method": "GET", "status": 304, "duration_ms": 21}
+{"ts": "2026-06-13T17:48:34", "level": "INFO", "request_id": "fa4274d9", "msg": "Gerando plano de entrevista com IA"}
+{"ts": "2026-06-13T17:48:36", "level": "INFO", "request_id": "fa4274d9", "msg": "llm_call_done", "duration_ms": 1593, "error": false, "backend": "groq"}
+{"ts": "2026-06-13T17:48:40", "level": "INFO", "request_id": "fa4274d9", "msg": "Plano gerado para entrevista 036e751f-d0ed-4489-a556-230aa1aed29d"}
+{"ts": "2026-06-13T17:48:40", "level": "INFO", "request_id": "fa4274d9", "msg": "request", "path": "/entrevista/gerar-plano", "method": "POST", "status": 201, "duration_ms": 5885}
+{"ts": "2026-06-13T17:48:42", "level": "INFO", "request_id": "b21a8e18", "msg": "request", "path": "/entrevista/036e751f-d0ed-4489-a556-230aa1aed29d/executar", "method": "GET", "status": 200, "duration_ms": 384}
+{"ts": "2026-06-13T17:48:42", "level": "INFO", "request_id": "ac9a7d16", "msg": "request", "path": "/static/base.css", "method": "GET", "status": 304, "duration_ms": 16}
+{"ts": "2026-06-13T17:48:43", "level": "INFO", "request_id": "2bf32c8f", "msg": "request", "path": "/entrevista/null/pergunta/1", "method": "GET", "status": 404, "duration_ms": 356}
+{"ts": "2026-06-13T17:51:29", "level": "WARNING", "request_id": "-", "msg": " * Debugger is active!"}
+{"ts": "2026-06-13T17:51:30", "level": "INFO", "request_id": "e3e6a491", "msg": "request", "method": "GET", "path": "/", "duration_ms": 18, "status": 200}
+{"ts": "2026-06-13T17:51:30", "level": "INFO", "request_id": "07fa6318", "msg": "request", "method": "GET", "path": "/static/home.css", "duration_ms": 11, "status": 304}
+{"ts": "2026-06-13T17:51:30", "level": "INFO", "request_id": "5b91bfcd", "msg": "request", "method": "GET", "path": "/static/base.css", "duration_ms": 12, "status": 304}
+{"ts": "2026-06-13T17:51:30", "level": "INFO", "request_id": "e9962a85", "msg": "request", "method": "GET", "path": "/static/home.js", "duration_ms": 9, "status": 304}
+{"ts": "2026-06-13T17:51:35", "level": "INFO", "request_id": "48ea3a8b", "msg": "request", "method": "GET", "path": "/entrevista/", "duration_ms": 27, "status": 200}
+{"ts": "2026-06-13T17:51:35", "level": "INFO", "request_id": "84cce901", "msg": "request", "method": "GET", "path": "/static/base.css", "duration_ms": 16, "status": 304}
+{"ts": "2026-06-13T17:51:47", "level": "INFO", "request_id": "4529e68f", "msg": "Gerando plano de entrevista com IA"}
+{"ts": "2026-06-13T17:51:48", "level": "INFO", "request_id": "4529e68f", "msg": "llm_call_done", "error": false, "backend": "groq", "duration_ms": 1429}
+{"ts": "2026-06-13T17:51:49", "level": "INFO", "request_id": "4529e68f", "msg": "Plano gerado para entrevista f4dad1c2-92ee-4d7f-8bf3-db7835f90e73"}
+{"ts": "2026-06-13T17:51:49", "level": "INFO", "request_id": "4529e68f", "msg": "request", "method": "POST", "path": "/entrevista/gerar-plano", "duration_ms": 2853, "status": 201}
+{"ts": "2026-06-13T17:51:51", "level": "INFO", "request_id": "358877b8", "msg": "request", "method": "GET", "path": "/entrevista/f4dad1c2-92ee-4d7f-8bf3-db7835f90e73/executar", "duration_ms": 632, "status": 200}
+{"ts": "2026-06-13T17:51:52", "level": "INFO", "request_id": "f91acfbc", "msg": "request", "method": "GET", "path": "/static/base.css", "duration_ms": 21, "status": 304}
+{"ts": "2026-06-13T17:51:52", "level": "INFO", "request_id": "87900cee", "msg": "request", "method": "GET", "path": "/entrevista/null/pergunta/1", "duration_ms": 365, "status": 404}
+{"ts": "2026-06-13T18:01:41", "level": "WARNING", "request_id": "-", "msg": " * Debugger is active!"}
+{"ts": "2026-06-13T18:01:41", "level": "INFO", "request_id": "3018cd94", "msg": "request", "path": "/", "duration_ms": 15, "method": "GET", "status": 200}
+{"ts": "2026-06-13T18:01:41", "level": "INFO", "request_id": "3203746c", "msg": "request", "path": "/static/base.css", "duration_ms": 13, "method": "GET", "status": 304}
+{"ts": "2026-06-13T18:01:41", "level": "INFO", "request_id": "89875d3d", "msg": "request", "path": "/static/home.css", "duration_ms": 14, "method": "GET", "status": 304}
+{"ts": "2026-06-13T18:01:41", "level": "INFO", "request_id": "29d49e9e", "msg": "request", "path": "/static/home.js", "duration_ms": 11, "method": "GET", "status": 304}
+{"ts": "2026-06-13T18:01:47", "level": "INFO", "request_id": "cecaa6b3", "msg": "request", "path": "/entrevista/", "duration_ms": 23, "method": "GET", "status": 200}
+{"ts": "2026-06-13T18:01:47", "level": "INFO", "request_id": "b06f72b8", "msg": "request", "path": "/static/base.css", "duration_ms": 16, "method": "GET", "status": 304}
+{"ts": "2026-06-13T18:01:59", "level": "INFO", "request_id": "66d3d4b7", "msg": "Gerando plano de entrevista com IA"}
+{"ts": "2026-06-13T18:02:01", "level": "INFO", "request_id": "66d3d4b7", "msg": "llm_call_done", "duration_ms": 1482, "error": false, "backend": "groq"}
+{"ts": "2026-06-13T18:02:02", "level": "INFO", "request_id": "66d3d4b7", "msg": "Plano gerado para entrevista f3a594c8-f47b-45f5-b40a-eedf4e7c91fd"}
+{"ts": "2026-06-13T18:02:02", "level": "INFO", "request_id": "66d3d4b7", "msg": "request", "path": "/entrevista/gerar-plano", "duration_ms": 2748, "method": "POST", "status": 201}
+{"ts": "2026-06-13T18:02:05", "level": "INFO", "request_id": "1fc2f1be", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/executar", "duration_ms": 493, "method": "GET", "status": 200}
+{"ts": "2026-06-13T18:02:08", "level": "INFO", "request_id": "f2c2bcb2", "msg": "request", "path": "/static/base.css", "duration_ms": 15, "method": "GET", "status": 304}
+{"ts": "2026-06-13T18:02:09", "level": "INFO", "request_id": "f631c137", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/pergunta/1", "duration_ms": 605, "method": "GET", "status": 200}
+{"ts": "2026-06-13T18:09:12", "level": "INFO", "request_id": "e3a8e70a", "msg": "Avaliando pergunta 1 da entrevista f3a594c8-f47b-45f5-b40a-eedf4e7c91fd"}
+{"ts": "2026-06-13T18:09:14", "level": "INFO", "request_id": "e3a8e70a", "msg": "llm_call_done", "duration_ms": 1128, "error": false, "backend": "groq"}
+{"ts": "2026-06-13T18:09:15", "level": "INFO", "request_id": "e3a8e70a", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/responder", "duration_ms": 3794, "method": "POST", "status": 200}
+{"ts": "2026-06-13T18:13:39", "level": "INFO", "request_id": "bdebbb0b", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/pergunta/2", "duration_ms": 739, "method": "GET", "status": 200}
+{"ts": "2026-06-13T18:14:52", "level": "INFO", "request_id": "c4361c1c", "msg": "Avaliando pergunta 2 da entrevista f3a594c8-f47b-45f5-b40a-eedf4e7c91fd"}
+{"ts": "2026-06-13T18:14:54", "level": "INFO", "request_id": "c4361c1c", "msg": "llm_call_done", "duration_ms": 944, "error": false, "backend": "groq"}
+{"ts": "2026-06-13T18:14:54", "level": "INFO", "request_id": "c4361c1c", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/responder", "duration_ms": 3307, "method": "POST", "status": 200}
+{"ts": "2026-06-13T18:17:39", "level": "INFO", "request_id": "c60685cb", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/pergunta/3", "duration_ms": 676, "method": "GET", "status": 200}
+{"ts": "2026-06-13T18:18:37", "level": "INFO", "request_id": "502c75a4", "msg": "Avaliando pergunta 3 da entrevista f3a594c8-f47b-45f5-b40a-eedf4e7c91fd"}
+{"ts": "2026-06-13T18:18:39", "level": "INFO", "request_id": "502c75a4", "msg": "llm_call_done", "duration_ms": 837, "error": false, "backend": "groq"}
+{"ts": "2026-06-13T18:18:39", "level": "INFO", "request_id": "502c75a4", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/responder", "duration_ms": 3405, "method": "POST", "status": 200}
+{"ts": "2026-06-13T18:20:12", "level": "INFO", "request_id": "abbaeb22", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/pergunta/4", "duration_ms": 848, "method": "GET", "status": 200}
+{"ts": "2026-06-13T18:21:12", "level": "INFO", "request_id": "4e046303", "msg": "Avaliando pergunta 4 da entrevista f3a594c8-f47b-45f5-b40a-eedf4e7c91fd"}
+{"ts": "2026-06-13T18:21:13", "level": "INFO", "request_id": "4e046303", "msg": "llm_call_done", "duration_ms": 947, "error": false, "backend": "groq"}
+{"ts": "2026-06-13T18:21:14", "level": "INFO", "request_id": "4e046303", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/responder", "duration_ms": 3627, "method": "POST", "status": 200}
+{"ts": "2026-06-13T18:22:28", "level": "INFO", "request_id": "dd8d4661", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/pergunta/5", "duration_ms": 682, "method": "GET", "status": 200}
+{"ts": "2026-06-13T18:23:16", "level": "INFO", "request_id": "2162e9bb", "msg": "Avaliando pergunta 5 da entrevista f3a594c8-f47b-45f5-b40a-eedf4e7c91fd"}
+{"ts": "2026-06-13T18:23:17", "level": "INFO", "request_id": "2162e9bb", "msg": "llm_call_done", "duration_ms": 936, "error": false, "backend": "groq"}
+{"ts": "2026-06-13T18:23:18", "level": "INFO", "request_id": "2162e9bb", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/responder", "duration_ms": 6454, "method": "POST", "status": 200}
+{"ts": "2026-06-13T18:23:56", "level": "INFO", "request_id": "2fa7f206", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/pergunta/6", "duration_ms": 792, "method": "GET", "status": 200}
+{"ts": "2026-06-13T18:24:12", "level": "INFO", "request_id": "871cc99c", "msg": "Avaliando pergunta 6 da entrevista f3a594c8-f47b-45f5-b40a-eedf4e7c91fd"}
+{"ts": "2026-06-13T18:24:13", "level": "INFO", "request_id": "871cc99c", "msg": "llm_call_done", "duration_ms": 739, "error": false, "backend": "groq"}
+{"ts": "2026-06-13T18:24:13", "level": "INFO", "request_id": "871cc99c", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/responder", "duration_ms": 3078, "method": "POST", "status": 200}
+{"ts": "2026-06-13T18:24:55", "level": "INFO", "request_id": "a655a536", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/pergunta/7", "duration_ms": 603, "method": "GET", "status": 200}
+{"ts": "2026-06-13T18:25:21", "level": "INFO", "request_id": "1db25b4d", "msg": "Avaliando pergunta 7 da entrevista f3a594c8-f47b-45f5-b40a-eedf4e7c91fd"}
+{"ts": "2026-06-13T18:25:23", "level": "INFO", "request_id": "1db25b4d", "msg": "llm_call_done", "duration_ms": 847, "error": false, "backend": "groq"}
+{"ts": "2026-06-13T18:25:23", "level": "INFO", "request_id": "1db25b4d", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/responder", "duration_ms": 3288, "method": "POST", "status": 200}
+{"ts": "2026-06-13T18:26:28", "level": "INFO", "request_id": "988e987c", "msg": "Gerando relatório final para entrevista f3a594c8-f47b-45f5-b40a-eedf4e7c91fd"}
+{"ts": "2026-06-13T18:26:30", "level": "INFO", "request_id": "988e987c", "msg": "llm_call_done", "duration_ms": 1315, "error": false, "backend": "groq"}
+{"ts": "2026-06-13T18:26:31", "level": "INFO", "request_id": "988e987c", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/finalizar", "duration_ms": 2958, "method": "POST", "status": 200}
+{"ts": "2026-06-13T18:26:31", "level": "INFO", "request_id": "855c7a8c", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/relatorio", "duration_ms": 436, "method": "GET", "status": 200}
+{"ts": "2026-06-13T18:26:31", "level": "INFO", "request_id": "f77bf04d", "msg": "request", "path": "/static/base.css", "duration_ms": 12, "method": "GET", "status": 304}
+{"ts": "2026-06-13T18:26:32", "level": "INFO", "request_id": "3097683b", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd", "duration_ms": 635, "method": "GET", "status": 200}
+{"ts": "2026-06-13T18:26:52", "level": "INFO", "request_id": "e2315c47", "msg": "request", "path": "/entrevista/f3a594c8-f47b-45f5-b40a-eedf4e7c91fd/exportar-pdf", "duration_ms": 1074, "method": "GET", "status": 200}

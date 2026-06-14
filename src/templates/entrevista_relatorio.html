@@ -2,7 +2,7 @@
 
 {% block title %}Relatório de Entrevista{% endblock %}
 
-{% block content %}
+{% block body %}
 <div class="entrevista-container">
     <div class="relatorio-header">
         <h1>Relatório de Entrevista</h1>
@@ -38,7 +38,7 @@
     </div>
     
     <div class="botoes-finais">
-        <a href="/entrevista/exportar-pdf?id={{ entrevista_id }}" class="btn btn-primary">
+        <a href="/entrevista/{{ entrevista_id }}/exportar-pdf" class="btn btn-primary"></a>
             📄 Exportar em PDF
         </a>
         <a href="/entrevista" class="btn btn-secondary">

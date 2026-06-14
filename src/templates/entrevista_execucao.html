@@ -2,8 +2,8 @@
 
 {% block title %}Executar Entrevista{% endblock %}
 
-{% block content %}
-<div class="entrevista-container">
+{% block body %}
+<div class="entrevista-container" data-entrevista-id="{{ entrevista_id }}">
     <div class="progresso-bar">
         <span id="progresso-texto">Carregando pergunta...</span>
         <div class="barra">
@@ -210,7 +210,7 @@ button:disabled {
 </style>
 
 <script>
-let entrevistaId = new URLSearchParams(window.location.search).get('id');
+let entrevistaId = window.location.pathname.split('/')[2];
 let perguntaAtual = 1;
 let totalPerguntas = 5;
 let contadorAprofundamentos = 0;

@@ -171,8 +171,16 @@ function initExecucao() {
     const form = document.getElementById('form-resposta');
     if (!form) return;
     
-    // Extrair ID da URL
-    entrevistaId = new URLSearchParams(window.location.search).get('id');
+    // Extrair ID da URL ou do data attribute
+    const container = document.querySelector('[data-entrevista-id]');
+    if (container) {
+        entrevistaId = container.dataset.entrevistaId;
+    } else {
+        // Fallback: extrair da URL (padrão: /entrevista/<id>/executar)
+        const match = window.location.pathname.match(/\/entrevista\/([a-f0-9-]+)\/executar/);
+        entrevistaId = match ? match[1] : null;
+    }
+    
     if (!entrevistaId) {
         mostrarErro('ID da entrevista não encontrado');
         return;
@@ -362,8 +370,9 @@ async function finalizarEntrevista() {
  * Inicializar página de relatório
  */
 function initRelatorio() {
-    entrevistaId = new URLSearchParams(window.location.search).get('id') || 
-                   window.location.pathname.split('/')[2];
+    // Extrair ID da URL (padrão: /entrevista/<id>/relatorio)
+    const match = window.location.pathname.match(/\/entrevista\/([a-f0-9-]+)\/relatorio/);
+    entrevistaId = match ? match[1] : null;
     
     if (!entrevistaId) {
         mostrarErro('ID da entrevista não encontrado');

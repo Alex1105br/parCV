@@ -79,6 +79,7 @@ def gerar_plano():
         
         # Extrair texto
         curriculo_text = extrair_texto_curriculo(caminho)
+        os.remove(caminho)
         if not curriculo_text:
             return jsonify({"error": "Não foi possível extrair texto do currículo"}), 400
         
@@ -124,6 +125,21 @@ def gerar_plano():
     except Exception as e:
         logger.error(f"Erro ao gerar plano: {str(e)}")
         return jsonify({"error": "Erro ao gerar plano"}), 500
+
+
+
+@bp.route("/<entrevista_id>/executar", methods=["GET"])
+@login_required
+def executar_entrevista(entrevista_id):
+    """Serve a página de execução da entrevista"""
+    entrevista = _get_entrevista_or_404(entrevista_id)
+    if not entrevista:
+        return "Entrevista não encontrada", 404
+    return render_template("entrevista_execucao.html", entrevista_id=entrevista_id)
+
+
+
+
 
 
 @bp.route("/<entrevista_id>", methods=["GET"])
