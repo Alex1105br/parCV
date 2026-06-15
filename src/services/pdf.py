@@ -444,3 +444,185 @@ def gerar_pdf_curriculo(texto_ou_json, template="classico", foto_bytes=None):
     doc.build(story)
     buffer.seek(0)
     return buffer
+
+
+def gerar_pdf_relatorio_entrevista(entrevista):
+    """
+    Gera PDF do relatório de entrevista em formato executivo.
+    Retorna bytes do PDF.
+    """
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import cm
+    from reportlab.lib import colors
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable, PageBreak, Table, TableStyle
+    
+    FONT_DIR = _find_font_dir()
+    _register_fonts(FONT_DIR)
+    
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=1.8 * cm,
+        rightMargin=1.8 * cm,
+        topMargin=1.6 * cm,
+        bottomMargin=1.6 * cm,
+    )
+    
+    # Cores
+    AZUL_ESCURO = colors.HexColor("#0056b3")
+    AZUL_CLARO = colors.HexColor("#007bff")
+    VERDE = colors.HexColor("#28a745")
+    AMARELO = colors.HexColor("#ffc107")
+    VERMELHO = colors.HexColor("#dc3545")
+    CINZA = colors.HexColor("#555555")
+    CINZA_CLARO = colors.HexColor("#f9f9f9")
+    
+    # Estilos
+    titulo_style = ParagraphStyle(
+        'titulo',
+        fontName='Sans-Bold',
+        fontSize=18,
+        textColor=AZUL_ESCURO,
+        spaceAfter=12,
+    )
+    
+    subtitulo_style = ParagraphStyle(
+        'subtitulo',
+        fontName='Sans-Bold',
+        fontSize=13,
+        textColor=AZUL_CLARO,
+        spaceAfter=10,
+        spaceBefore=12,
+    )
+    
+    texto_style = ParagraphStyle(
+        'texto',
+        fontName='Sans',
+        fontSize=10,
+        textColor=CINZA,
+        spaceAfter=8,
+        leading=12,
+    )
+    
+    # Story para o PDF
+    story = []
+    
+    # ===== HEADER =====
+    story.append(Paragraph("RELATÓRIO DE ENTREVISTA", titulo_style))
+    story.append(Spacer(1, 8))
+    
+    # Score Geral
+    relatorio = entrevista.relatorio_final
+    score_geral = relatorio.get("score_geral", 5.0)
+    
+    # Determinar cor baseada no score
+    if score_geral >= 7:
+        score_cor = VERDE
+    elif score_geral >= 4:
+        score_cor = AMARELO
+    else:
+        score_cor = VERMELHO
+    
+    # Caixa de score
+    score_text = Paragraph(f"<b>Score Final: {score_geral:.1f}/10</b>", ParagraphStyle(
+        'score',
+        fontName='Sans-Bold',
+        fontSize=16,
+        textColor=score_cor,
+    ))
+    
+    score_table = Table([[score_text]], colWidths=[17 * cm])
+    score_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#f0f8ff")),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 10),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+        ('TOPPADDING', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ('BORDER', (0, 0), (-1, -1), 2),
+        ('BORDERCOLOR', (0, 0), (-1, -1), score_cor),
+    ]))
+    
+    story.append(score_table)
+    story.append(Spacer(1, 20))
+    
+    # ===== PARECER GERAL =====
+    story.append(Paragraph("Parecer Geral", subtitulo_style))
+    parecer = relatorio.get("parecer_final", "Avaliação completa realizada")
+    story.append(Paragraph(parecer, texto_style))
+    story.append(Spacer(1, 12))
+    
+    # ===== PONTOS FORTES =====
+    story.append(Paragraph("Pontos Fortes", subtitulo_style))
+    pontos_fortes = relatorio.get("pontos_fortes", [])
+    for pf in pontos_fortes:
+        story.append(Paragraph(f"✓ {pf}", texto_style))
+    story.append(Spacer(1, 12))
+    
+    # ===== PONTOS A MELHORAR =====
+    story.append(Paragraph("Pontos a Melhorar", subtitulo_style))
+    pontos_fracos = relatorio.get("pontos_fracos", [])
+    for pf in pontos_fracos:
+        story.append(Paragraph(f"• {pf}", texto_style))
+    story.append(Spacer(1, 12))
+    
+    # ===== RECOMENDAÇÕES =====
+    story.append(Paragraph("Recomendações", subtitulo_style))
+    recomendacoes = relatorio.get("recomendacoes", [])
+    for rec in recomendacoes:
+        story.append(Paragraph(f"→ {rec}", texto_style))
+    
+    story.append(PageBreak())
+    
+    # ===== PÁGINA 2: DETALHES DAS PERGUNTAS =====
+    story.append(Paragraph("Detalhes das Respostas", titulo_style))
+    story.append(Spacer(1, 12))
+    
+    for i, pergunta in enumerate(entrevista.perguntas, 1):
+        story.append(Paragraph(f"<b>Pergunta {i}</b>", ParagraphStyle(
+            f'pergunta_{i}',
+            fontName='Sans-Bold',
+            fontSize=11,
+            textColor=AZUL_CLARO,
+            spaceAfter=6,
+        )))
+        
+        story.append(Paragraph(pergunta.pergunta_principal, texto_style))
+        
+        if pergunta.resposta_usuario:
+            story.append(Paragraph(f"<b>Resposta:</b>", ParagraphStyle(
+                'label',
+                fontName='Sans-Bold',
+                fontSize=10,
+                textColor=CINZA,
+            )))
+            story.append(Paragraph(pergunta.resposta_usuario, texto_style))
+        
+        if pergunta.avaliacao_resposta:
+            av = pergunta.avaliacao_resposta
+            score = av.get("score", 5)
+            feedback = av.get("feedback", "")
+            
+            score_cor = VERDE if score >= 7 else (AMARELO if score >= 4 else VERMELHO)
+            
+            story.append(Paragraph(
+                f"<b>Avaliação: {score}/10</b>",
+                ParagraphStyle(
+                    f'av_score_{i}',
+                    fontName='Sans-Bold',
+                    fontSize=10,
+                    textColor=score_cor,
+                )
+            ))
+            
+            story.append(Paragraph(feedback, texto_style))
+        
+        story.append(Spacer(1, 12))
+    
+    # Build PDF
+    doc.build(story)
+    buffer.seek(0)
+    return buffer.getvalue()
