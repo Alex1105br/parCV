@@ -1,262 +1,514 @@
 {% extends "base.html" %}
 
-{% block title %}Simulador de Entrevista{% endblock %}
+{% block title %}Simulação de Entrevista - parCV{% endblock %}
+
+{% block styles %}
+<style>
+    :root {
+        --bg-main: #0B0F19;
+        --bg-card: #151D30;
+        --color-primary: #6366F1;
+        --color-primary-hover: #4F46E5;
+        --color-gradient-start: #8B5CF6;
+        --color-gradient-end: #6366F1;
+        --color-border: #24324F;
+        --color-border-focus: #8B5CF6;
+        --text-main: #F3F4F6;
+        --text-muted: #9CA3AF;
+        --color-success: #10B981;
+        --color-danger: #EF4444;
+        --color-warning: #F59E0B;
+        --radius-lg: 16px;
+        --radius-md: 12px;
+        --spacing-xl: 32px;
+    }
+
+    body {
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 24px var(--spacing-xl);
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .header__left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .header__home {
+        color: var(--text-muted);
+        transition: color 0.2s;
+    }
+
+    .header__home:hover {
+        color: var(--color-primary);
+    }
+
+    .header__title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 24px;
+        font-weight: 700;
+    }
+
+    .ev-main {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 24px;
+    }
+
+    .ev-card {
+        background: var(--bg-card);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-xl);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    .ev-card--center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 60px var(--spacing-xl);
+    }
+
+    .ev-card__header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .ev-card__icon {
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--color-primary);
+        padding: 12px;
+        border-radius: var(--radius-md);
+    }
+
+    .ev-card__title {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .ev-card__subtitle {
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    .form-group {
+        margin-bottom: 24px;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: var(--text-main);
+    }
+
+    .file-drop {
+        position: relative;
+        border: 2px dashed var(--color-border);
+        border-radius: var(--radius-md);
+        padding: 32px 20px;
+        text-align: center;
+        cursor: pointer;
+        background: rgba(21, 29, 48, 0.5);
+        transition: all 0.2s ease;
+    }
+
+    .file-drop:hover, .file-drop--hover {
+        border-color: var(--color-border-focus);
+        background: rgba(139, 92, 246, 0.05);
+    }
+
+    .file-drop--selected {
+        border-color: var(--color-success);
+        background: rgba(16, 185, 129, 0.03);
+    }
+
+    .file-drop__input {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .file-drop__icon {
+        color: var(--text-muted);
+        margin-bottom: 12px;
+        width: 36px;
+        height: 36px;
+    }
+
+    .file-drop__text {
+        font-size: 15px;
+        margin-bottom: 4px;
+    }
+
+    .file-drop__text span {
+        color: var(--color-primary);
+        font-weight: 500;
+    }
+
+    .file-drop__hint {
+        color: var(--text-muted);
+        font-size: 12px;
+    }
+
+    .file-drop__name {
+        margin-top: 12px;
+        display: inline-block;
+        padding: 6px 12px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-main);
+    }
+
+    .form-textarea {
+        width: 100%;
+        min-height: 140px;
+        background: rgba(11, 15, 25, 0.6);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        color: var(--text-main);
+        font-family: inherit;
+        font-size: 15px;
+        resize: vertical;
+        box-sizing: border-box;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-textarea:focus {
+        outline: none;
+        border-color: var(--color-border-focus);
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+    }
+
+    .ev-alert {
+        padding: 14px 16px;
+        border-radius: var(--radius-md);
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+
+    .ev-alert--danger {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid var(--color-danger);
+        color: #FCA5A5;
+    }
+
+    .btn-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin-top: 8px;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        padding: 12px 28px;
+        border-radius: 30px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+
+    .btn--primary {
+        background: linear-gradient(135deg, var(--color-gradient-start), var(--color-gradient-end));
+        color: #FFFFFF;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        width: 100%;
+        max-width: 320px;
+    }
+
+    .btn--primary:hover {
+        opacity: 0.95;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .ev-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        border-top-color: var(--color-primary);
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .ev-loading-text {
+        color: var(--text-muted);
+        font-size: 16px;
+    }
+
+    /* Estilos do Planejamento Pronto */
+    .ev-plano-header {
+        text-align: center;
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .ev-plano-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--color-success);
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 16px;
+    }
+
+    .ev-plano-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .ev-plano-subtitle {
+        color: var(--text-muted);
+        font-size: 15px;
+    }
+
+    .ev-topicos {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 24px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .ev-topico {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--color-border);
+        padding: 14px 18px;
+        border-radius: var(--radius-md);
+        font-size: 15px;
+    }
+
+    .ev-topico i {
+        color: var(--color-primary);
+        flex-shrink: 0;
+    }
+
+    .ev-estrategia {
+        background: rgba(99, 102, 241, 0.05);
+        border-left: 4px solid var(--color-primary);
+        padding: 16px 20px;
+        border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #D1D5DB;
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .ev-plano-actions {
+        display: flex;
+        justify-content: center;
+    }
+
+    .hidden { display: none !important; }
+</style>
+{% endblock %}
 
 {% block body %}
-<div class="entrevista-container">
-    <h1>Simulador de Entrevista</h1>
-    <p class="subtitle">Prepare-se para sua próxima entrevista técnica com ajuda da IA</p>
-    
-    <form id="form-planejamento" enctype="multipart/form-data" class="form-planejamento">
-        
-        <div class="form-group">
-            <label for="curriculo">📄 Carregue seu Currículo</label>
-            <input type="file" id="curriculo" name="curriculo" accept=".pdf,.doc,.docx" required>
-            <small>Formatos aceitos: PDF, DOC, DOCX | Máximo: 5MB</small>
-        </div>
-        
-        <div class="form-group">
-            <label for="vaga_descricao">📋 Descrição da Vaga</label>
-            <textarea id="vaga_descricao" name="vaga_descricao" 
-                      placeholder="Cole aqui a descrição completa da vaga que você pretende se candidatar..."
-                      required></textarea>
-            <small>Inclua requisitos técnicos, responsabilidades e experiências desejadas</small>
-        </div>
-        
-        <button type="submit" class="btn btn-primary btn-large" id="btn-gerar">
-            <span>Gerar Plano de Entrevista</span>
-        </button>
-    </form>
-    
-    <div id="resultado-plano" class="resultado-plano" style="display:none;">
-        <div class="alert alert-success">
-            <div class="alert-icon">✅</div>
-            <div class="alert-content">
-                <h3>Plano de Entrevista Gerado!</h3>
-                <p>A entrevista terá <strong id="num-perguntas">5</strong> perguntas sobre os seguintes tópicos:</p>
-                <ul id="topicos-list" class="topicos-list"></ul>
-                <p class="strategy-text" id="strategy-text"></p>
+<header class="header">
+    <div class="header__left">
+        <a href="/" class="header__home" aria-label="Voltar para início">
+            <i data-lucide="arrow-left"></i>
+        </a>
+        <h1 class="header__title">
+            <i data-lucide="user-check"></i>
+            Simulação de Entrevista
+        </h1>
+    </div>
+</header>
+
+<main class="ev-main">
+    <div class="ev-card" id="card-form">
+        <div class="ev-card__header">
+            <div class="ev-card__icon">
+                <i data-lucide="file-text"></i>
+            </div>
+            <div>
+                <h2 class="ev-card__title">Configure sua entrevista</h2>
+                <p class="ev-card__subtitle">Envie seu currículo e a vaga desejada para que a IA monte 5 perguntas personalizadas</p>
             </div>
         </div>
-        
-        <a href="#" class="btn btn-success btn-large" id="btn-iniciar">
-            Iniciar Entrevista →
-        </a>
+
+        <form id="form-planejamento" enctype="multipart/form-data">
+            <div class="form-group">
+                <label class="form-label" for="curriculo">
+                    <i data-lucide="paperclip"></i>
+                    Currículo
+                </label>
+                <div class="file-drop" id="file-drop">
+                    <input type="file" id="curriculo" name="curriculo" accept=".pdf,.doc,.docx" required class="file-drop__input">
+                    <i data-lucide="upload-cloud" class="file-drop__icon"></i>
+                    <p class="file-drop__text">Arraste ou <span>clique para selecionar</span></p>
+                    <p class="file-drop__hint">PDF, DOC ou DOCX • máx. 5 MB</p>
+                    <p class="file-drop__name hidden" id="file-name"></p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="vaga_descricao">
+                    <i data-lucide="briefcase"></i>
+                    Descrição da vaga
+                </label>
+                <textarea
+                    id="vaga_descricao"
+                    name="vaga_descricao"
+                    class="form-textarea"
+                    placeholder="Cole aqui a descrição completa da vaga — requisitos, responsabilidades, stack técnica..."
+                    required
+                ></textarea>
+            </div>
+
+            <div id="error-message" class="ev-alert ev-alert--danger hidden"></div>
+
+            <div class="btn-container">
+                <button type="submit" class="btn btn--primary" id="btn-gerar">
+                    <i data-lucide="sparkles"></i>
+                    Gerar Plano de Entrevista
+                </button>
+            </div>
+        </form>
     </div>
-    
-    <div id="loading" class="loading" style="display:none;">
-        <div class="spinner"></div>
-        <p>Gerando plano de entrevista com IA...</p>
+
+    <div class="ev-card ev-card--center hidden" id="card-loading">
+        <div class="ev-spinner"></div>
+        <p class="ev-loading-text">Analisando seu currículo e gerando perguntas personalizadas...</p>
     </div>
-    
-    <div id="error-message" class="alert alert-danger" style="display:none;"></div>
-</div>
 
-<style>
-.entrevista-container {
-    max-width: 800px;
-    margin: 40px auto;
-    padding: 30px;
-}
+    <div class="ev-card hidden" id="card-resultado">
+        <div class="ev-plano-header">
+            <div class="ev-plano-badge">
+                <i data-lucide="check-circle"></i>
+                Plano gerado
+            </div>
+            <h2 class="ev-plano-title">Sua entrevista está pronta</h2>
+            <p class="ev-plano-subtitle">Serão feitas <strong id="num-perguntas">5</strong> perguntas personalizadas com base no seu perfil e na vaga.</p>
+        </div>
 
-.subtitle {
-    color: #666;
-    font-size: 16px;
-    margin-bottom: 30px;
-}
+        <ul class="ev-topicos" id="topicos-list"></ul>
 
-.form-planejamento {
-    background: #f9f9f9;
-    padding: 30px;
-    border-radius: 8px;
-    border: 1px solid #e0e0e0;
-}
+        <div class="ev-estrategia" id="strategy-text"></div>
 
-.form-group {
-    margin-bottom: 25px;
-}
-
-.form-group label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: #333;
-}
-
-.form-group input[type="file"],
-.form-group textarea {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-family: inherit;
-    font-size: 14px;
-}
-
-.form-group textarea {
-    resize: vertical;
-    min-height: 200px;
-}
-
-.form-group small {
-    display: block;
-    color: #999;
-    margin-top: 5px;
-    font-size: 12px;
-}
-
-.btn-large {
-    padding: 14px 30px;
-    font-size: 16px;
-}
-
-.resultado-plano {
-    margin-top: 30px;
-}
-
-.alert {
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.alert-success {
-    background: #d4edda;
-    border: 1px solid #c3e6cb;
-    color: #155724;
-}
-
-.alert-danger {
-    background: #f8d7da;
-    border: 1px solid #f5c6cb;
-    color: #721c24;
-}
-
-.alert-icon {
-    font-size: 24px;
-    margin-bottom: 10px;
-}
-
-.alert-content h3 {
-    margin: 0 0 10px 0;
-    font-size: 18px;
-}
-
-.alert-content p {
-    margin: 0 0 15px 0;
-}
-
-.topicos-list {
-    list-style: none;
-    padding: 0;
-    margin: 15px 0;
-}
-
-.topicos-list li {
-    padding: 8px 0;
-    padding-left: 25px;
-    position: relative;
-}
-
-.topicos-list li:before {
-    content: "→";
-    position: absolute;
-    left: 0;
-    color: #007bff;
-    font-weight: bold;
-}
-
-.strategy-text {
-    margin-top: 15px;
-    font-style: italic;
-    background: rgba(255,255,255,0.5);
-    padding: 15px;
-    border-radius: 6px;
-    border-left: 4px solid #007bff;
-}
-
-.loading {
-    text-align: center;
-    padding: 40px;
-}
-
-.spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #007bff;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 20px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-</style>
+        <div class="ev-plano-actions">
+            <a href="#" class="btn btn--primary" id="btn-iniciar">
+                <i data-lucide="play"></i>
+                Iniciar Entrevista
+            </a>
+        </div>
+    </div>
+</main>
 
 <script>
+const fileInput = document.getElementById('curriculo');
+const fileNameEl = document.getElementById('file-name');
+const fileDrop = document.getElementById('file-drop');
+
+fileInput.addEventListener('change', () => {
+    const f = fileInput.files[0];
+    if (f) {
+        fileNameEl.textContent = f.name;
+        fileNameEl.classList.remove('hidden');
+        fileDrop.classList.add('file-drop--selected');
+    }
+});
+
+// Drag & Drop
+fileDrop.addEventListener('dragover', e => { e.preventDefault(); fileDrop.classList.add('file-drop--hover'); });
+fileDrop.addEventListener('dragleave', () => fileDrop.classList.remove('file-drop--hover'));
+fileDrop.addEventListener('drop', e => {
+    e.preventDefault();
+    fileDrop.classList.remove('file-drop--hover');
+    const f = e.dataTransfer.files[0];
+    if (f) {
+        const dt = new DataTransfer();
+        dt.items.add(f);
+        fileInput.files = dt.files;
+        fileNameEl.textContent = f.name;
+        fileNameEl.classList.remove('hidden');
+        fileDrop.classList.add('file-drop--selected');
+    }
+});
+
 document.getElementById('form-planejamento').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+    const errorEl = document.getElementById('error-message');
+    errorEl.classList.add('hidden');
+
     const formData = new FormData(e.target);
-    const curriculo = formData.get('curriculo');
-    const vaga = formData.get('vaga_descricao');
-    
-    // Validar arquivo
-    if (!curriculo) {
-        showError("Selecione um currículo");
-        return;
-    }
-    
-    if (!vaga.trim()) {
-        showError("Descreva a vaga");
-        return;
-    }
-    
-    // Mostrar loading
-    document.getElementById('form-planejamento').style.display = 'none';
-    document.getElementById('loading').style.display = 'block';
-    document.getElementById('error-message').style.display = 'none';
-    
+    if (!fileInput.files[0]) { showError('Selecione um currículo.'); return; }
+    if (!formData.get('vaga_descricao').trim()) { showError('Descreva a vaga.'); return; }
+
+    document.getElementById('card-form').classList.add('hidden');
+    document.getElementById('card-loading').classList.remove('hidden');
+
     try {
-        const res = await fetch('/entrevista/gerar-plano', {
-            method: 'POST',
-            body: formData
-        });
-        
-        if (!res.ok) {
-            const error = await res.json();
-            throw new Error(error.error || 'Erro ao gerar plano');
-        }
-        
+        const res = await fetch('/entrevista/gerar-plano', { method: 'POST', body: formData });
+        if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Erro ao gerar plano'); }
         const data = await res.json();
-        
-        // Salvar ID para próxima tela
-        window.entrevistaId = data.entrevista_id;
-        
-        // Exibir plano
+
         document.getElementById('num-perguntas').textContent = data.numero_perguntas;
-        document.getElementById('strategy-text').textContent = data.plano.estrategia;
-        document.getElementById('topicos-list').innerHTML = 
-            data.plano.topicos.map(t => `<li>${t}</li>`).join('');
-        
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('resultado-plano').style.display = 'block';
+        document.getElementById('strategy-text').textContent = data.plano.estrategia || '';
+        document.getElementById('topicos-list').innerHTML =
+            (data.plano.topicos || []).map(t => `<li class="ev-topico"><i data-lucide="chevron-right"></i>${t}</li>`).join('');
         document.getElementById('btn-iniciar').href = `/entrevista/${data.entrevista_id}/executar`;
-        
+
+        document.getElementById('card-loading').classList.add('hidden');
+        document.getElementById('card-resultado').classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
     } catch (err) {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('form-planejamento').style.display = 'block';
+        document.getElementById('card-loading').classList.add('hidden');
+        document.getElementById('form-planejamento').closest('.ev-card').classList.remove('hidden');
         showError(err.message);
     }
 });
 
-function showError(message) {
-    const errorDiv = document.getElementById('error-message');
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
+function showError(msg) {
+    const el = document.getElementById('error-message');
+    el.textContent = msg;
+    el.classList.remove('hidden');
 }
 </script>
 {% endblock %}

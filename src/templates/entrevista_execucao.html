@@ -1,359 +1,445 @@
 {% extends "base.html" %}
 
-{% block title %}Executar Entrevista{% endblock %}
+{% block title %}Entrevista em Andamento - parCV{% endblock %}
+
+{% block styles %}
+<style>
+    :root {
+        --bg-main: #0B0F19;
+        --bg-card: #151D30;
+        --color-primary: #6366F1;
+        --color-border: #24324F;
+        --color-border-focus: #8B5CF6;
+        --text-main: #F3F4F6;
+        --text-muted: #9CA3AF;
+        --color-success: #10B981;
+        --color-danger: #EF4444;
+        --color-warning: #F59E0B;
+        --radius-lg: 16px;
+        --radius-md: 12px;
+        --spacing-xl: 32px;
+    }
+
+    body {
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 24px var(--spacing-xl);
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .header__left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .header__title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    .ev-progress-info {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--color-primary);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .ev-main--exec {
+        max-width: 760px;
+        margin: 40px auto;
+        padding: 0 24px;
+    }
+
+    .ev-progress-bar {
+        width: 100%;
+        height: 6px;
+        background: var(--color-border);
+        border-radius: 3px;
+        margin-bottom: 32px;
+        overflow: hidden;
+    }
+
+    .ev-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--color-primary), #8B5CF6);
+        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .ev-card {
+        background: var(--bg-card);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-xl);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    .ev-card--center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 60px var(--spacing-xl);
+    }
+
+    .ev-pergunta-meta {
+        display: inline-block;
+        background: rgba(139, 92, 246, 0.1);
+        color: #A78BFA;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 16px;
+    }
+
+    .ev-pergunta-texto {
+        font-size: 18px;
+        line-height: 1.6;
+        font-weight: 500;
+        margin: 0 0 24px 0;
+    }
+
+    .form-group {
+        margin-top: var(--spacing-xl);
+    }
+
+    .form-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-muted);
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    .form-textarea {
+        width: 100%;
+        min-height: 160px;
+        background: rgba(11, 15, 25, 0.6);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        color: var(--text-main);
+        font-family: inherit;
+        font-size: 15px;
+        resize: vertical;
+        box-sizing: border-box;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-textarea:focus {
+        outline: none;
+        border-color: var(--color-border-focus);
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+    }
+
+    .ev-alert {
+        padding: 14px 16px;
+        border-radius: var(--radius-md);
+        font-size: 14px;
+        margin-top: 24px;
+    }
+
+    .ev-alert--danger {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid var(--color-danger);
+        color: #FCA5A5;
+    }
+
+    .ev-exec-actions {
+        display: flex;
+        justify-content: center;
+        margin-top: var(--spacing-xl);
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        padding: 12px 28px;
+        border-radius: 30px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        width: 100%;
+        max-width: 320px;
+    }
+
+    .btn--primary {
+        background: linear-gradient(135deg, #8B5CF6, var(--color-primary));
+        color: #FFFFFF;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn--primary:hover:not(:disabled) {
+        opacity: 0.95;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .ev-spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        border-top-color: var(--color-primary);
+        animation: spin 1s linear infinite;
+        margin-bottom: 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .ev-loading-text { color: var(--text-muted); font-size: 15px; }
+
+    /* Estilos de Feedback */
+    .ev-feedback-header {
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+        background: rgba(255, 255, 255, 0.02);
+        padding: 24px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--color-border);
+    }
+
+    .ev-feedback-score {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: rgba(11, 15, 25, 0.8);
+        border: 2px solid var(--color-border);
+        border-radius: var(--radius-md);
+        min-width: 80px;
+        height: 80px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    #score-display span:first-child {
+        font-size: 28px;
+    }
+
+    .ev-feedback-score__label {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: -2px;
+    }
+
+    .ev-feedback-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 8px 0;
+        color: var(--color-primary);
+    }
+
+    .ev-feedback-texto {
+        font-size: 14px;
+        line-height: 1.6;
+        color: #D1D5DB;
+        margin: 0;
+    }
+
+    .hidden { display: none !important; }
+</style>
+{% endblock %}
 
 {% block body %}
-<div class="entrevista-container" data-entrevista-id="{{ entrevista_id }}">
-    <div class="progresso-bar">
-        <span id="progresso-texto">Carregando pergunta...</span>
-        <div class="barra">
-            <div class="preenchimento" id="barra-preenchimento" style="width: 0%"></div>
+<header class="header">
+    <div class="header__left">
+        <h1 class="header__title">
+            <i data-lucide="mic"></i>
+            Entrevista em Andamento
+        </h1>
+    </div>
+    <div class="header__actions">
+        <div class="ev-progress-info" id="progresso-texto">Carregando...</div>
+    </div>
+</header>
+
+<main class="ev-main ev-main--exec">
+    <div class="ev-progress-bar">
+        <div class="ev-progress-fill" id="barra-preenchimento" style="width: 0%"></div>
+    </div>
+
+    <div class="ev-card ev-card--center" id="card-loading">
+        <div class="ev-spinner"></div>
+        <p class="ev-loading-text">Carregando pergunta...</p>
+    </div>
+
+    <div class="ev-card hidden" id="card-pergunta">
+        <div class="ev-pergunta-meta" id="pergunta-tema"></div>
+        <p class="ev-pergunta-texto" id="pergunta-titulo"></p>
+
+        <div class="form-group">
+            <label class="form-label" for="resposta-input">Sua resposta</label>
+            <textarea
+                id="resposta-input"
+                class="form-textarea"
+                placeholder="Digite sua resposta aqui..."
+            ></textarea>
+        </div>
+
+        <div id="error-resposta" class="ev-alert ev-alert--danger hidden"></div>
+
+        <div class="ev-exec-actions">
+            <button class="btn btn--primary" id="btn-enviar">
+                <i data-lucide="send"></i>
+                Enviar Resposta
+            </button>
         </div>
     </div>
-    
-    <div class="pergunta-card" id="pergunta-card">
-        <h2 id="pergunta-titulo"></h2>
-        
-        <form id="form-resposta" class="form-resposta">
-            <textarea id="resposta-input" placeholder="Digite sua resposta aqui..." required></textarea>
-            
-            <div class="botoes">
-                <button type="submit" class="btn btn-primary">Enviar Resposta</button>
+
+    <div class="ev-card hidden" id="card-feedback">
+        <div class="ev-feedback-header">
+            <div class="ev-feedback-score" id="score-display">
+                <span id="score-valor">-</span>
+                <span class="ev-feedback-score__label">/10</span>
             </div>
-        </form>
-    </div>
-    
-    <div id="feedback-box" class="feedback-box" style="display:none;">
-        <h3>📊 Feedback da IA</h3>
-        <p id="feedback-texto"></p>
-        <div class="score">
-            Score: <strong id="score-valor">8</strong>/10
+            <div>
+                <h3 class="ev-feedback-title">Feedback da IA</h3>
+                <p class="ev-feedback-texto" id="feedback-texto"></p>
+            </div>
+        </div>
+
+        <div class="ev-exec-actions">
+            <button class="btn btn--primary" id="btn-proxima">
+                <i data-lucide="arrow-right"></i>
+                Próxima Pergunta
+            </button>
         </div>
     </div>
-    
-    <div id="aprofundamento-box" class="aprofundamento-box" style="display:none;">
-        <h3>🔍 Pergunta de Aprofundamento</h3>
-        <p id="pergunta-aprofundamento"></p>
-        <form id="form-aprofundamento" class="form-resposta">
-            <textarea id="resposta-aprofundamento" placeholder="Sua resposta..." required></textarea>
-            <button type="submit" class="btn btn-primary">Responder</button>
-        </form>
-    </div>
-    
-    <div id="proxima-pergunta" style="display:none;" class="proxima-pergunta-container">
-        <button class="btn btn-success" id="btn-proxima">Próxima Pergunta →</button>
-    </div>
-</div>
-
-<style>
-.entrevista-container {
-    max-width: 900px;
-    margin: 30px auto;
-    padding: 30px;
-}
-
-.progresso-bar {
-    margin-bottom: 30px;
-}
-
-#progresso-texto {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 10px;
-    color: #333;
-}
-
-.barra {
-    width: 100%;
-    height: 12px;
-    background: #eee;
-    border-radius: 6px;
-    overflow: hidden;
-}
-
-.preenchimento {
-    height: 100%;
-    background: linear-gradient(90deg, #007bff, #0056b3);
-    transition: width 0.3s ease;
-}
-
-.pergunta-card {
-    background: #f9f9f9;
-    padding: 30px;
-    border-radius: 8px;
-    border-left: 4px solid #007bff;
-    margin-bottom: 20px;
-}
-
-.pergunta-card h2 {
-    margin-top: 0;
-    color: #333;
-    font-size: 20px;
-}
-
-.form-resposta {
-    margin-top: 20px;
-}
-
-.form-resposta textarea {
-    width: 100%;
-    min-height: 150px;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 14px;
-    resize: vertical;
-}
-
-.form-resposta textarea:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-}
-
-.botoes {
-    margin-top: 15px;
-    display: flex;
-    gap: 10px;
-}
-
-.btn {
-    padding: 12px 24px;
-    font-size: 14px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.btn-primary {
-    background: #007bff;
-    color: white;
-}
-
-.btn-primary:hover {
-    background: #0056b3;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-}
-
-.btn-success {
-    background: #28a745;
-    color: white;
-    padding: 14px 30px;
-    font-size: 16px;
-}
-
-.btn-success:hover {
-    background: #218838;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-}
-
-.feedback-box {
-    background: #d4edda;
-    border: 1px solid #c3e6cb;
-    color: #155724;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.feedback-box h3 {
-    margin-top: 0;
-    color: #0c5420;
-}
-
-.feedback-box p {
-    margin: 10px 0;
-    line-height: 1.6;
-}
-
-.score {
-    margin-top: 15px;
-    font-size: 18px;
-    padding: 10px;
-    background: rgba(255,255,255,0.5);
-    border-radius: 6px;
-    text-align: center;
-}
-
-.score strong {
-    font-size: 24px;
-    color: #007bff;
-}
-
-.aprofundamento-box {
-    background: #fff3cd;
-    border: 1px solid #ffeaa7;
-    color: #856404;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.aprofundamento-box h3 {
-    margin-top: 0;
-    color: #654321;
-}
-
-.proxima-pergunta-container {
-    text-align: center;
-}
-
-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-</style>
+</main>
 
 <script>
 let entrevistaId = window.location.pathname.split('/')[2];
 let perguntaAtual = 1;
 let totalPerguntas = 5;
-let contadorAprofundamentos = 0;
-let aprofundamentosLista = [];
 
 async function carregarPergunta() {
+    document.getElementById('card-pergunta').classList.add('hidden');
+    document.getElementById('card-feedback').classList.add('hidden');
+    document.getElementById('card-loading').classList.remove('hidden');
+
     try {
         const res = await fetch(`/entrevista/${entrevistaId}/pergunta/${perguntaAtual}`);
         if (!res.ok) throw new Error('Erro ao carregar pergunta');
-        
         const data = await res.json();
+
         totalPerguntas = data.total_perguntas;
-        
         document.getElementById('pergunta-titulo').textContent = data.pergunta_principal;
-        document.getElementById('progresso-texto').textContent = 
-            `Pergunta ${perguntaAtual} de ${totalPerguntas}`;
-        document.getElementById('barra-preenchimento').style.width = 
-            `${(perguntaAtual / totalPerguntas) * 100}%`;
-        
-        // Resetar UI
-        document.getElementById('form-resposta').style.display = 'block';
-        document.getElementById('feedback-box').style.display = 'none';
-        document.getElementById('aprofundamento-box').style.display = 'none';
-        document.getElementById('proxima-pergunta').style.display = 'none';
+        document.getElementById('pergunta-tema').textContent = data.tema || '';
+        document.getElementById('progresso-texto').textContent = `Pergunta ${perguntaAtual} de ${totalPerguntas}`;
+        document.getElementById('barra-preenchimento').style.width = `${((perguntaAtual - 1) / totalPerguntas) * 100}%`;
         document.getElementById('resposta-input').value = '';
+        document.getElementById('error-resposta').classList.add('hidden');
+
+        document.getElementById('card-loading').classList.add('hidden');
+        document.getElementById('card-pergunta').classList.remove('hidden');
         document.getElementById('resposta-input').focus();
-        
     } catch (err) {
-        alert('Erro ao carregar pergunta: ' + err.message);
+        document.getElementById('card-loading').innerHTML =
+            `<p class="ev-alert ev-alert--danger">${err.message}</p>`;
     }
 }
 
-document.getElementById('form-resposta').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const resposta = document.getElementById('resposta-input').value;
-    if (!resposta.trim() || resposta.length > 2000) {
-        alert('Resposta inválida');
-        return;
-    }
-    
-    const btn = e.target.querySelector('button');
+document.getElementById('btn-enviar').addEventListener('click', async () => {
+    const resposta = document.getElementById('resposta-input').value.trim();
+    const errorEl = document.getElementById('error-resposta');
+    errorEl.classList.add('hidden');
+
+    if (!resposta) { errorEl.textContent = 'Digite sua resposta antes de enviar.'; errorEl.classList.remove('hidden'); return; }
+    if (resposta.length > 2000) { errorEl.textContent = 'Resposta muito longa (máx. 2000 caracteres).'; errorEl.classList.remove('hidden'); return; }
+
+    const btn = document.getElementById('btn-enviar');
     btn.disabled = true;
-    btn.textContent = 'Enviando...';
-    
+    btn.innerHTML = '<i data-lucide="loader"></i> Enviando...';
+    if (window.lucide) lucide.createIcons();
+
     try {
         const res = await fetch(`/entrevista/${entrevistaId}/responder`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                numero_sequencial: perguntaAtual,
-                resposta: resposta,
-                tipo: 'principal'
-            })
+            body: JSON.stringify({ numero_sequencial: perguntaAtual, resposta, tipo: 'principal' })
         });
-        
         if (!res.ok) throw new Error('Erro ao enviar resposta');
-        
         const data = await res.json();
-        
-        // Esconder formulário, mostrar feedback
-        document.getElementById('form-resposta').style.display = 'none';
-        document.getElementById('feedback-box').style.display = 'block';
-        document.getElementById('feedback-texto').textContent = data.feedback_ia;
-        document.getElementById('score-valor').textContent = data.score;
-        
-        // Se tem aprofundamentos
-        if (data.aprofundamentos.length > 0) {
-            aprofundamentosLista = data.aprofundamentos;
-            contadorAprofundamentos = 0;
-            mostrarAprofundamento();
-        } else {
-            mostrarBotaoProxima();
-        }
-        
+
+        const score = data.score || 0;
+        const scoreEl = document.getElementById('score-valor');
+        scoreEl.textContent = score;
+        scoreEl.style.color = score >= 7 ? 'var(--color-success)' : score >= 4 ? 'var(--color-warning)' : 'var(--color-danger)';
+        document.getElementById('feedback-texto').textContent = data.feedback_ia || '';
+
+        const btnProxima = document.getElementById('btn-proxima');
+        const isUltima = perguntaAtual >= totalPerguntas;
+        btnProxima.innerHTML = isUltima
+            ? '<i data-lucide="flag"></i> Finalizar e ver relatório'
+            : '<i data-lucide="arrow-right"></i> Próxima Pergunta';
+        btnProxima.onclick = isUltima ? finalizarEntrevista : proximaPergunta;
+
+        document.getElementById('barra-preenchimento').style.width = `${(perguntaAtual / totalPerguntas) * 100}%`;
+
+        document.getElementById('card-pergunta').classList.add('hidden');
+        document.getElementById('card-feedback').classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
     } catch (err) {
-        alert('Erro: ' + err.message);
+        errorEl.textContent = err.message;
+        errorEl.classList.remove('hidden');
     } finally {
         btn.disabled = false;
-        btn.textContent = 'Enviar Resposta';
+        btn.innerHTML = '<i data-lucide="send"></i> Enviar Resposta';
+        if (window.lucide) lucide.createIcons();
     }
 });
 
-function mostrarAprofundamento() {
-    if (contadorAprofundamentos >= aprofundamentosLista.length) {
-        mostrarBotaoProxima();
-        return;
-    }
-    
-    const ap = aprofundamentosLista[contadorAprofundamentos];
-    document.getElementById('pergunta-aprofundamento').textContent = ap.pergunta;
-    document.getElementById('aprofundamento-box').style.display = 'block';
-    document.getElementById('resposta-aprofundamento').value = '';
-    document.getElementById('resposta-aprofundamento').focus();
-    
-    const form = document.getElementById('form-aprofundamento');
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        
-        const resposta = document.getElementById('resposta-aprofundamento').value;
-        if (!resposta.trim()) {
-            alert('Resposta inválida');
-            return;
-        }
-        
-        contadorAprofundamentos++;
-        mostrarAprofundamento();
-    };
-}
-
-function mostrarBotaoProxima() {
-    document.getElementById('aprofundamento-box').style.display = 'none';
-    
-    if (perguntaAtual < totalPerguntas) {
-        document.getElementById('proxima-pergunta').style.display = 'block';
-        document.getElementById('btn-proxima').textContent = 'Próxima Pergunta →';
-        document.getElementById('btn-proxima').onclick = proximaPergunta;
-    } else {
-        document.getElementById('proxima-pergunta').style.display = 'block';
-        document.getElementById('btn-proxima').textContent = 'Finalizar e Ver Relatório →';
-        document.getElementById('btn-proxima').onclick = finalizarEntrevista;
-    }
-}
-
-async function proximaPergunta() {
+function proximaPergunta() {
     perguntaAtual++;
-    await carregarPergunta();
+    carregarPergunta();
 }
 
 async function finalizarEntrevista() {
-    if (!confirm('Tem certeza que deseja finalizar a entrevista?')) return;
-    
+    const btn = document.getElementById('btn-proxima');
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader"></i> Gerando relatório...';
+    if (window.lucide) lucide.createIcons();
     try {
         const res = await fetch(`/entrevista/${entrevistaId}/finalizar`, { method: 'POST' });
         if (!res.ok) throw new Error('Erro ao finalizar');
-        
         window.location.href = `/entrevista/${entrevistaId}/relatorio`;
     } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="flag"></i> Finalizar e ver relatório';
         alert('Erro: ' + err.message);
     }
 }
 
-// Carregar primeira pergunta
 window.addEventListener('load', carregarPergunta);
 </script>
 {% endblock %}

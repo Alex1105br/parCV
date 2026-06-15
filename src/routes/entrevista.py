@@ -156,11 +156,14 @@ def get_entrevista(entrevista_id):
         "numero_perguntas": entrevista.numero_perguntas,
         "plano_entrevista": entrevista.plano_entrevista,
         "criado_em": entrevista.criado_em.isoformat(),
+        "relatorio_final": entrevista.relatorio_final,
         "perguntas": [
             {
                 "numero_sequencial": p.numero_sequencial,
                 "pergunta_principal": p.pergunta_principal,
+                "resposta_usuario": p.resposta_usuario,
                 "respondido": p.resposta_usuario is not None,
+                "avaliacao_resposta": p.avaliacao_resposta,
                 "score": p.avaliacao_resposta.get("score") if p.avaliacao_resposta else None
             }
             for p in entrevista.perguntas
@@ -256,26 +259,8 @@ def responder_pergunta(entrevista_id):
             "aprofundar": avaliacao.get("deve_aprofundar", False)
         }
         
-        # Gerar e salvar aprofundamentos se necessário
+        # Aprofundamentos removidos — entrevista direta com 5 perguntas
         aprofundamentos_resposta = []
-        if avaliacao.get("deve_aprofundar") and avaliacao.get("perguntas_aprofundamento"):
-            pergunta.perguntas_aprofundamento = [
-                {
-                    "pergunta": ap,
-                    "resposta": None,
-                    "feedback": None
-                }
-                for ap in avaliacao["perguntas_aprofundamento"][:2]
-            ]
-            
-            aprofundamentos_resposta = [
-                {
-                    "numero": i + 1,
-                    "pergunta": ap,
-                    "tipo": f"aprofundamento_{i+1}"
-                }
-                for i, ap in enumerate(avaliacao["perguntas_aprofundamento"][:2])
-            ]
         
         db.session.commit()
         
@@ -336,9 +321,6 @@ def relatorio(entrevista_id):
     if not entrevista:
         return jsonify({"error": "Entrevista não encontrada"}), 404
     
-    if entrevista.status != "concluida":
-        return jsonify({"error": "Entrevista ainda não foi concluída"}), 400
-    
     return render_template("entrevista_relatorio.html", entrevista_id=entrevista_id)
 
 
@@ -349,9 +331,6 @@ def exportar_pdf(entrevista_id):
     entrevista = _get_entrevista_or_404(entrevista_id)
     if not entrevista:
         return jsonify({"error": "Entrevista não encontrada"}), 404
-    
-    if entrevista.status != "concluida":
-        return jsonify({"error": "Entrevista ainda não foi concluída"}), 400
     
     try:
         pdf_bytes = gerar_pdf_relatorio_entrevista(entrevista)

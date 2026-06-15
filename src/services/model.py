@@ -209,7 +209,7 @@ DESCRIÇÃO DA VAGA:
 
 Gere um JSON com a seguinte estrutura (APENAS JSON, sem outros textos):
 {{
-    "numero_perguntas": <5-8>,
+    "numero_perguntas": 5,
     "topicos_principais": [<lista de 3-5 tópicos técnicos principais>],
     "estrategia_entrevista": "<descrição breve da estratégia em 2-3 linhas>",
     "questoes_principais": [<lista de 5-8 perguntas técnicas bem estruturadas>]
@@ -245,6 +245,9 @@ Gere um JSON com a seguinte estrutura (APENAS JSON, sem outros textos):
             plano.setdefault("topicos_principais", [])
             plano.setdefault("estrategia_entrevista", "")
             plano.setdefault("questoes_principais", [])
+            # Limit to exactly 5
+            plano["numero_perguntas"] = 5
+            plano["questoes_principais"] = plano["questoes_principais"][:5]
             
             return plano
     except json.JSONDecodeError as e:
@@ -281,8 +284,8 @@ Forneça avaliação em JSON (APENAS JSON):
 {{
     "feedback": "<feedback construtivo e específico sobre a resposta - max 300 chars>",
     "score": <1-10>,
-    "deve_aprofundar": <true/false>,
-    "perguntas_aprofundamento": [<lista de 0-2 perguntas de aprofundamento se deve_aprofundar=true>]
+    "deve_aprofundar": false,
+    "perguntas_aprofundamento": []
 }}"""
     
     response, error = call_model(prompt, num_predict=800)
