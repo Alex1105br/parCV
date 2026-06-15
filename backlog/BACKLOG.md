@@ -79,7 +79,7 @@ class: cover
 | ✓ | sanitização de input + proteção contra *prompt injection* | security | 5 |
 | ✓ | Botão Nova conversa e listagem de conversas na sidebar | ux | 5 |
 | ✓ | Upload de currículo no chat para perguntas contextuais | feature | 5 |
-| | Simulação de entrevista com IA | feature | 7 |
+| ✓ | Simulação de entrevista com IA | feature | 7 |
 
 > Foco: UX de chat.
 
@@ -89,7 +89,7 @@ class: cover
 
 | | título | label | pts |
 | - | :- | :-: | :-: |
-| | Sign-in/up | feature | 5 |
+| ✓ | Sign-in/up | feature | 5 |
 | | README atualizado com screenshots, arquitetura e contribuição | docs | 3 |
 
 > Foco: autenticação + deploy + documentação.
