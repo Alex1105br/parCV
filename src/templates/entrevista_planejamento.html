@@ -5,19 +5,18 @@
 {% block styles %}
 <style>
     :root {
-        --bg-main: #0B0F19;
-        --bg-card: #151D30;
-        --color-primary: #6366F1;
-        --color-primary-hover: #4F46E5;
-        --color-gradient-start: #8B5CF6;
-        --color-gradient-end: #6366F1;
-        --color-border: #24324F;
-        --color-border-focus: #8B5CF6;
-        --text-main: #F3F4F6;
-        --text-muted: #9CA3AF;
-        --color-success: #10B981;
-        --color-danger: #EF4444;
-        --color-warning: #F59E0B;
+        /* Paleta de cores mantida do design original */
+        --bg-main: #1a1a2e;
+        --bg-card: #24243e;
+        --color-primary: #3f51b5;
+        --color-primary-hover: #303f9f;
+        --color-border: #30304d;
+        --color-border-focus: #3f51b5;
+        --text-main: #ffffff;
+        --text-muted: #b0b0b0;
+        --color-success: #2e7d32;
+        --color-danger: #d32f2f;
+        --color-warning: #f57c00;
         --radius-lg: 16px;
         --radius-md: 12px;
         --spacing-xl: 32px;
@@ -26,7 +25,7 @@
     body {
         background-color: var(--bg-main);
         color: var(--text-main);
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        font-family: system-ui, -apple-system, sans-serif;
     }
 
     .header {
@@ -91,7 +90,7 @@
     }
 
     .ev-card__icon {
-        background: rgba(99, 102, 241, 0.1);
+        background: rgba(63, 81, 181, 0.1);
         color: var(--color-primary);
         padding: 12px;
         border-radius: var(--radius-md);
@@ -129,18 +128,18 @@
         padding: 32px 20px;
         text-align: center;
         cursor: pointer;
-        background: rgba(21, 29, 48, 0.5);
+        background: rgba(36, 36, 62, 0.5);
         transition: all 0.2s ease;
     }
 
     .file-drop:hover, .file-drop--hover {
         border-color: var(--color-border-focus);
-        background: rgba(139, 92, 246, 0.05);
+        background: rgba(63, 81, 181, 0.05);
     }
 
     .file-drop--selected {
         border-color: var(--color-success);
-        background: rgba(16, 185, 129, 0.03);
+        background: rgba(46, 125, 50, 0.03);
     }
 
     .file-drop__input {
@@ -186,7 +185,7 @@
     .form-textarea {
         width: 100%;
         min-height: 140px;
-        background: rgba(11, 15, 25, 0.6);
+        background: rgba(26, 26, 46, 0.6);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-md);
         padding: 16px;
@@ -195,13 +194,12 @@
         font-size: 15px;
         resize: vertical;
         box-sizing: border-box;
-        transition: border-color 0.2s, box-shadow 0.2s;
+        transition: border-color 0.2s;
     }
 
     .form-textarea:focus {
         outline: none;
         border-color: var(--color-border-focus);
-        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
     }
 
     .ev-alert {
@@ -212,9 +210,9 @@
     }
 
     .ev-alert--danger {
-        background: rgba(239, 68, 68, 0.1);
+        background: rgba(211, 47, 47, 0.1);
         border: 1px solid var(--color-danger);
-        color: #FCA5A5;
+        color: #ffcdd2;
     }
 
     .btn-container {
@@ -240,18 +238,17 @@
         text-decoration: none;
     }
 
+    /* Redefinição do botão: Sem gradiente, paleta clássica e tamanho ajustado */
     .btn--primary {
-        background: linear-gradient(135deg, var(--color-gradient-start), var(--color-gradient-end));
+        background-color: var(--color-primary);
         color: #FFFFFF;
-        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
         width: 100%;
         max-width: 320px;
     }
 
     .btn--primary:hover {
-        opacity: 0.95;
+        background-color: var(--color-primary-hover);
         transform: translateY(-1px);
-        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
     }
 
     .ev-spinner {
@@ -273,7 +270,6 @@
         font-size: 16px;
     }
 
-    /* Estilos do Planejamento Pronto */
     .ev-plano-header {
         text-align: center;
         margin-bottom: var(--spacing-xl);
@@ -283,8 +279,8 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        background: rgba(16, 185, 129, 0.1);
-        color: var(--color-success);
+        background: rgba(46, 125, 50, 0.1);
+        color: #81c784;
         padding: 6px 14px;
         border-radius: 20px;
         font-size: 13px;
@@ -329,13 +325,13 @@
     }
 
     .ev-estrategia {
-        background: rgba(99, 102, 241, 0.05);
+        background: rgba(63, 81, 181, 0.05);
         border-left: 4px solid var(--color-primary);
         padding: 16px 20px;
         border-radius: 0 var(--radius-md) var(--radius-md) 0;
         font-size: 14px;
         line-height: 1.6;
-        color: #D1D5DB;
+        color: #e0e0e0;
         margin-bottom: var(--spacing-xl);
     }
 
@@ -455,7 +451,6 @@ fileInput.addEventListener('change', () => {
     }
 });
 
-// Drag & Drop
 fileDrop.addEventListener('dragover', e => { e.preventDefault(); fileDrop.classList.add('file-drop--hover'); });
 fileDrop.addEventListener('dragleave', () => fileDrop.classList.remove('file-drop--hover'));
 fileDrop.addEventListener('drop', e => {
@@ -500,7 +495,7 @@ document.getElementById('form-planejamento').addEventListener('submit', async (e
         if (window.lucide) lucide.createIcons();
     } catch (err) {
         document.getElementById('card-loading').classList.add('hidden');
-        document.getElementById('form-planejamento').closest('.ev-card').classList.remove('hidden');
+        document.getElementById('card-form').classList.remove('hidden');
         showError(err.message);
     }
 });

@@ -5,15 +5,15 @@
 {% block styles %}
 <style>
     :root {
-        --bg-main: #0B0F19;
-        --bg-card: #151D30;
-        --color-primary: #6366F1;
-        --color-border: #24324F;
-        --text-main: #F3F4F6;
-        --text-muted: #9CA3AF;
-        --color-success: #10B981;
-        --color-danger: #EF4444;
-        --color-warning: #F59E0B;
+        --bg-main: #1a1a2e;
+        --bg-card: #24243e;
+        --color-primary: #3f51b5;
+        --color-border: #30304d;
+        --text-main: #ffffff;
+        --text-muted: #b0b0b0;
+        --color-success: #2e7d32;
+        --color-danger: #d32f2f;
+        --color-warning: #f57c00;
         --radius-lg: 16px;
         --radius-md: 12px;
         --spacing-xl: 32px;
@@ -22,7 +22,7 @@
     body {
         background-color: var(--bg-main);
         color: var(--text-main);
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        font-family: system-ui, -apple-system, sans-serif;
     }
 
     .header {
@@ -83,18 +83,18 @@
         padding: 60px var(--spacing-xl);
     }
 
-    /* Redesenho do Score Ring */
+    /* Redesenho Inteligente do Card de Score: Tamanho controlado e texto centralizado de forma absoluta */
     .ev-card--score {
         display: flex;
         align-items: center;
         gap: var(--spacing-xl);
-        background: linear-gradient(135deg, #1E293B, var(--bg-card));
+        background: rgba(255, 255, 255, 0.02);
     }
 
     .ev-score-ring {
         position: relative;
-        width: 130px;
-        height: 130px;
+        width: 120px;
+        height: 120px;
         flex-shrink: 0;
     }
 
@@ -103,6 +103,7 @@
         height: 100%;
     }
 
+    /* Posicionamento do texto garantindo que a nota apareça exatamente no centro */
     .ev-score-ring__value {
         position: absolute;
         top: 0; left: 0; width: 100%; height: 100%;
@@ -115,7 +116,7 @@
     }
 
     #score-numero {
-        font-size: 32px;
+        font-size: 30px;
     }
 
     .ev-score-ring__denom {
@@ -137,7 +138,7 @@
         letter-spacing: 0.05em;
     }
 
-    /* Resumo 3 colunas Modernizado */
+    /* Grid Modernizado de 3 Colunas */
     .ev-resumo {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -153,9 +154,9 @@
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
 
-    .ev-resumo__col--success { border-top: 4px solid var(--color-success); background: linear-gradient(to bottom, rgba(16, 185, 129, 0.02), var(--bg-card)); }
-    .ev-resumo__col--warning { border-top: 4px solid var(--color-warning); background: linear-gradient(to bottom, rgba(245, 158, 11, 0.02), var(--bg-card)); }
-    .ev-resumo__col--primary { border-top: 4px solid var(--color-primary); background: linear-gradient(to bottom, rgba(99, 102, 241, 0.02), var(--bg-card)); }
+    .ev-resumo__col--success { border-top: 4px solid #81c784; }
+    .ev-resumo__col--warning { border-top: 4px solid #ffb74d; }
+    .ev-resumo__col--primary { border-top: 4px solid #9fa8da; }
 
     .ev-resumo__title {
         display: flex;
@@ -166,9 +167,9 @@
         margin: 0 0 16px 0;
     }
 
-    .ev-resumo__col--success .ev-resumo__title { color: var(--color-success); }
-    .ev-resumo__col--warning .ev-resumo__title { color: var(--color-warning); }
-    .ev-resumo__col--primary .ev-resumo__title { color: var(--color-primary); }
+    .ev-resumo__col--success .ev-resumo__title { color: #81c784; }
+    .ev-resumo__col--warning .ev-resumo__title { color: #ffb74d; }
+    .ev-resumo__col--primary .ev-resumo__title { color: #9fa8da; }
 
     .ev-resumo__list {
         list-style: none;
@@ -182,7 +183,7 @@
     .ev-resumo__list li {
         font-size: 14px;
         line-height: 1.5;
-        color: #D1D5DB;
+        color: #e0e0e0;
         position: relative;
         padding-left: 14px;
     }
@@ -208,11 +209,11 @@
     .ev-parecer-texto {
         font-size: 15px;
         line-height: 1.7;
-        color: #D1D5DB;
+        color: #e0e0e0;
         margin: 0;
     }
 
-    /* Acordeão de Perguntas Refinado */
+    /* Detalhes de Perguntas (Acordeão Moderno) */
     .ev-acordeao {
         display: flex;
         flex-direction: column;
@@ -249,7 +250,7 @@
     .ev-acordeao__num {
         font-size: 13px;
         font-weight: 600;
-        color: var(--color-primary);
+        color: #9fa8da;
     }
 
     .ev-acordeao__preview {
@@ -267,9 +268,9 @@
         font-weight: 600;
     }
 
-    .ev-badge--success { background: rgba(16, 185, 129, 0.1); color: var(--color-success); }
-    .ev-badge--warning { background: rgba(245, 158, 11, 0.1); color: var(--color-warning); }
-    .ev-badge--danger { background: rgba(239, 68, 68, 0.1); color: var(--color-danger); }
+    .ev-badge--success { background: rgba(46, 125, 50, 0.2); color: #81c784; }
+    .ev-badge--warning { background: rgba(245, 158, 11, 0.2); color: #ffb74d; }
+    .ev-badge--danger { background: rgba(213, 47, 47, 0.2); color: #e57373; }
 
     .ev-acordeao__chevron {
         color: var(--text-muted);
@@ -282,7 +283,7 @@
 
     .ev-acordeao__body {
         padding: 20px;
-        background: rgba(11, 15, 25, 0.4);
+        background: rgba(26, 26, 46, 0.4);
         border-top: 1px solid var(--color-border);
         display: flex;
         flex-direction: column;
@@ -301,11 +302,11 @@
         font-size: 14px;
         line-height: 1.6;
         margin: 0;
-        color: #E5E7EB;
+        color: #e0e0e0;
     }
 
     .ev-detalhe-bloco--feedback {
-        background: rgba(99, 102, 241, 0.04);
+        background: rgba(63, 81, 181, 0.04);
         padding: 14px;
         border-radius: var(--radius-md);
         border-left: 3px solid var(--color-primary);
@@ -327,8 +328,8 @@
         text-decoration: none;
     }
 
-    .btn--primary { background: var(--color-primary); color: white; }
-    .btn--primary:hover { background: #4F46E5; }
+    .btn--primary { background-color: var(--color-primary); color: white; }
+    .btn--primary:hover { background-color: #303f9f; }
     .btn--secondary { background: rgba(255, 255, 255, 0.08); color: var(--text-main); }
     .btn--secondary:hover { background: rgba(255, 255, 255, 0.15); }
 
@@ -372,13 +373,14 @@
 </header>
 
 <main class="ev-main">
-    <div class="ev-card ev-card--center" id="card-loading">
+    <div class="ev-card--center" id="card-loading">
         <div class="ev-spinner"></div>
         <p class="ev-loading-text">Carregando relatório...</p>
     </div>
 
     <div class="hidden" id="relatorio-content">
 
+        <!-- Score Geral Redesenhado -->
         <div class="ev-card ev-card--score" id="card-score">
             <div class="ev-score-ring" id="score-ring">
                 <svg viewBox="0 0 100 100">
@@ -457,35 +459,30 @@ async function carregarRelatorio() {
             return;
         }
 
-        // Score
         const score = relatorio.score_geral ?? 0;
         document.getElementById('score-numero').textContent = score.toFixed(1);
 
-        // Cor e label
         let cor, label;
-        if (score >= 8)      { cor = 'var(--color-success)'; label = 'Excelente'; }
-        else if (score >= 6) { cor = 'var(--color-primary)'; label = 'Bom'; }
-        else if (score >= 4) { cor = 'var(--color-warning)'; label = 'Regular'; }
-        else                 { cor = 'var(--color-danger)';  label = 'Precisa melhorar'; }
+        if (score >= 8)      { cor = '#81c784'; label = 'Excelente'; }
+        else if (score >= 6) { cor = '#9fa8da'; label = 'Bom'; }
+        else if (score >= 4) { cor = '#ffb74d'; label = 'Regular'; }
+        else                 { cor = '#e57373'; label = 'Precisa melhorar'; }
 
         document.getElementById('score-arc').style.stroke = cor;
         document.getElementById('score-numero').style.color = cor;
         document.getElementById('score-label').textContent = label;
         document.getElementById('score-label').style.color = cor;
 
-        // Anima arco: dashoffset = 264 * (1 - score/10)
         requestAnimationFrame(() => {
             document.getElementById('score-arc').style.strokeDashoffset = 264 * (1 - score / 10);
         });
 
-        // Listas
         const toLi = arr => (arr || []).map(x => `<li>${x}</li>`).join('');
         document.getElementById('pontos-fortes').innerHTML = toLi(relatorio.pontos_fortes);
         document.getElementById('pontos-fracos').innerHTML = toLi(relatorio.pontos_fracos);
         document.getElementById('recomendacoes').innerHTML = toLi(relatorio.recomendacoes);
         document.getElementById('parecer-final').textContent = relatorio.parecer_final || '';
 
-        // Acordeão de perguntas
         const container = document.getElementById('perguntas-container');
         (data.perguntas || []).forEach((p, i) => {
             const s = p.avaliacao_resposta?.score ?? 0;

@@ -5,16 +5,16 @@
 {% block styles %}
 <style>
     :root {
-        --bg-main: #0B0F19;
-        --bg-card: #151D30;
-        --color-primary: #6366F1;
-        --color-border: #24324F;
-        --color-border-focus: #8B5CF6;
-        --text-main: #F3F4F6;
-        --text-muted: #9CA3AF;
-        --color-success: #10B981;
-        --color-danger: #EF4444;
-        --color-warning: #F59E0B;
+        --bg-main: #1a1a2e;
+        --bg-card: #24243e;
+        --color-primary: #3f51b5;
+        --color-border: #30304d;
+        --color-border-focus: #3f51b5;
+        --text-main: #ffffff;
+        --text-muted: #b0b0b0;
+        --color-success: #2e7d32;
+        --color-danger: #d32f2f;
+        --color-warning: #f57c00;
         --radius-lg: 16px;
         --radius-md: 12px;
         --spacing-xl: 32px;
@@ -23,7 +23,7 @@
     body {
         background-color: var(--bg-main);
         color: var(--text-main);
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        font-family: system-ui, -apple-system, sans-serif;
     }
 
     .header {
@@ -54,8 +54,8 @@
         border-radius: 20px;
         font-size: 13px;
         font-weight: 600;
-        color: var(--color-primary);
-        border: 1px solid rgba(99, 102, 241, 0.2);
+        color: #ffffff;
+        border: 1px solid var(--color-border);
     }
 
     .ev-main--exec {
@@ -75,8 +75,8 @@
 
     .ev-progress-fill {
         height: 100%;
-        background: linear-gradient(90deg, var(--color-primary), #8B5CF6);
-        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        background-color: var(--color-primary);
+        transition: width 0.4s ease;
     }
 
     .ev-card {
@@ -98,8 +98,8 @@
 
     .ev-pergunta-meta {
         display: inline-block;
-        background: rgba(139, 92, 246, 0.1);
-        color: #A78BFA;
+        background: rgba(63, 81, 181, 0.15);
+        color: #9fa8da;
         padding: 4px 12px;
         border-radius: 12px;
         font-size: 12px;
@@ -131,7 +131,7 @@
     .form-textarea {
         width: 100%;
         min-height: 160px;
-        background: rgba(11, 15, 25, 0.6);
+        background: rgba(26, 26, 46, 0.6);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-md);
         padding: 16px;
@@ -140,13 +140,12 @@
         font-size: 15px;
         resize: vertical;
         box-sizing: border-box;
-        transition: border-color 0.2s, box-shadow 0.2s;
+        transition: border-color 0.2s;
     }
 
     .form-textarea:focus {
         outline: none;
         border-color: var(--color-border-focus);
-        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
     }
 
     .ev-alert {
@@ -157,9 +156,9 @@
     }
 
     .ev-alert--danger {
-        background: rgba(239, 68, 68, 0.1);
+        background: rgba(213, 47, 47, 0.1);
         border: 1px solid var(--color-danger);
-        color: #FCA5A5;
+        color: #ffcdd2;
     }
 
     .ev-exec-actions {
@@ -187,15 +186,13 @@
     }
 
     .btn--primary {
-        background: linear-gradient(135deg, #8B5CF6, var(--color-primary));
+        background-color: var(--color-primary);
         color: #FFFFFF;
-        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
     }
 
     .btn--primary:hover:not(:disabled) {
-        opacity: 0.95;
+        background-color: #303f9f;
         transform: translateY(-1px);
-        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
     }
 
     .btn:disabled {
@@ -217,7 +214,6 @@
 
     .ev-loading-text { color: var(--text-muted); font-size: 15px; }
 
-    /* Estilos de Feedback */
     .ev-feedback-header {
         display: flex;
         gap: 24px;
@@ -233,7 +229,7 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: rgba(11, 15, 25, 0.8);
+        background: rgba(26, 26, 46, 0.8);
         border: 2px solid var(--color-border);
         border-radius: var(--radius-md);
         min-width: 80px;
@@ -256,13 +252,13 @@
         font-size: 16px;
         font-weight: 600;
         margin: 0 0 8px 0;
-        color: var(--color-primary);
+        color: #9fa8da;
     }
 
     .ev-feedback-texto {
         font-size: 14px;
         line-height: 1.6;
-        color: #D1D5DB;
+        color: #e0e0e0;
         margin: 0;
     }
 
@@ -394,7 +390,7 @@ document.getElementById('btn-enviar').addEventListener('click', async () => {
         const score = data.score || 0;
         const scoreEl = document.getElementById('score-valor');
         scoreEl.textContent = score;
-        scoreEl.style.color = score >= 7 ? 'var(--color-success)' : score >= 4 ? 'var(--color-warning)' : 'var(--color-danger)';
+        scoreEl.style.color = score >= 7 ? '#81c784' : score >= 4 ? '#ffb74d' : '#e57373';
         document.getElementById('feedback-texto').textContent = data.feedback_ia || '';
 
         const btnProxima = document.getElementById('btn-proxima');
