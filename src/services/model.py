@@ -275,10 +275,13 @@ DESCRIÇÃO DA VAGA:
 
 Gere um JSON com a seguinte estrutura (APENAS JSON, sem outros textos):
 {{
-    "numero_perguntas": 5,
-    "topicos_principais": [<lista de 3-5 tópicos técnicos principais>],
-    "estrategia_entrevista": "<descrição breve da estratégia em 2-3 linhas>",
-    "questoes_principais": [<lista de 5-8 perguntas técnicas bem estruturadas>]
+    "numero_perguntas": 10,
+    "topicos_principais": [<lista de 4-6 tópicos principais, misturando habilidades técnicas e comportamentais>],
+    "estrategia_entrevista": "<descrição breve da estratégia em 2-3 linhas, mencionando a cobertura de hard e soft skills>",
+    "questoes_principais": [<lista de exatamente 10 perguntas, sendo:
+        - perguntas 1 a 6: hard skills (habilidades técnicas específicas da vaga, tecnologias, metodologias, resolução de problemas técnicos),
+        - perguntas 7 a 10: soft skills (comunicação, trabalho em equipe, liderança, adaptabilidade, resolução de conflitos, gestão de tempo)
+    >]
 }}"""
     
     response, error = call_model(prompt, num_predict=1500)
@@ -286,15 +289,20 @@ Gere um JSON com a seguinte estrutura (APENAS JSON, sem outros textos):
     if error or not response:
         logger.error(f"Erro ao gerar plano: {error}")
         return {
-            "numero_perguntas": 5,
-            "topicos_principais": ["Experiência Técnica", "Resolução de Problemas", "Trabalho em Equipe"],
-            "estrategia_entrevista": "Avaliação técnica com foco em habilidades práticas e comportamentais",
+            "numero_perguntas": 10,
+            "topicos_principais": ["Habilidades Técnicas", "Resolução de Problemas", "Comunicação", "Trabalho em Equipe", "Gestão de Tempo"],
+            "estrategia_entrevista": "Avaliação equilibrada com 6 perguntas de hard skills (competências técnicas) e 4 perguntas de soft skills (competências comportamentais)",
             "questoes_principais": [
-                "Descreva seu maior projeto técnico e o que você aprendeu com ele",
-                "Como você aborda a resolução de um problema desconhecido?",
-                "Qual é sua experiência com tecnologias relevantes para esta vaga?",
-                "Conte sobre um conflito no trabalho e como você o resolveu",
-                "Quais são seus objetivos profissionais para os próximos 2 anos?"
+                "Descreva seu maior projeto técnico e as tecnologias que você utilizou",
+                "Qual é sua experiência com as tecnologias principais exigidas nesta vaga?",
+                "Como você aborda a resolução de um bug crítico em produção?",
+                "Explique como você garante a qualidade do código que escreve",
+                "Descreva sua experiência com metodologias ágeis ou processos de desenvolvimento",
+                "Como você se mantém atualizado com as novas tecnologias da sua área?",
+                "Conte sobre uma situação em que precisou explicar um problema técnico para uma pessoa não técnica",
+                "Descreva um momento em que você teve que lidar com prazos apertados e como se organizou",
+                "Conte sobre um conflito com um colega de equipe e como você o resolveu",
+                "Quais são seus objetivos profissionais para os próximos 2 anos e como esta vaga se encaixa neles?"
             ]
         }
     
@@ -307,28 +315,33 @@ Gere um JSON com a seguinte estrutura (APENAS JSON, sem outros textos):
             plano = json.loads(json_str)
             
             # Validar campos
-            plano.setdefault("numero_perguntas", 5)
+            plano.setdefault("numero_perguntas", 10)
             plano.setdefault("topicos_principais", [])
             plano.setdefault("estrategia_entrevista", "")
             plano.setdefault("questoes_principais", [])
-            # Limit to exactly 5
-            plano["numero_perguntas"] = 5
-            plano["questoes_principais"] = plano["questoes_principais"][:5]
+            # Limitar a exatamente 10 perguntas
+            plano["numero_perguntas"] = 10
+            plano["questoes_principais"] = plano["questoes_principais"][:10]
             
             return plano
     except json.JSONDecodeError as e:
         logger.warning(f"Erro ao parsear JSON do plano: {e}")
     
     return {
-        "numero_perguntas": 5,
-        "topicos_principais": ["Experiência Técnica", "Resolução de Problemas", "Trabalho em Equipe"],
-        "estrategia_entrevista": "Avaliação técnica com foco em habilidades práticas e comportamentais",
+        "numero_perguntas": 10,
+        "topicos_principais": ["Habilidades Técnicas", "Resolução de Problemas", "Comunicação", "Trabalho em Equipe", "Gestão de Tempo"],
+        "estrategia_entrevista": "Avaliação equilibrada com 6 perguntas de hard skills (competências técnicas) e 4 perguntas de soft skills (competências comportamentais)",
         "questoes_principais": [
-            "Descreva seu maior projeto técnico e o que você aprendeu com ele",
-            "Como você aborda a resolução de um problema desconhecido?",
-            "Qual é sua experiência com tecnologias relevantes para esta vaga?",
-            "Conte sobre um conflito no trabalho e como você o resolveu",
-            "Quais são seus objetivos profissionais para os próximos 2 anos?"
+            "Descreva seu maior projeto técnico e as tecnologias que você utilizou",
+            "Qual é sua experiência com as tecnologias principais exigidas nesta vaga?",
+            "Como você aborda a resolução de um bug crítico em produção?",
+            "Explique como você garante a qualidade do código que escreve",
+            "Descreva sua experiência com metodologias ágeis ou processos de desenvolvimento",
+            "Como você se mantém atualizado com as novas tecnologias da sua área?",
+            "Conte sobre uma situação em que precisou explicar um problema técnico para uma pessoa não técnica",
+            "Descreva um momento em que você teve que lidar com prazos apertados e como se organizou",
+            "Conte sobre um conflito com um colega de equipe e como você o resolveu",
+            "Quais são seus objetivos profissionais para os próximos 2 anos e como esta vaga se encaixa neles?"
         ]
     }
 
@@ -405,43 +418,65 @@ def gerar_relatorio_final(entrevista_id):
         logger.error(f"Entrevista {entrevista_id} não encontrada")
         return _relatorio_padrao()
     
-    # Compilar respostas e feedbacks
-    perguntas_info = []
+    # Compilar respostas e feedbacks, separando hard e soft skills
+    # Perguntas 1-6 = hard skills, 7-10 = soft skills (conforme estrutura gerada no plano)
+    hard_skills_info = []
+    soft_skills_info = []
     scores_totais = []
-    
+
     for pergunta in entrevista.perguntas:
         if pergunta.resposta_usuario and pergunta.avaliacao_resposta:
             score = pergunta.avaliacao_resposta.get("score", 5)
             scores_totais.append(score)
-            perguntas_info.append({
-                "pergunta": pergunta.pergunta_principal[:100],
-                "resposta_resumida": pergunta.resposta_usuario[:150],
+            entrada = {
+                "numero": pergunta.numero_sequencial,
+                "pergunta": pergunta.pergunta_principal[:120],
+                "resposta_resumida": pergunta.resposta_usuario[:200],
                 "score": score,
-                "feedback": pergunta.avaliacao_resposta.get("feedback", "")[:100]
-            })
-    
+                "feedback": pergunta.avaliacao_resposta.get("feedback", "")[:150]
+            }
+            if pergunta.numero_sequencial <= 6:
+                hard_skills_info.append(entrada)
+            else:
+                soft_skills_info.append(entrada)
+
     # Calcular score médio
     score_medio = sum(scores_totais) / len(scores_totais) if scores_totais else 5.0
-    
-    prompt = f"""Você é um gestor de RH sênior. Gere um relatório executivo final de entrevista.
+    score_hard = (sum(p["score"] for p in hard_skills_info) / len(hard_skills_info)) if hard_skills_info else 5.0
+    score_soft = (sum(p["score"] for p in soft_skills_info) / len(soft_skills_info)) if soft_skills_info else 5.0
+
+    prompt = f"""Você é um gestor de RH sênior. Gere um relatório executivo final de entrevista analisando SEPARADAMENTE hard skills e soft skills.
 
 VAGA: {entrevista.vaga_descricao[:500]}
 
-PLAN DA ENTREVISTA: {entrevista.plano_entrevista.get('estrategia_entrevista', '')}
+ESTRATÉGIA DA ENTREVISTA: {entrevista.plano_entrevista.get('estrategia_entrevista', '')}
 
-DESEMPENHO:
-- Score Médio: {score_medio:.1f}/10
-- Perguntas Respondidas: {len(perguntas_info)}
-- Detalhes: {json.dumps(perguntas_info[:3])}
+DESEMPENHO GERAL:
+- Score Médio Geral: {score_medio:.1f}/10
+- Score Médio Hard Skills (técnicas): {score_hard:.1f}/10
+- Score Médio Soft Skills (comportamentais): {score_soft:.1f}/10
+- Total de Perguntas Respondidas: {len(hard_skills_info) + len(soft_skills_info)}
+
+HARD SKILLS — Respostas técnicas (perguntas 1 a 6):
+{json.dumps(hard_skills_info, ensure_ascii=False)}
+
+SOFT SKILLS — Respostas comportamentais (perguntas 7 a 10):
+{json.dumps(soft_skills_info, ensure_ascii=False)}
+
+INSTRUÇÕES:
+- Analise os dois blocos acima com atenção.
+- "pontos_fortes" deve cobrir tanto conquistas técnicas (hard skills) quanto comportamentais (soft skills) onde o candidato se destacou.
+- "pontos_fracos" deve listar falhas ou respostas fracas de AMBOS os blocos — não ignore soft skills com score baixo.
+- "recomendacoes" deve ser concreto e diferenciado: se o candidato foi fraco em soft skills, inclua recomendações específicas de desenvolvimento comportamental (ex: comunicação, gestão de conflitos, trabalho em equipe); se foi fraco em hard skills, inclua recomendações técnicas.
 
 Gere JSON (APENAS JSON):
 {{
     "score_geral": <1.0-10.0>,
-    "parecer_final": "<parecer executivo conciso - max 500 chars>",
-    "pontos_fortes": [<lista 3-4 pontos fortes identificados>],
-    "pontos_fracos": [<lista 3-4 pontos a melhorar>],
-    "recomendacoes": [<lista 2-3 recomendações concretas>],
-    "recomendacao_gestor": "<recomendação final - REJEITAR / ENTREVISTA_ADICIONAL / APROVAR>"
+    "parecer_final": "<parecer executivo conciso cobrindo hard e soft skills - max 500 chars>",
+    "pontos_fortes": [<lista de 3-4 pontos fortes, misturando hard e soft skills onde houver destaque>],
+    "pontos_fracos": [<lista de 3-4 pontos fracos, incluindo soft skills se houver score baixo>],
+    "recomendacoes": [<lista de 3-4 recomendações concretas e diferenciadas por tipo de lacuna>],
+    "recomendacao_gestor": "<REJEITAR / ENTREVISTA_ADICIONAL / APROVAR>"
 }}"""
     
     response, error = call_model(prompt, num_predict=1000)
@@ -476,12 +511,16 @@ Gere JSON (APENAS JSON):
 
 
 def _relatorio_padrao(score_medio=5.0):
-    """Retorna relatório padrão de fallback"""
+    """Retorna relatório padrão de fallback cobrindo hard e soft skills"""
     return {
         "score_geral": score_medio,
-        "parecer_final": "Candidato foi avaliado através da simulação de entrevista. Resultados precisam de análise adicional.",
-        "pontos_fortes": ["Comunicação clara", "Engajamento na entrevista", "Disposição para aprender"],
-        "pontos_fracos": ["Maior prática em casos técnicos", "Aprofundamento em conceitos", "Experiência específica"],
-        "recomendacoes": ["Revisar fundamentação técnica", "Praticar casos de uso reais", "Estudar situações do setor"],
+        "parecer_final": "Candidato avaliado através da simulação de entrevista. Demonstrou conhecimento técnico básico, mas algumas competências comportamentais precisam de atenção.",
+        "pontos_fortes": ["Engajamento durante a entrevista", "Disposição para aprender", "Comunicação satisfatória"],
+        "pontos_fracos": ["Aprofundamento em habilidades técnicas específicas da vaga", "Desenvolvimento de competências comportamentais como gestão de conflitos e trabalho em equipe"],
+        "recomendacoes": [
+            "Revisar e praticar os conceitos técnicos exigidos pela vaga",
+            "Desenvolver soft skills por meio de dinâmicas em equipe e feedbacks constantes",
+            "Buscar experiências práticas que envolvam liderança e comunicação interpessoal"
+        ],
         "recomendacao_gestor": "ENTREVISTA_ADICIONAL"
     }

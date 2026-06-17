@@ -114,7 +114,7 @@ def gerar_plano():
         
         return jsonify({
             "entrevista_id": entrevista.id,
-            "numero_perguntas": plano["numero_perguntas"],
+            "numero_perguntas": plano["numero_perguntas"],  # 10 (6 hard skills + 4 soft skills)
             "plano": {
                 "topicos": plano["topicos_principais"],
                 "estrategia": plano["estrategia_entrevista"],
