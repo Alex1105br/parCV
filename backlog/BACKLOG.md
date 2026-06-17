@@ -80,6 +80,7 @@ class: cover
 | ✓ | Botão Nova conversa e listagem de conversas na sidebar | ux | 5 |
 | ✓ | Upload de currículo no chat para perguntas contextuais | feature | 5 |
 | ✓ | Simulação de entrevista com IA | feature | 7 |
+| ✓ | Sign-in/up | feature | 5 |
 
 > Foco: UX de chat.
 
@@ -89,7 +90,8 @@ class: cover
 
 | | título | label | pts |
 | - | :- | :-: | :-: |
-| ✓ | Sign-in/up | feature | 5 |
+| ✓ | Adicionando soft skills à simulação de entrevista. | feature | 5 |
+| | Design final do projeto | ux | 5 |
 | | README atualizado com screenshots, arquitetura e contribuição | docs | 3 |
 
-> Foco: autenticação + deploy + documentação.
+> Foco: documentação.
