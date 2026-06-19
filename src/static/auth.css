@@ -100,6 +100,16 @@ input::placeholder {
     color: var(--color-text-muted);
 }
 
+/* Chrome Autocomplete Fix */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--color-surface-raised) inset !important;
+    -webkit-text-fill-color: var(--color-text) !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
 /* Buttons */
 .btn-primary {
     width: 100%;
