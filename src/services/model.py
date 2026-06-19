@@ -351,7 +351,7 @@ def avaliar_resposta(pergunta, resposta, contexto):
     Avalia resposta com IA.
     Retorna dict com: feedback, score (1-10), deve_aprofundar, perguntas_aprofundamento
     """
-    prompt = f"""Você é um avaliador técnico experiente. Avalie a seguinte resposta de entrevista.
+    prompt = f"""Você é um avaliador técnico experiente e criterioso. Avalie a seguinte resposta de entrevista.
 
 PERGUNTA: {pergunta}
 
@@ -359,10 +359,17 @@ RESPOSTA DO CANDIDATO: {resposta}
 
 CONTEXTO: {json.dumps(contexto)}
 
+CRITÉRIOS DE PONTUAÇÃO (0-10):
+- 0: Resposta irrelevante, nula ou totalmente incorreta.
+- 1-3: Resposta muito fraca, incompleta ou com erros graves.
+- 4-6: Resposta média, básica ou que carece de profundidade técnica.
+- 7-9: Resposta boa a excelente, demonstrando domínio e clareza.
+- 10: Resposta PERFEITA, completa, articulada e sem pontos de melhoria. Não hesite em dar 10 se a resposta for exemplar.
+
 Forneça avaliação em JSON (APENAS JSON):
 {{
     "feedback": "<feedback construtivo e específico sobre a resposta - max 300 chars>",
-    "score": <1-10>,
+    "score": <0-10>,
     "deve_aprofundar": false,
     "perguntas_aprofundamento": []
 }}"""
@@ -373,7 +380,7 @@ Forneça avaliação em JSON (APENAS JSON):
         logger.error(f"Erro ao avaliar resposta: {error}")
         return {
             "feedback": "Resposta adequada. Considere adicionar mais detalhes técnicos.",
-            "score": 6,
+            "score": 5,
             "deve_aprofundar": False,
             "perguntas_aprofundamento": []
         }
@@ -391,8 +398,8 @@ Forneça avaliação em JSON (APENAS JSON):
             avaliacao.setdefault("deve_aprofundar", False)
             avaliacao.setdefault("perguntas_aprofundamento", [])
             
-            # Limitar score entre 1-10
-            avaliacao["score"] = max(1, min(10, int(avaliacao["score"])))
+            # Limitar score entre 0-10
+            avaliacao["score"] = max(0, min(10, int(avaliacao["score"])))
             
             return avaliacao
     except (json.JSONDecodeError, ValueError, TypeError) as e:
@@ -471,7 +478,7 @@ INSTRUÇÕES:
 
 Gere JSON (APENAS JSON):
 {{
-    "score_geral": <1.0-10.0>,
+    "score_geral": <0.0-10.0>,
     "parecer_final": "<parecer executivo conciso cobrindo hard e soft skills - max 500 chars>",
     "pontos_fortes": [<lista de 3-4 pontos fortes, misturando hard e soft skills onde houver destaque>],
     "pontos_fracos": [<lista de 3-4 pontos fracos, incluindo soft skills se houver score baixo>],
@@ -501,7 +508,7 @@ Gere JSON (APENAS JSON):
             relatorio.setdefault("recomendacao_gestor", "ENTREVISTA_ADICIONAL")
             
             # Validar score
-            relatorio["score_geral"] = max(1.0, min(10.0, float(relatorio["score_geral"])))
+            relatorio["score_geral"] = max(0.0, min(10.0, float(relatorio["score_geral"])))
             
             return relatorio
     except (json.JSONDecodeError, ValueError, TypeError) as e:

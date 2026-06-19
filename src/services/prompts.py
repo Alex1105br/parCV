@@ -40,6 +40,7 @@ def build_prompt_ats(curriculo, vaga=None):
         "4. Palavras-chave ATS (0-20)\n"
         "5. Skills técnicas (0-15)\n"
         "6. Compatibilidade com vaga (0-15)\n"
+        "A pontuação total deve ser a soma exata dos critérios acima, variando de 0 a 100.\n"
         "\n"
         # "A pontuação deve ser objetiva e baseada apenas no conteúdo do currículo e na vaga — os campos 'palavras_chave_faltando' e 'certificados_sugeridos' são complementares e NÃO devem penalizar a nota.\n"
         "Inclua em 'palavras_chave_faltando' as palavras-chave relevantes extraídas da vaga que estão ausentes no currículo. "
