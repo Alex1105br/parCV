@@ -17,10 +17,17 @@
         --text-main: #e6e1e8; 
         --text-muted: #9e9ba2;
 
-        /* Estados  */
-        --color-success: #2e7d32;
-        --color-danger: #d32f2f;
-        --color-warning: #f57c00;
+        /* Estados (Sincronizado com pdf.py) */
+        --color-excelente: #4ade80;
+        --color-bom: #60a5fa;
+        --color-regular: #facc15;
+        --color-ruim: #fb923c;
+        --color-pessimo: #f87171;
+
+        /* Aliases para compatibilidade */
+        --color-success: var(--color-excelente);
+        --color-warning: var(--color-regular);
+        --color-danger: var(--color-pessimo);
 
         /* Bordas arredondadas */
         --radius-lg: 12px; 
@@ -280,9 +287,11 @@
         font-weight: 600;
     }
 
-    .ev-badge--success { background: rgba(46, 125, 50, 0.2); color: #81c784; }
-    .ev-badge--warning { background: rgba(245, 158, 11, 0.2); color: #ffb74d; }
-    .ev-badge--danger { background: rgba(213, 47, 47, 0.2); color: #e57373; }
+    .ev-badge--excelente { background: rgba(74, 222, 128, 0.1); color: var(--color-excelente); }
+    .ev-badge--bom { background: rgba(96, 165, 250, 0.1); color: var(--color-bom); }
+    .ev-badge--regular { background: rgba(250, 204, 21, 0.1); color: var(--color-regular); }
+    .ev-badge--ruim { background: rgba(251, 146, 60, 0.1); color: var(--color-ruim); }
+    .ev-badge--pessimo { background: rgba(248, 113, 113, 0.1); color: var(--color-pessimo); }
 
     .ev-acordeao__chevron {
         color: var(--text-muted);
@@ -318,11 +327,32 @@
     }
 
     .ev-detalhe-bloco--feedback {
-        background: rgba(63, 81, 181, 0.04);
+        background: rgba(255, 255, 255, 0.02);
         padding: 14px;
         border-radius: var(--radius-md);
-        border-left: 3px solid var(--color-primary);
+        border: 1px solid var(--color-border);
+        transition: border-color 0.3s;
     }
+
+    .ev-detalhe-bloco--feedback h4 {
+        transition: color 0.3s;
+    }
+
+    /* Classes de cor dinâmicas para o feedback */
+    .ev-detalhe-bloco--excelente { border-color: var(--color-excelente); }
+    .ev-detalhe-bloco--excelente h4 { color: var(--color-excelente) !important; }
+    
+    .ev-detalhe-bloco--bom { border-color: var(--color-bom); }
+    .ev-detalhe-bloco--bom h4 { color: var(--color-bom) !important; }
+    
+    .ev-detalhe-bloco--regular { border-color: var(--color-regular); }
+    .ev-detalhe-bloco--regular h4 { color: var(--color-regular) !important; }
+    
+    .ev-detalhe-bloco--ruim { border-color: var(--color-ruim); }
+    .ev-detalhe-bloco--ruim h4 { color: var(--color-ruim) !important; }
+    
+    .ev-detalhe-bloco--pessimo { border-color: var(--color-pessimo); }
+    .ev-detalhe-bloco--pessimo h4 { color: var(--color-pessimo) !important; }
 
     /* Botões */
     .btn {
@@ -475,10 +505,11 @@ async function carregarRelatorio() {
         document.getElementById('score-numero').textContent = score.toFixed(1);
 
         let cor, label;
-        if (score >= 8)      { cor = '#81c784'; label = 'Excelente'; }
-        else if (score >= 6) { cor = '#9fa8da'; label = 'Bom'; }
-        else if (score >= 4) { cor = '#ffb74d'; label = 'Regular'; }
-        else                 { cor = '#e57373'; label = 'Precisa melhorar'; }
+        if (score >= 9.0)      { cor = '#4ade80'; label = 'Excelente'; }
+        else if (score >= 7.0) { cor = '#60a5fa'; label = 'Bom'; }
+        else if (score >= 5.0) { cor = '#facc15'; label = 'Regular'; }
+        else if (score >= 3.0) { cor = '#fb923c'; label = 'Ruim'; }
+        else                   { cor = '#f87171'; label = 'Péssimo'; }
 
         document.getElementById('score-arc').style.stroke = cor;
         document.getElementById('score-numero').style.color = cor;
@@ -507,7 +538,12 @@ async function carregarRelatorio() {
         const container = document.getElementById('perguntas-container');
         (data.perguntas || []).forEach((p, i) => {
             const s = p.avaliacao_resposta?.score ?? 0;
-            const sLabel = s >= 7 ? 'success' : s >= 4 ? 'warning' : 'danger';
+            let sLabel;
+            if (s >= 9.0)      sLabel = 'excelente';
+            else if (s >= 7.0) sLabel = 'bom';
+            else if (s >= 5.0) sLabel = 'regular';
+            else if (s >= 3.0) sLabel = 'ruim';
+            else               sLabel = 'pessimo';
             const div = document.createElement('div');
             div.className = 'ev-acordeao__item';
             div.innerHTML = `
@@ -526,7 +562,7 @@ async function carregarRelatorio() {
                         <h4>Sua resposta</h4>
                         <p>${p.resposta_usuario || '<em>Não respondida</em>'}</p>
                     </div>
-                    <div class="ev-detalhe-bloco ev-detalhe-bloco--feedback">
+                    <div class="ev-detalhe-bloco ev-detalhe-bloco--feedback ev-detalhe-bloco--${sLabel}">
                         <h4>Feedback</h4>
                         <p>${p.avaliacao_resposta?.feedback || 'Sem feedback'}</p>
                     </div>
