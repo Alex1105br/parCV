@@ -280,12 +280,19 @@
 
     async function sendFileAndMessage(file, msg) {
         let assistantDiv = null;
-        // addMessage('Enviando documento: ' + file.name + (msg ? ' e mensagem...' : '...'), 'system');
 
         uploadedFileNames.add(file.name);
         const formData = new FormData();
         formData.append('arquivo', file);
         if (msg) formData.append('mensagem', msg);
+
+        // Mostra feedback imediato (mensagens do usuário + indicador de digitando)
+        // ANTES do fetch, para que a animação apareça enquanto o upload/processamento ocorre,
+        // em vez de só depois que a resposta começar a chegar.
+        activateChat();
+        addMessage('Enviando "' + file.name + '"...', 'system');
+        if (msg) { addMessage(msg, 'user'); messageCount++; }
+        const typingDiv = showTypingIndicator();
 
         try {
             const response = await fetch('/upload', {
@@ -304,9 +311,6 @@
             }
 
             if (contentType.includes('text/event-stream')) {
-                addMessage('"' + file.name + '" carregado.', 'system');
-                if (msg) { addMessage(msg, 'user'); messageCount++; }
-                const typingDiv = showTypingIndicator();
                 assistantDiv = addMessage('', 'assistant');
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
@@ -369,6 +373,7 @@
                 }
                 typingDiv.remove();
             } else {
+                typingDiv.remove();
                 const data = await response.json();
                 const uploadOnlySid = data.session_id || null;
                 if (uploadOnlySid) {
@@ -386,6 +391,7 @@
                 }
             }
         } catch (err) {
+            if (typingDiv.parentNode) typingDiv.remove();
             if (assistantDiv) {
                 assistantDiv.classList.replace('message--assistant', 'message--error');
                 assistantDiv.textContent = 'Erro de conexão: ' + err.message;
