@@ -8,7 +8,7 @@ from flask_limiter.util import get_remote_address
 from flask_mail import Mail
 from flask_migrate import Migrate
 
-from src.config import UPLOAD_FOLDER, SECRET_KEY, DATABASE_URL, MAIL_SERVER, MAIL_PORT, MAIL_USE_TLS, MAIL_USE_SSL, MAIL_USERNAME, MAIL_PASSWORD, MAIL_DEFAULT_SENDER, RESEND_API_KEY
+from src.config import UPLOAD_FOLDER, SECRET_KEY, DATABASE_URL, MAIL_SERVER, MAIL_PORT, MAIL_USE_TLS, MAIL_USE_SSL, MAIL_USERNAME, MAIL_PASSWORD, MAIL_DEFAULT_SENDER
 from src.logging_config import setup_logging, logger, request_id_var
 from src.models.db import db
 
@@ -52,7 +52,6 @@ def create_app():
             "mail_use_tls": app.config["MAIL_USE_TLS"],
             "mail_username_set": bool(app.config["MAIL_USERNAME"]),
             "mail_password_set": bool(app.config["MAIL_PASSWORD"]),
-            "resend_api_key_set": bool(RESEND_API_KEY),
         },
     )
     # ─────────────────────────────────────────────────────────────────────

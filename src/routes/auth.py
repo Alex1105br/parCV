@@ -2,12 +2,11 @@ import re
 import secrets
 from datetime import datetime, timedelta, timezone
 
-import requests
 from flask import Blueprint, redirect, render_template, request, session, url_for, current_app
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_mail import Message
 
-from src.config import RESEND_API_KEY, RESEND_SENDER, MAIL_DEFAULT_SENDER
+from src.config import MAIL_DEFAULT_SENDER
 from src.models.db import db
 from src.models.user import User
 
@@ -178,13 +177,7 @@ def reset_password(token):
 
 
 def _send_reset_email(to_email: str, name: str, reset_url: str):
-    """
-    Envia e-mail de redefinição.
-    Prioriza Resend (API via HTTPS, porta 443) se RESEND_API_KEY estiver
-    configurada — recomendado quando a rede bloqueia portas SMTP (25/465/587/2525),
-    cenário comum em redes universitárias/corporativas.
-    Caso contrário, usa Flask-Mail (SMTP) como antes.
-    """
+    """Envia e-mail de redefinição via SMTP tradicional (Flask-Mail / Gmail)."""
     text_body = (
         f"Olá, {name}!\n\n"
         f"Recebemos um pedido de redefinição de senha para a sua conta parCV.\n\n"
@@ -212,42 +205,11 @@ def _send_reset_email(to_email: str, name: str, reset_url: str):
     </div>
     """
 
-    if RESEND_API_KEY:
-        _send_via_resend(to_email, html_body, text_body)
-    else:
-        _send_via_smtp(to_email, html_body, text_body)
+    _send_via_smtp(to_email, html_body, text_body)
 
 
-def _send_via_resend(to_email: str, html_body: str, text_body: str):
-    """Envia via API HTTPS da Resend — não depende de portas SMTP."""
-    from src.logging_config import logger
-    try:
-        resp = requests.post(
-            "https://api.resend.com/emails",
-            headers={
-                "Authorization": f"Bearer {RESEND_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "from": RESEND_SENDER,
-                "to": [to_email],
-                "subject": "Redefinição de senha — parCV",
-                "html": html_body,
-                "text": text_body,
-            },
-            timeout=15,
-        )
-        if resp.status_code >= 400:
-            logger.error(
-                "mail_send_error",
-                extra={"provedor": "resend", "status": resp.status_code, "erro": resp.text},
-            )
-    except Exception as e:
-        logger.error("mail_send_error", extra={"provedor": "resend", "erro": str(e)})
-
-
-def _send_via_smtp(to_email: str, html_body: str, text_body: str):
-    """Envia via Flask-Mail (SMTP) — caminho original, usado se Resend não estiver configurada."""
+def _send_via_smtp(to_email: str, html_body: str, text_body: str) -> bool:
+    """Envia via Flask-Mail (SMTP). Retorna True em caso de sucesso."""
     from src.logging_config import logger
     try:
         from src.app import mail
@@ -258,5 +220,7 @@ def _send_via_smtp(to_email: str, html_body: str, text_body: str):
         msg.body = text_body
         msg.html = html_body
         mail.send(msg)
+        return True
     except Exception as e:
         logger.error("mail_send_error", extra={"provedor": "smtp", "erro": str(e)})
+        return False
