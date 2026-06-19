@@ -486,7 +486,16 @@ async function carregarRelatorio() {
         document.getElementById('score-label').style.color = cor;
 
         requestAnimationFrame(() => {
-            document.getElementById('score-arc').style.strokeDashoffset = 264 * (1 - score / 10);
+            const offset = 264 * (1 - score / 10);
+            const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const arc = document.getElementById('score-arc');
+            if (prefersReduced) {
+                // Aplica diretamente sem transição
+                arc.style.transition = 'none';
+                arc.style.strokeDashoffset = offset;
+            } else {
+                arc.style.strokeDashoffset = offset;
+            }
         });
 
         const toLi = arr => (arr || []).map(x => `<li>${x}</li>`).join('');

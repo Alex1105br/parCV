@@ -55,8 +55,33 @@
     <main class="main-content">
         <header class="main-header">
             <h1 class="main-header__title">Dashboard</h1>
-            <p class="main-header__subtitle">Escolha um serviço para começar</p>
+            <p class="main-header__subtitle">Olá, {{ user_name }}! Escolha um serviço para começar.</p>
         </header>
+
+        <!-- Estatísticas rápidas do usuário -->
+        <div class="stats-row" id="stats-row">
+            <div class="stat-card">
+                <i data-lucide="file-check"></i>
+                <div>
+                    <span class="stat-card__value" id="stat-analises">—</span>
+                    <span class="stat-card__label">Análises feitas</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i data-lucide="trending-up"></i>
+                <div>
+                    <span class="stat-card__value" id="stat-score">—</span>
+                    <span class="stat-card__label">Melhor score ATS</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i data-lucide="mic"></i>
+                <div>
+                    <span class="stat-card__value" id="stat-entrevistas">—</span>
+                    <span class="stat-card__label">Entrevistas simuladas</span>
+                </div>
+            </div>
+        </div>
 
         <div class="card-grid">
             <a href="/analisar" class="card">
@@ -72,33 +97,34 @@
 
             <a href="/entrevista" class="card">
                 <div class="card__icon-wrap">
-                    <i data-lucide="message-square"></i>
+                    <i data-lucide="mic"></i>
                 </div>
                 <div class="card__body">
                     <h3 class="card__title">Simulação de entrevista</h3>
-                    <p class="card__desc">Converse com a IA para praticar perguntas de entrevistas.</p>
+                    <p class="card__desc">Pratique perguntas personalizadas com base no seu currículo e na vaga desejada.</p>
                 </div>
                 <i data-lucide="arrow-right" class="card__arrow"></i>
             </a>
 
-            <a href="/analisar" class="card">
+            <!-- Otimizar e Gerar PDF fazem parte do fluxo de análise -->
+            <a href="/analisar" class="card card--flow">
                 <div class="card__icon-wrap">
                     <i data-lucide="wand-2"></i>
                 </div>
                 <div class="card__body">
                     <h3 class="card__title">Otimizar currículo</h3>
-                    <p class="card__desc">Reescreva seu currículo com IA para maximizar compatibilidade ATS.</p>
+                    <p class="card__desc">Reescreva seu currículo com IA — disponível após a análise ATS.</p>
                 </div>
                 <i data-lucide="arrow-right" class="card__arrow"></i>
             </a>
 
-            <a href="/analisar" class="card">
+            <a href="/analisar" class="card card--flow">
                 <div class="card__icon-wrap">
                     <i data-lucide="file-down"></i>
                 </div>
                 <div class="card__body">
                     <h3 class="card__title">Gerar PDF profissional</h3>
-                    <p class="card__desc">Exporte seu currículo otimizado em PDF com layout estruturado.</p>
+                    <p class="card__desc">Exporte seu currículo otimizado em PDF — disponível após a otimização.</p>
                 </div>
                 <i data-lucide="arrow-right" class="card__arrow"></i>
             </a>
@@ -123,7 +149,7 @@
             <div class="steps">
                 <div class="step">
                     <div class="step__number">1</div>
-                    <p class="step__text">Envie seu currículo em PDF ou TXT</p>
+                    <p class="step__text">Envie seu currículo em PDF, DOCX ou TXT</p>
                 </div>
                 <div class="step">
                     <div class="step__number">2</div>

@@ -40,3 +40,20 @@ SECRET_KEY = env.str("SECRET_KEY", default=None)
 
 # DATABASE_URL = env.str("DATABASE_URL", default="sqlite:///parcv.db")
 DATABASE_URL = env.str("DATABASE_URL", default="postgresql://parcv:parcv@localhost:5432/parcv")
+
+# ===== E-mail (recuperação de senha) =====
+# Opção A — Resend (API via HTTPS, recomendado se a rede bloquear portas SMTP)
+RESEND_API_KEY = env.str("RESEND_API_KEY", default="")
+# Remetente usado com Resend — sem domínio verificado em resend.com/domains,
+# só é permitido usar o domínio de teste onboarding@resend.dev
+RESEND_SENDER = env.str("RESEND_SENDER", default="parCV <onboarding@resend.dev>")
+
+# Opção B — SMTP tradicional (Gmail, Mailtrap, etc.)
+MAIL_SERVER   = env.str("MAIL_SERVER", default="smtp.gmail.com")
+MAIL_PORT     = env.int("MAIL_PORT", default=587)
+MAIL_USE_TLS  = env.bool("MAIL_USE_TLS", default=True)
+MAIL_USE_SSL  = env.bool("MAIL_USE_SSL", default=False)
+MAIL_USERNAME = env.str("MAIL_USERNAME", default="")
+MAIL_PASSWORD = env.str("MAIL_PASSWORD", default="")
+# Remetente usado com SMTP — precisa ser a própria conta autenticada (MAIL_USERNAME)
+MAIL_DEFAULT_SENDER = env.str("MAIL_DEFAULT_SENDER", default="") or MAIL_USERNAME or "noreply@parcv.app"

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Análise de Currículo - IA Currículos{% endblock %}
+{% block title %}Análise de Currículo - parCV{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='analisar.css') }}">
@@ -18,9 +18,9 @@
         </h1>
     </div>
     <div class="header__actions">
-        <div class="header__status">
+        <div class="header__status" id="model-status">
             <i data-lucide="circle-dot" class="status-icon"></i>
-            <span>Modelo ativo</span>
+            <span id="model-status-text">Modelo ativo</span>
         </div>
     </div>
 </header>
@@ -33,16 +33,22 @@
         </h2>
 
         <div class="form-group">
-            <label for="ats-file" class="form-label">Currículo (PDF, DOCX ou TXT)</label>
+            <label for="ats-file" class="form-label">
+                Currículo
+                <span class="form-label__hint">(PDF, DOCX ou TXT · máx. 5 MB)</span>
+            </label>
             <div class="file-drop" id="file-drop">
                 <i data-lucide="file-up" class="file-drop__icon"></i>
                 <p class="file-drop__text">Arraste ou clique para selecionar</p>
                 <input type="file" id="ats-file" class="file-drop__input" accept=".pdf,.docx,.txt">
             </div>
+            <div id="file-size-error" class="form-error hidden">
+                Arquivo muito grande. O limite é 5 MB.
+            </div>
         </div>
 
         <div class="form-group">
-            <label for="photo-file" class="form-label">Foto para o PDF (opcional, JPG/PNG)</label>
+            <label for="photo-file" class="form-label">Foto para o PDF <span class="form-label__hint">(opcional · JPG/PNG)</span></label>
             <div class="file-drop file-drop--photo" id="photo-drop">
                 <i data-lucide="user-circle" class="file-drop__icon"></i>
                 <p class="file-drop__text">Adicionar foto (aparece no cabeçalho do PDF)</p>
@@ -51,8 +57,10 @@
         </div>
 
         <div class="form-group">
-            <label for="ats-vaga" class="form-label">Descrição da vaga (opcional)</label>
-            <textarea id="ats-vaga" class="form-textarea" placeholder="Cole a descrição da vaga aqui..." rows="5" spellcheck="false"></textarea>
+            <label for="ats-vaga" class="form-label">Descrição da vaga <span class="form-label__hint">(opcional)</span></label>
+            <textarea id="ats-vaga" class="form-textarea"
+                      placeholder="Cole a descrição da vaga aqui..."
+                      rows="5" spellcheck="false"></textarea>
         </div>
 
         <button type="button" class="btn btn--primary btn--block" id="btn-analisar">

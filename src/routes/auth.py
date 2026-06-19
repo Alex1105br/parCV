@@ -1,8 +1,13 @@
 import re
+import secrets
+from datetime import datetime, timedelta, timezone
 
-from flask import Blueprint, redirect, render_template, request, session, url_for
+import requests
+from flask import Blueprint, redirect, render_template, request, session, url_for, current_app
 from werkzeug.security import check_password_hash, generate_password_hash
+from flask_mail import Message
 
+from src.config import RESEND_API_KEY, RESEND_SENDER, MAIL_DEFAULT_SENDER
 from src.models.db import db
 from src.models.user import User
 
@@ -17,14 +22,13 @@ def is_valid_email(email: str) -> bool:
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
-    # Já logado → vai para home
     if "user_id" in session:
         return redirect(url_for("home.index"))
 
     error = None
     if request.method == "POST":
         email    = request.form.get("email", "").strip()
-        password = request.form.get("password", "").strip()
+        password = request.form.get("password", "")   # sem .strip() — preserva senha exata
 
         if not email or not password:
             error = "Por favor, preencha todos os campos."
@@ -33,7 +37,6 @@ def login():
         else:
             user = User.query.filter_by(email=email).first()
             if not user or not check_password_hash(user.password, password):
-                # Mensagem genérica: não revela se o e-mail existe ou não
                 error = "Email ou senha incorretos."
             else:
                 session.clear()
@@ -53,8 +56,8 @@ def register():
     if request.method == "POST":
         name             = request.form.get("name", "").strip()
         email            = request.form.get("email", "").strip()
-        password         = request.form.get("password", "").strip()
-        confirm_password = request.form.get("confirm_password", "").strip()
+        password         = request.form.get("password", "")          # sem .strip()
+        confirm_password = request.form.get("confirm_password", "")  # sem .strip()
 
         if not all([name, email, password, confirm_password]):
             error = "Por favor, preencha todos os campos."
@@ -86,3 +89,174 @@ def register():
 def logout():
     session.clear()
     return redirect(url_for("auth.login"))
+
+
+# ---------------------------------------------------------------------------
+# Recuperação de senha
+# ---------------------------------------------------------------------------
+
+@bp.route("/esqueci-senha", methods=["GET", "POST"])
+def forgot_password():
+    if "user_id" in session:
+        return redirect(url_for("home.index"))
+
+    message = None
+    error   = None
+
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        if not email or not is_valid_email(email):
+            error = "Digite um email válido."
+        else:
+            user = User.query.filter_by(email=email).first()
+            # Resposta genérica — não revela se o e-mail existe
+            if user:
+                now = datetime.now(timezone.utc)
+
+                # Se o token atual ainda tem mais de 59 minutos de validade
+                # restante, significa que foi gerado há menos de 1 minuto —
+                # reutiliza o mesmo em vez de gerar outro e reenviar e-mail.
+                # Isso evita que cliques duplicados/refresh do navegador
+                # invalidem o link que o usuário já recebeu.
+                token_recente = (
+                    user.reset_token
+                    and user.reset_token_expires_at
+                    and (user.reset_token_expires_at - now) > timedelta(minutes=59)
+                )
+
+                if not token_recente:
+                    token = secrets.token_urlsafe(32)
+                    user.reset_token            = token
+                    user.reset_token_expires_at = now + timedelta(hours=1)
+                    db.session.commit()
+                    reset_url = url_for("auth.reset_password", token=token, _external=True)
+                    _send_reset_email(user.email, user.name, reset_url)
+
+            message = (
+                "Se esse email estiver cadastrado, você receberá as instruções em breve. "
+                "Verifique também a caixa de spam."
+            )
+
+    return render_template("forgot_password.html", message=message, error=error)
+
+
+@bp.route("/redefinir-senha/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    if "user_id" in session:
+        return redirect(url_for("home.index"))
+
+    user = User.query.filter_by(reset_token=token).first()
+    now  = datetime.now(timezone.utc)
+
+    if not user or user.reset_token_expires_at is None or user.reset_token_expires_at < now:
+        return render_template(
+            "reset_password.html",
+            token=token,
+            expired=True,
+            error=None,
+        )
+
+    error = None
+    if request.method == "POST":
+        password         = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if not password or not confirm_password:
+            error = "Preencha os dois campos."
+        elif len(password) < 8:
+            error = "A senha deve ter pelo menos 8 caracteres."
+        elif password != confirm_password:
+            error = "As senhas não coincidem."
+        else:
+            user.password               = generate_password_hash(password)
+            user.reset_token            = None
+            user.reset_token_expires_at = None
+            db.session.commit()
+            return redirect(url_for("auth.login") + "?reset=ok")
+
+    return render_template("reset_password.html", token=token, expired=False, error=error)
+
+
+def _send_reset_email(to_email: str, name: str, reset_url: str):
+    """
+    Envia e-mail de redefinição.
+    Prioriza Resend (API via HTTPS, porta 443) se RESEND_API_KEY estiver
+    configurada — recomendado quando a rede bloqueia portas SMTP (25/465/587/2525),
+    cenário comum em redes universitárias/corporativas.
+    Caso contrário, usa Flask-Mail (SMTP) como antes.
+    """
+    text_body = (
+        f"Olá, {name}!\n\n"
+        f"Recebemos um pedido de redefinição de senha para a sua conta parCV.\n\n"
+        f"Clique no link abaixo (válido por 1 hora):\n{reset_url}\n\n"
+        f"Se você não solicitou isso, ignore este e-mail — sua senha permanece a mesma.\n\n"
+        f"Equipe parCV"
+    )
+    html_body = f"""
+    <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;
+                border:1px solid #e0e0e0;border-radius:12px;">
+      <h2 style="color:#1a1a2e;margin-bottom:8px;">Redefinição de senha</h2>
+      <p>Olá, <strong>{name}</strong>!</p>
+      <p>Recebemos um pedido de redefinição de senha para a sua conta <strong>parCV</strong>.</p>
+      <p style="margin:24px 0;">
+        <a href="{reset_url}"
+           style="background:#6c63ff;color:#fff;padding:12px 24px;border-radius:8px;
+                  text-decoration:none;font-weight:600;display:inline-block;">
+          Redefinir minha senha
+        </a>
+      </p>
+      <p style="font-size:13px;color:#666;">
+        Este link expira em <strong>1 hora</strong>.<br>
+        Se você não solicitou isso, ignore este e-mail.
+      </p>
+    </div>
+    """
+
+    if RESEND_API_KEY:
+        _send_via_resend(to_email, html_body, text_body)
+    else:
+        _send_via_smtp(to_email, html_body, text_body)
+
+
+def _send_via_resend(to_email: str, html_body: str, text_body: str):
+    """Envia via API HTTPS da Resend — não depende de portas SMTP."""
+    from src.logging_config import logger
+    try:
+        resp = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": RESEND_SENDER,
+                "to": [to_email],
+                "subject": "Redefinição de senha — parCV",
+                "html": html_body,
+                "text": text_body,
+            },
+            timeout=15,
+        )
+        if resp.status_code >= 400:
+            logger.error(
+                "mail_send_error",
+                extra={"provedor": "resend", "status": resp.status_code, "erro": resp.text},
+            )
+    except Exception as e:
+        logger.error("mail_send_error", extra={"provedor": "resend", "erro": str(e)})
+
+
+def _send_via_smtp(to_email: str, html_body: str, text_body: str):
+    """Envia via Flask-Mail (SMTP) — caminho original, usado se Resend não estiver configurada."""
+    from src.logging_config import logger
+    try:
+        from src.app import mail
+        msg = Message(
+            subject="Redefinição de senha — parCV",
+            recipients=[to_email],
+        )
+        msg.body = text_body
+        msg.html = html_body
+        mail.send(msg)
+    except Exception as e:
+        logger.error("mail_send_error", extra={"provedor": "smtp", "erro": str(e)})

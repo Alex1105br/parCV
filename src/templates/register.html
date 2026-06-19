@@ -20,15 +20,112 @@
         <div class="alert">{{ error }}</div>
         {% endif %}
 
-        <form method="post" action="{{ url_for('auth.register') }}" novalidate>
-            <input type="text" name="name" placeholder="Nome completo" value="{{ request.form.name or '' }}" required>
-            <input type="email" name="email" placeholder="Email" value="{{ request.form.email or '' }}" required>
-            <input type="password" name="password" placeholder="Senha" required>
-            <input type="password" name="confirm_password" placeholder="Confirmar senha" required>
-            <button class="btn-primary" type="submit">Registrar</button>
+        <form method="post" action="{{ url_for('auth.register') }}" novalidate id="register-form">
+            <input type="text" name="name" placeholder="Nome completo"
+                   value="{{ request.form.name or '' }}" required autocomplete="name">
+            <input type="email" name="email" placeholder="Email"
+                   value="{{ request.form.email or '' }}" required autocomplete="email">
+
+            <!-- Senha com toggle + medidor de força -->
+            <div class="password-field">
+                <input type="password" name="password" id="reg-password"
+                       placeholder="Senha (mín. 8 caracteres)" required autocomplete="new-password">
+                <button type="button" class="toggle-pw" aria-label="Mostrar/ocultar senha"
+                        data-target="reg-password">
+                    <i data-lucide="eye"></i>
+                </button>
+            </div>
+            <div class="pw-strength" id="pw-strength" aria-live="polite">
+                <div class="pw-strength__bar" id="pw-bar"></div>
+            </div>
+            <div id="pw-strength-label" style="font-size:12px;min-height:16px;"></div>
+
+            <!-- Confirmação com feedback em tempo real -->
+            <div class="password-field">
+                <input type="password" name="confirm_password" id="reg-confirm"
+                       placeholder="Confirmar senha" required autocomplete="new-password">
+                <button type="button" class="toggle-pw" aria-label="Mostrar/ocultar senha"
+                        data-target="reg-confirm">
+                    <i data-lucide="eye"></i>
+                </button>
+            </div>
+            <div id="pw-match-msg" style="font-size:13px;min-height:18px;margin-top:-4px;"></div>
+
+            <button class="btn-primary" type="submit" id="btn-register">Registrar</button>
         </form>
 
         <a class="btn-secondary" href="{{ url_for('auth.login') }}">Já tenho conta</a>
     </div>
 </div>
+
+<script>
+// Toggle visibilidade
+document.querySelectorAll('.toggle-pw').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var input = document.getElementById(this.dataset.target);
+        var isText = input.type === 'text';
+        input.type = isText ? 'password' : 'text';
+        var icon = this.querySelector('i');
+        icon.setAttribute('data-lucide', isText ? 'eye' : 'eye-off');
+        if (window.lucide) lucide.createIcons({ nodes: [this] });
+    });
+});
+
+// Medidor de força de senha
+var pwInput   = document.getElementById('reg-password');
+var pwBar     = document.getElementById('pw-bar');
+var pwLabel   = document.getElementById('pw-strength-label');
+
+function getStrength(pw) {
+    var score = 0;
+    if (pw.length >= 8)  score++;
+    if (pw.length >= 12) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    return score;
+}
+
+var levels = [
+    { label: '',          color: 'transparent',   width: '0%'   },
+    { label: 'Muito fraca', color: '#ef4444',     width: '20%'  },
+    { label: 'Fraca',      color: '#f97316',      width: '40%'  },
+    { label: 'Razoável',   color: '#eab308',      width: '60%'  },
+    { label: 'Forte',      color: '#22c55e',      width: '80%'  },
+    { label: 'Muito forte',color: '#16a34a',      width: '100%' },
+];
+
+pwInput.addEventListener('input', function() {
+    var s = this.value ? getStrength(this.value) : 0;
+    var l = levels[s];
+    pwBar.style.width           = l.width;
+    pwBar.style.backgroundColor = l.color;
+    pwLabel.textContent         = this.value ? l.label : '';
+    pwLabel.style.color         = l.color;
+});
+
+// Validação em tempo real de confirmação
+var confInput = document.getElementById('reg-confirm');
+var matchMsg  = document.getElementById('pw-match-msg');
+
+function checkMatch() {
+    if (!confInput.value) { matchMsg.textContent = ''; return; }
+    if (pwInput.value === confInput.value) {
+        matchMsg.textContent = '✓ Senhas coincidem';
+        matchMsg.style.color = '#22c55e';
+    } else {
+        matchMsg.textContent = '✗ Senhas não coincidem';
+        matchMsg.style.color = '#ef4444';
+    }
+}
+pwInput.addEventListener('input', checkMatch);
+confInput.addEventListener('input', checkMatch);
+
+// Loading ao submeter
+document.getElementById('register-form').addEventListener('submit', function() {
+    var btn = document.getElementById('btn-register');
+    btn.disabled = true;
+    btn.textContent = 'Criando conta...';
+});
+</script>
 {% endblock %}

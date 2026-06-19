@@ -387,3 +387,53 @@ ul {
 .error {
     color: var(--color-danger);
 }
+/* ===== Stats row ===== */
+.stats-row {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+    flex-wrap: wrap;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md) var(--spacing-lg);
+    min-width: 150px;
+    flex: 1;
+}
+
+.stat-card i {
+    color: var(--color-primary);
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+}
+
+.stat-card__value {
+    display: block;
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-text);
+    line-height: 1.1;
+}
+
+.stat-card__label {
+    display: block;
+    font-size: var(--font-size-sm, 12px);
+    color: var(--color-text-muted);
+    margin-top: 2px;
+}
+
+/* Card que é parte de um fluxo — leve indicador visual */
+.card--flow {
+    opacity: 0.85;
+}
+
+.card--flow .card__desc {
+    font-style: italic;
+}

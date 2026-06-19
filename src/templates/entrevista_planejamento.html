@@ -452,10 +452,21 @@
 const fileInput = document.getElementById('curriculo');
 const fileNameEl = document.getElementById('file-name');
 const fileDrop = document.getElementById('file-drop');
+const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+
+function validateFile(file) {
+    if (!file) return false;
+    if (file.size > MAX_BYTES) {
+        showError('Arquivo muito grande. O limite é 5 MB.');
+        return false;
+    }
+    return true;
+}
 
 fileInput.addEventListener('change', () => {
     const f = fileInput.files[0];
     if (f) {
+        if (!validateFile(f)) { fileInput.value = ''; return; }
         fileNameEl.textContent = f.name;
         fileNameEl.classList.remove('hidden');
         fileDrop.classList.add('file-drop--selected');
@@ -469,6 +480,7 @@ fileDrop.addEventListener('drop', e => {
     fileDrop.classList.remove('file-drop--hover');
     const f = e.dataTransfer.files[0];
     if (f) {
+        if (!validateFile(f)) return;
         const dt = new DataTransfer();
         dt.items.add(f);
         fileInput.files = dt.files;

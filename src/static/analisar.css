@@ -1009,3 +1009,17 @@
         padding: 18px 16px 16px;
     }
 }
+/* ===== Label hint ===== */
+.form-label__hint {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    margin-left: 4px;
+}
+
+/* ===== Inline form error ===== */
+.form-error {
+    font-size: 13px;
+    color: var(--color-danger);
+    margin-top: 6px;
+}

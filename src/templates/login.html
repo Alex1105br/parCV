@@ -16,17 +16,59 @@
 
         <h1>Login</h1>
 
+        {% if request.args.get('reset') == 'ok' %}
+        <div class="alert alert--success">Senha redefinida com sucesso! Faça login.</div>
+        {% endif %}
+
         {% if error %}
         <div class="alert">{{ error }}</div>
         {% endif %}
 
-        <form method="post" action="{{ url_for('auth.login') }}" novalidate>
-            <input type="email" name="email" placeholder="Email" value="{{ request.form.email or '' }}" required>
-            <input type="password" name="password" placeholder="Senha" required>
-            <button class="btn-primary" type="submit">Entrar</button>
+        <form method="post" action="{{ url_for('auth.login') }}" novalidate id="login-form">
+            <input type="email" name="email" placeholder="Email"
+                   value="{{ request.form.email or '' }}" required autocomplete="email">
+
+            <div class="password-field">
+                <input type="password" name="password" id="login-password"
+                       placeholder="Senha" required autocomplete="current-password">
+                <button type="button" class="toggle-pw" aria-label="Mostrar/ocultar senha"
+                        data-target="login-password">
+                    <i data-lucide="eye"></i>
+                </button>
+            </div>
+
+            <div style="text-align:right;margin-top:-4px;">
+                <a href="{{ url_for('auth.forgot_password') }}"
+                   style="font-size:var(--font-size-sm,13px);color:var(--color-primary);text-decoration:none;">
+                    Esqueci minha senha
+                </a>
+            </div>
+
+            <button class="btn-primary" type="submit" id="btn-login">Entrar</button>
         </form>
 
         <a class="btn-secondary" href="{{ url_for('auth.register') }}">Criar conta</a>
     </div>
 </div>
+
+<script>
+// Toggle visibilidade de senha
+document.querySelectorAll('.toggle-pw').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var input = document.getElementById(this.dataset.target);
+        var isText = input.type === 'text';
+        input.type = isText ? 'password' : 'text';
+        var icon = this.querySelector('i');
+        icon.setAttribute('data-lucide', isText ? 'eye' : 'eye-off');
+        if (window.lucide) lucide.createIcons({ nodes: [this] });
+    });
+});
+
+// Feedback de loading ao submeter
+document.getElementById('login-form').addEventListener('submit', function() {
+    var btn = document.getElementById('btn-login');
+    btn.disabled = true;
+    btn.textContent = 'Entrando...';
+});
+</script>
 {% endblock %}

@@ -346,9 +346,19 @@
 </main>
 
 <script>
-let entrevistaId = window.location.pathname.split('/')[2];
+// ID extraído do template pelo Jinja — não depende da estrutura da URL
+let entrevistaId = '{{ entrevista_id }}';
 let perguntaAtual = 1;
 let totalPerguntas = 5;
+let entrevistaFinalizada = false;
+
+// Aviso ao tentar sair no meio da entrevista
+window.addEventListener('beforeunload', function(e) {
+    if (!entrevistaFinalizada) {
+        e.preventDefault();
+        e.returnValue = 'Você tem uma entrevista em andamento. Tem certeza que quer sair?';
+    }
+});
 
 async function carregarPergunta() {
     document.getElementById('card-pergunta').classList.add('hidden');
@@ -440,6 +450,7 @@ async function finalizarEntrevista() {
     try {
         const res = await fetch(`/entrevista/${entrevistaId}/finalizar`, { method: 'POST' });
         if (!res.ok) throw new Error('Erro ao finalizar');
+        entrevistaFinalizada = true;
         window.location.href = `/entrevista/${entrevistaId}/relatorio`;
     } catch (err) {
         btn.disabled = false;

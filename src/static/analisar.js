@@ -14,6 +14,22 @@
     var photoDataUrl = null;
     var _sliderCleanup = null;
 
+    var MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB — deve coincidir com MAX_UPLOAD_BYTES no back-end
+
+    function showFileSizeError(show) {
+        var el = document.getElementById('file-size-error');
+        if (el) el.classList.toggle('hidden', !show);
+    }
+
+    function validateFileSize(file) {
+        if (file && file.size > MAX_FILE_BYTES) {
+            showFileSizeError(true);
+            return false;
+        }
+        showFileSizeError(false);
+        return true;
+    }
+
     // ===== File Drop Zone =====
     if (fileDrop) {
         fileDrop.addEventListener('click', function () { fileInput.click(); });
@@ -31,12 +47,20 @@
             e.preventDefault();
             fileDrop.classList.remove('file-drop--active');
             if (e.dataTransfer.files.length) {
+                if (!validateFileSize(e.dataTransfer.files[0])) return;
                 fileInput.files = e.dataTransfer.files;
                 updateDropLabel();
             }
         });
 
-        fileInput.addEventListener('change', updateDropLabel);
+        fileInput.addEventListener('change', function () {
+            if (fileInput.files.length && !validateFileSize(fileInput.files[0])) {
+                fileInput.value = '';
+                updateDropLabel();
+                return;
+            }
+            updateDropLabel();
+        });
     }
 
     // ===== Photo Drop Zone =====

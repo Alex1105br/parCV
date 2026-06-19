@@ -13,7 +13,11 @@ class User(db.Model):
     password  = db.Column(db.String(255), nullable=False)
     criado_em = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
-    analises    = db.relationship("Analise",     back_populates="user", lazy="dynamic")
-    otimizacoes = db.relationship("Otimizacao",  back_populates="user", lazy="dynamic")
+    # Campos para recuperação de senha
+    reset_token            = db.Column(db.String(100), nullable=True)
+    reset_token_expires_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+    analises      = db.relationship("Analise",     back_populates="user", lazy="dynamic")
+    otimizacoes   = db.relationship("Otimizacao",  back_populates="user", lazy="dynamic")
     chat_sessions = db.relationship("ChatSession", back_populates="user", lazy="dynamic")
-    entrevistas = db.relationship("Entrevista", back_populates="user", lazy="dynamic")
+    entrevistas   = db.relationship("Entrevista",  back_populates="user", lazy="dynamic")
