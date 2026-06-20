@@ -399,3 +399,5 @@ def exportar_pdf(entrevista_id):
     except Exception as e:
         logger.error(f"Erro ao gerar PDF: {str(e)}")
         return jsonify({"error": "Erro ao gerar PDF"}), 500
+    
+#comentario

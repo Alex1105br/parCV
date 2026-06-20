@@ -8,6 +8,7 @@
 
 {% block body %}
 <div class="layout">
+
     <aside class="sidebar" id="sidebar" aria-label="Menu de navegação">
         <div class="sidebar__brand">
             <button class="sidebar__toggle" id="sidebar-toggle" aria-label="Contrair menu" aria-expanded="true">
@@ -15,26 +16,36 @@
             </button>
             <span class="sidebar__brand-text">parCV</span>
         </div>
+
         <nav class="sidebar__nav">
             <a href="/" class="sidebar__item sidebar__item--active" aria-current="page">
                 <i data-lucide="layout-dashboard"></i>
                 <span>Dashboard</span>
             </a>
+
             <a href="/analisar" class="sidebar__item">
                 <i data-lucide="scan-search"></i>
                 <span>Analisar currículo</span>
             </a>
-            <a href="/chat" class="sidebar__item">
-                <i data-lucide="message-square"></i>
-                <span>Chat</span>
-            </a>
+
             <a href="/entrevista" class="sidebar__item">
-                <i data-lucide="mic"></i>
+                <i data-lucide="user-check"></i>
                 <span>Simulação de entrevista</span>
             </a>
+
+            <a href="/otimizar" class="sidebar__item">
+                <i data-lucide="wand-2"></i>
+                <span>Otimizar currículo</span>
+            </a>
+
+            <a href="/gerar-pdf" class="sidebar__item">
+                <i data-lucide="file-text"></i>
+                <span>Gerar PDF profissional</span>
+            </a>
+
             <a href="/historico" class="sidebar__item">
                 <i data-lucide="history"></i>
-                <span>Histórico</span>
+                <span>Histórico de análises</span>
             </a>
         </nav>
 
@@ -43,6 +54,7 @@
                 <i data-lucide="user"></i>
                 <span>{{ user_name }}</span>
             </span>
+
             <form method="post" action="{{ url_for('auth.logout') }}">
                 <button type="submit" class="sidebar__logout" aria-label="Sair">
                     <i data-lucide="log-out"></i>
@@ -53,56 +65,73 @@
     </aside>
 
     <main class="main-content">
-        <header class="main-header">
-            <h1 class="main-header__title">Dashboard</h1>
-            <p class="main-header__subtitle">Olá, {{ user_name }}! Escolha um serviço para começar.</p>
+
+        <header class="home-header">
+            <h1 class="home-header__title">Bem-vindo ao parCV!</h1>
+            <p class="home-header__subtitle">
+                Olá, {{ user_name }}. Escolha um serviço para começar.
+            </p>
         </header>
 
-
-
         <div class="card-grid">
+
             <a href="/analisar" class="card">
                 <div class="card__icon-wrap">
                     <i data-lucide="scan-search"></i>
                 </div>
+
                 <div class="card__body">
                     <h3 class="card__title">Analisar currículo</h3>
-                    <p class="card__desc">Avalie seu currículo com critérios ATS e receba um score detalhado.</p>
+                    <p class="card__desc">
+                        Avalie seu currículo com critérios ATS e receba um score detalhado.
+                    </p>
                 </div>
+
                 <i data-lucide="arrow-right" class="card__arrow"></i>
             </a>
 
             <a href="/entrevista" class="card">
                 <div class="card__icon-wrap">
-                    <i data-lucide="mic"></i>
+                    <i data-lucide="user-check"></i>
                 </div>
+
                 <div class="card__body">
                     <h3 class="card__title">Simulação de entrevista</h3>
-                    <p class="card__desc">Pratique perguntas personalizadas com base no seu currículo e na vaga desejada.</p>
+                    <p class="card__desc">
+                        Treine respondendo perguntas inteligentes geradas pela nossa IA.
+                    </p>
                 </div>
+
                 <i data-lucide="arrow-right" class="card__arrow"></i>
             </a>
 
-            <!-- Otimizar e Gerar PDF fazem parte do fluxo de análise -->
-            <a href="/analisar" class="card card--flow">
+            <a href="/otimizar" class="card">
                 <div class="card__icon-wrap">
                     <i data-lucide="wand-2"></i>
                 </div>
+
                 <div class="card__body">
                     <h3 class="card__title">Otimizar currículo</h3>
-                    <p class="card__desc">Reescreva seu currículo com IA — disponível após a análise ATS.</p>
+                    <p class="card__desc">
+                        Reescreva trechos com IA para melhorar o alinhamento com vagas.
+                    </p>
                 </div>
+
                 <i data-lucide="arrow-right" class="card__arrow"></i>
             </a>
 
-            <a href="/analisar" class="card card--flow">
+            <a href="/gerar-pdf" class="card">
                 <div class="card__icon-wrap">
-                    <i data-lucide="file-down"></i>
+                    <i data-lucide="file-text"></i>
                 </div>
+
                 <div class="card__body">
                     <h3 class="card__title">Gerar PDF profissional</h3>
-                    <p class="card__desc">Exporte seu currículo otimizado em PDF — disponível após a otimização.</p>
+                    <p class="card__desc">
+                        Exporte seu currículo adaptado em um layout estruturado e profissional.
+                    </p>
                 </div>
+
                 <i data-lucide="arrow-right" class="card__arrow"></i>
             </a>
 
@@ -110,12 +139,17 @@
                 <div class="card__icon-wrap">
                     <i data-lucide="history"></i>
                 </div>
+
                 <div class="card__body">
                     <h3 class="card__title">Histórico de análises</h3>
-                    <p class="card__desc">Veja todas as análises anteriores com score, data e detalhes.</p>
+                    <p class="card__desc">
+                        Consulte resultados anteriores, scores e recomendações geradas.
+                    </p>
                 </div>
+
                 <i data-lucide="arrow-right" class="card__arrow"></i>
             </a>
+
         </div>
 
         <section class="info-section">
@@ -123,21 +157,33 @@
                 <i data-lucide="info"></i>
                 Como funciona
             </h2>
+
             <div class="steps">
+
                 <div class="step">
                     <div class="step__number">1</div>
-                    <p class="step__text">Envie seu currículo em PDF, DOCX ou TXT</p>
+                    <p class="step__text">
+                        Envie seu currículo em PDF ou TXT
+                    </p>
                 </div>
+
                 <div class="step">
                     <div class="step__number">2</div>
-                    <p class="step__text">Receba análise com score e critérios ATS</p>
+                    <p class="step__text">
+                        Receba análise com score e critérios ATS
+                    </p>
                 </div>
+
                 <div class="step">
                     <div class="step__number">3</div>
-                    <p class="step__text">Otimize e exporte em PDF profissional</p>
+                    <p class="step__text">
+                        Otimize e exporte em PDF profissional
+                    </p>
                 </div>
+
             </div>
         </section>
+
     </main>
 </div>
 {% endblock %}
