@@ -11,7 +11,7 @@ Plataforma web para otimizar currículos e se preparar para entrevistas com apoi
 
 O backend é em **Flask** (Python), com **PostgreSQL** (ex.: Supabase) como banco de dados, e suporta dois backends de LLM: **Groq** (nuvem) ou **Ollama** (local).
 
-> 📚 **Documentação técnica**: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (como o sistema é organizado, fluxos principais, schema do banco) e [docs/API.md](docs/API.md) (referência completa de todos os endpoints).
+> 📚 **Documentação técnica**: [docs/ARQUITETURA.md](docs/ARQUITETURA.md) (como o sistema é organizado, fluxos principais, schema do banco) e [docs/API.md](docs/API.md) (referência completa de todos os endpoints).
 
 ---
 
@@ -459,7 +459,7 @@ Trabalho/
 ├── README.md
 ├── docs/
 │   ├── API.md                   # referência completa dos endpoints HTTP
-│   └── ARCHITECTURE.md          # como as peças do sistema se conectam
+│   └── ARQUITETURA.md          # como as peças do sistema se conectam
 ├── backlog/                      # histórico de sprints (uso interno/apresentação)
 │   ├── BACKLOG.md
 │   └── parcv-marp.css

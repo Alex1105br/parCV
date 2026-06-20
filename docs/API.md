@@ -1,6 +1,6 @@
 # Referência da API — parCV
 
-Esta referência foi extraída diretamente do código-fonte das rotas (`src/routes/`), não escrita de memória — cada endpoint listado aqui corresponde a uma rota Flask real no projeto. Para o panorama arquitetural, veja [ARCHITECTURE.md](./ARCHITECTURE.md).
+Esta referência foi extraída diretamente do código-fonte das rotas (`src/routes/`), não escrita de memória — cada endpoint listado aqui corresponde a uma rota Flask real no projeto. Para o panorama arquitetural, veja [ARQUITETURA.md](./ARQUITETURA.md).
 
 ## Convenções gerais
 

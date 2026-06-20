@@ -117,7 +117,7 @@ def has_prompt_injection(text):
     prompt injection, em português e inglês — ex: "ignore as instruções",
     "you are now", "[INST]", tokens de chat de sistema. Primeira camada
     de defesa, usada antes de qualquer texto livre do usuário ser
-    enviado para a LLM (ver docs/ARCHITECTURE.md, seção de segurança)."""
+    enviado para a LLM (ver docs/ARQUITETURA.md, seção de segurança)."""
     return bool(_INJECTION_PATTERNS.search(text))
 
 
