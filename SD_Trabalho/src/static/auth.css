@@ -1,0 +1,210 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    background: var(--color-bg);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 400px;
+    padding: var(--spacing-md);
+}
+
+.card {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-2xl) var(--spacing-xl);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+/* Brand */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    justify-content: center;
+    margin-bottom: var(--spacing-xs);
+}
+
+.brand__logo {
+    width: 28px;
+    height: 28px;
+    color: var(--color-primary);
+}
+
+.brand__text {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-text);
+    letter-spacing: -0.5px;
+}
+
+/* Title */
+h1 {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-text);
+    text-align: center;
+}
+
+/* Alert */
+.alert {
+    background: var(--color-danger-bg);
+    border: 1px solid var(--color-danger);
+    color: var(--color-danger);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-base);
+}
+
+/* Form */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-md);
+    color: var(--color-text);
+    background: var(--color-surface-raised);
+    transition: border-color var(--transition), box-shadow var(--transition);
+    outline: none;
+}
+
+input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-subtle);
+    background: var(--color-surface);
+}
+
+input::placeholder {
+    color: var(--color-text-muted);
+}
+
+/* Chrome Autocomplete Fix */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--color-surface-raised) inset !important;
+    -webkit-text-fill-color: var(--color-text) !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Buttons */
+.btn-primary {
+    width: 100%;
+    padding: var(--spacing-sm);
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition), transform 0.1s;
+    margin-top: var(--spacing-xs);
+}
+
+.btn-primary:hover {
+    background: var(--color-primary-hover);
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+.btn-secondary {
+    display: block;
+    text-align: center;
+    padding: var(--spacing-sm);
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    text-decoration: none;
+    transition: border-color var(--transition), background var(--transition);
+}
+
+.btn-secondary:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: var(--color-primary-subtle);
+}
+
+/* ===== Password field with toggle ===== */
+.password-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-field input {
+    width: 100%;
+    padding-right: 42px; /* room for the toggle button */
+}
+
+.toggle-pw {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    transition: color var(--transition);
+}
+
+.toggle-pw:hover {
+    color: var(--color-text);
+}
+
+.toggle-pw i {
+    width: 18px;
+    height: 18px;
+}
+
+/* ===== Password strength meter ===== */
+.pw-strength {
+    height: 4px;
+    background: var(--color-border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: -4px;
+}
+
+.pw-strength__bar {
+    height: 100%;
+    width: 0%;
+    border-radius: 2px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* ===== Success alert variant ===== */
+.alert--success {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: #22c55e;
+    color: #16a34a;
+}

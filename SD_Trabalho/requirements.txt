@@ -1,0 +1,13 @@
+environs==11.0
+flask==3.0
+flask-limiter==4.0
+flask-mail==0.10.0
+flask-migrate==4.0
+flask-sqlalchemy==3.1
+marshmallow==4.3
+pillow==12.2
+psycopg2-binary==2.9.10
+python-docx==1.1
+reportlab==4.0
+requests==2.31
+werkzeug==3.0

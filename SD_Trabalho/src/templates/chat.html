@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Chat - parCV{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="chat-layout">
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <aside class="sidebar sidebar--collapsed" id="sidebar">
+        <div class="sidebar__top">
+            <button class="sidebar__toggle" id="btn-toggle-sidebar" type="button" aria-label="Expandir/Contrair barra lateral">
+                <i data-lucide="panel-left-close"></i>
+            </button>
+            <a href="/" class="sidebar__brand" title="Voltar para a página inicial">
+                <span>parCV</span>
+            </a>
+        </div>
+        <nav class="sidebar__nav">
+            <button class="sidebar__nav-item" id="btn-nova-conversa" type="button">
+                <i data-lucide="square-pen"></i>
+                <span>Nova conversa</span>
+            </button>
+        </nav>
+        <div class="sidebar__content">
+            {% if sessoes_fixadas %}
+            <div class="sidebar__section">
+                <span class="sidebar__section-label">Fixadas</span>
+            </div>
+            <ul class="sidebar__list" id="pinned-list">
+                {% for s in sessoes_fixadas %}
+                <li class="sidebar__item{% if s.id == sessao_atual %} sidebar__item--active{% endif %}" data-sid="{{ s.id }}" data-fixado="true">
+                    <i data-lucide="pin" class="sidebar__item-pin-icon"></i>
+                    <span class="sidebar__item-title">{{ s.titulo if s.titulo else "Conversa " ~ s.criado_em.strftime('%d/%m %H:%M') }}</span>
+                    <span class="sidebar__item-date">{{ s.criado_em.strftime('%d/%m %H:%M') }}</span>
+                    <button class="sidebar__item-menu" title="Opções" aria-label="Opções da conversa">
+                        <i data-lucide="ellipsis"></i>
+                    </button>
+                    <div class="sidebar__item-actions">
+                        <button class="sidebar__action sidebar__action--pin" title="Desafixar">
+                            <i data-lucide="pin-off"></i>
+                            <span>Desafixar</span>
+                        </button>
+                        <button class="sidebar__action sidebar__action--rename" title="Renomear">
+                            <i data-lucide="pencil"></i>
+                            <span>Renomear</span>
+                        </button>
+                        <button class="sidebar__action sidebar__action--delete" title="Excluir">
+                            <i data-lucide="trash-2"></i>
+                            <span>Excluir</span>
+                        </button>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            <div class="sidebar__section">
+                <span class="sidebar__section-label">Recentes</span>
+            </div>
+            <ul class="sidebar__list" id="session-list">
+                {% for s in sessoes_recentes %}
+                <li class="sidebar__item{% if s.id == sessao_atual %} sidebar__item--active{% endif %}" data-sid="{{ s.id }}" data-fixado="false">
+                    <span class="sidebar__item-title">{{ s.titulo if s.titulo else "Conversa " ~ s.criado_em.strftime('%d/%m %H:%M') }}</span>
+                    <span class="sidebar__item-date">{{ s.criado_em.strftime('%d/%m %H:%M') }}</span>
+                    <button class="sidebar__item-menu" title="Opções" aria-label="Opções da conversa">
+                        <i data-lucide="ellipsis"></i>
+                    </button>
+                    <div class="sidebar__item-actions">
+                        <button class="sidebar__action sidebar__action--pin" title="Fixar">
+                            <i data-lucide="pin"></i>
+                            <span>Fixar</span>
+                        </button>
+                        <button class="sidebar__action sidebar__action--rename" title="Renomear">
+                            <i data-lucide="pencil"></i>
+                            <span>Renomear</span>
+                        </button>
+                        <button class="sidebar__action sidebar__action--delete" title="Excluir">
+                            <i data-lucide="trash-2"></i>
+                            <span>Excluir</span>
+                        </button>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </aside>
+
+    <div class="chat-main">
+        <header class="header">
+            <div class="header__left">
+                <a href="/" class="header__home" title="Voltar para a página inicial" aria-label="Página inicial">
+                    <i data-lucide="arrow-left"></i>
+                </a>
+            </div>
+            <div class="header__actions">
+                <div class="header__status">
+                    <i data-lucide="circle-dot" class="status-icon"></i>
+                    <span>Modelo ativo</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="chat" id="chat-container" role="log" aria-live="polite" aria-label="Mensagens do chat">
+            <div class="chat__welcome" id="welcome">
+                <h2 id="welcome-msg"></h2>
+                <form class="input-area" id="input-area" aria-label="Enviar mensagem">
+                    <div class="input-area__wrapper">
+                        <label for="file-input" class="input-area__upload" title="Enviar documento" aria-label="Anexar arquivo">
+                            <i data-lucide="paperclip"></i>
+                        </label>
+                        <input type="file" id="file-input" accept=".txt,.pdf,.docx" hidden>
+                        <span class="input-area__filename" id="file-name" aria-live="polite"></span>
+                        <textarea id="msg-input" class="input-area__text" placeholder="" autocomplete="off" spellcheck="false" rows="1"></textarea>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='chat.js') }}"></script>
+{% endblock %}

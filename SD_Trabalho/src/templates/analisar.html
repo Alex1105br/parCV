@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Análise de Currículo - parCV{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='analisar.css') }}">
+{% endblock %}
+
+{% block body %}
+<header class="header">
+    <div class="header__left">
+        <a href="/" class="header__home" aria-label="Voltar para a página inicial">
+            <i data-lucide="arrow-left"></i>
+        </a>
+        <h1 class="header__title">
+            <i data-lucide="scan-search"></i>
+            Análise de Currículo (ATS)
+        </h1>
+    </div>
+    <div class="header__actions">
+        <div class="header__status" id="model-status">
+            <i data-lucide="circle-dot" class="status-icon"></i>
+            <span id="model-status-text">Modelo ativo</span>
+        </div>
+    </div>
+</header>
+
+<main class="analisar">
+    <section class="analisar__form" aria-label="Formulário de análise">
+        <div class="form-group">
+            <label for="ats-file" class="form-label">
+                <i data-lucide="paperclip"></i>
+                Currículo
+                <span class="form-label__hint">(PDF, DOCX ou TXT · máx. 5 MB)</span>
+            </label>
+            <div class="file-drop" id="file-drop">
+                <i data-lucide="file-up" class="file-drop__icon"></i>
+                <p class="file-drop__text">Arraste ou clique para selecionar</p>
+                <input type="file" id="ats-file" class="file-drop__input" accept=".pdf,.docx,.txt">
+            </div>
+            <div id="file-size-error" class="form-error hidden">
+                Arquivo muito grande. O limite é 5 MB.
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="photo-file" class="form-label">
+                <i data-lucide="image"></i>
+                Foto para o PDF <span class="form-label__hint">(opcional · JPG/PNG)</span>
+            </label>
+            <div class="file-drop file-drop--photo" id="photo-drop">
+                <i data-lucide="user-circle" class="file-drop__icon"></i>
+                <p class="file-drop__text">Adicionar foto (aparece no cabeçalho do PDF)</p>
+                <input type="file" id="photo-file" class="file-drop__input" accept=".jpg,.jpeg,.png">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="ats-vaga" class="form-label">
+                <i data-lucide="briefcase"></i>
+                Descrição da vaga <span class="form-label__hint">(opcional)</span>
+            </label>
+            <textarea id="ats-vaga" class="form-textarea"
+                      placeholder="Cole a descrição da vaga aqui..."
+                      rows="5" spellcheck="false"></textarea>
+        </div>
+
+        <button type="button" class="btn btn--primary btn--block" id="btn-analisar">
+            <i data-lucide="scan-search"></i>
+            Analisar currículo
+        </button>
+
+        <div id="loader" class="loader hidden" aria-live="polite">
+            <span class="loader__bar"></span>
+            <span>Analisando...</span>
+        </div>
+    </section>
+
+    <section class="analisar__resultado" id="resultado" aria-live="polite" aria-label="Resultado da análise"></section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='analisar.js') }}"></script>
+{% endblock %}

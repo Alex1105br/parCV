@@ -147,17 +147,7 @@ body {
     overflow-y: auto;
     padding: 60px 70px;
 
-    background-image:
-        linear-gradient(
-            rgba(8, 10, 25, 0.70),
-            rgba(8, 10, 25, 0.80)
-        ),
-        url("../static/images/home-bg.png");
-
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
+    background-color: var(--color-bg);
 
     position: relative;
 }
