@@ -16,7 +16,6 @@ from src.services.model import (
     avaliar_resposta,
     gerar_relatorio_final
 )
-from src.services.parser import extrair_texto_curriculo
 from src.services.pdf import gerar_pdf_relatorio_entrevista
 from src.utils import (
     login_required, allowed_file, carregar_arquivo, 
@@ -77,11 +76,18 @@ def gerar_plano():
         caminho = os.path.join(UPLOAD_FOLDER, filename)
         arquivo.save(caminho)
         
-        # Extrair texto
-        curriculo_text = extrair_texto_curriculo(caminho)
+        # Extrair texto do currículo (PDF/DOCX/TXT)
+        curriculo_text, erro = carregar_arquivo(caminho)
         os.remove(caminho)
+        if erro:
+            return jsonify({"error": erro}), 400
         if not curriculo_text:
             return jsonify({"error": "Não foi possível extrair texto do currículo"}), 400
+
+        curriculo_text = sanitize_text(curriculo_text, max_length=20000)
+
+        if has_prompt_injection(curriculo_text):
+            return jsonify({"error": "Conteúdo inválido detectado"}), 422
         
         # Chamar IA para gerar plano
         logger.info("Gerando plano de entrevista com IA")
