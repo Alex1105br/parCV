@@ -9,7 +9,7 @@ from src.logging_config import logger
 from src.models.analise import Analise
 from src.models.db import db
 from src.models.otimizacao import Otimizacao
-from src.services.model import call_model
+from src.services.model import call_model, gerar_titulo_analise
 from src.services.parser import extrair_json, extrair_texto_curriculo
 from src.services.prompts import build_prompt_ats, build_prompt_otimizar
 from src.services.pdf import gerar_pdf_curriculo
@@ -63,8 +63,12 @@ def analisar():
     result = extrair_json(resposta)
     result["texto_original"] = texto
 
+    titulo = gerar_titulo_analise(texto, vaga)
+    result["titulo"] = titulo
+
     try:
         analise = Analise(
+            titulo=titulo,
             score_total=result.get("score_total", 0),
             criterios=result.get("criterios", {}),
             pontos_fortes=result.get("pontos_fortes", []),
@@ -106,6 +110,7 @@ def list_analises():
         "analises": [
             {
                 "id": a.id,
+                "titulo": a.titulo,
                 "score_total": a.score_total,
                 "criado_em": a.criado_em.isoformat(),
                 "vaga": a.vaga,
@@ -145,6 +150,7 @@ def get_analise(analise_id):
         return jsonify({"error": "Análise não encontrada"}), 404
     return jsonify({
         "id": analise.id,
+        "titulo": analise.titulo,
         "criado_em": analise.criado_em.isoformat(),
         "score_total": analise.score_total,
         "criterios": analise.criterios,
@@ -156,6 +162,24 @@ def get_analise(analise_id):
         "certificados_sugeridos": analise.certificados_sugeridos,
         "vaga": analise.vaga,
     })
+
+
+@bp.route("/analises/<string:analise_id>/titulo", methods=["PATCH"])
+@login_required
+def renomear_analise(analise_id):
+    """Renomeia manualmente o título de uma análise (gerado automaticamente
+    na criação — ver gerar_titulo_analise). Mesmo padrão da rota análoga em
+    /chat/sessao/<sid>/titulo."""
+    analise = db.session.get(Analise, analise_id)
+    if analise is None or analise.user_id != session["user_id"]:
+        return jsonify({"error": "Análise não encontrada"}), 404
+    data = request.get_json(silent=True) or {}
+    titulo = sanitize_text(data.get("titulo", ""))[:100].strip()
+    if not titulo:
+        return jsonify({"error": "Título vazio"}), 400
+    analise.titulo = titulo
+    db.session.commit()
+    return jsonify({"id": analise.id, "titulo": analise.titulo})
 
 
 @bp.route("/otimizar", methods=["POST"])

@@ -22,6 +22,7 @@ class Analise(db.Model):
 
     id                     = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     criado_em              = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    titulo                 = db.Column(db.String(100), nullable=False, default="")
     score_total            = db.Column(db.Integer, nullable=False)
     criterios              = db.Column(db.JSON, nullable=False)
     pontos_fortes          = db.Column(db.JSON, nullable=False)

@@ -124,6 +124,12 @@
         var scoreClass = scoreNumClass(data.score_total);
 
         var sidebar =
+            '<div class="detalhe__titulo-wrap">' +
+                '<span class="detalhe__titulo" id="detalhe-titulo">' + escapeHtml(data.titulo || 'Análise sem título') + '</span>' +
+                '<button type="button" class="detalhe__titulo-edit-btn" id="detalhe-titulo-edit" aria-label="Renomear análise" title="Renomear">' +
+                    '<i data-lucide="pencil"></i>' +
+                '</button>' +
+            '</div>' +
             '<div class="detalhe__score-wrap">' +
                 '<span class="detalhe__score-label">Score ATS</span>' +
                 '<span class="detalhe__score-num ' + scoreClass + '">' + data.score_total + '</span>' +
@@ -193,6 +199,59 @@
 
         if (window.lucide) lucide.createIcons({ nodes: [container] });
         setupCriterioAccordions(container);
+        setupTituloRename(data.id || analiseId, data.titulo || 'Análise sem título');
+    }
+
+    // ===== Renomear análise (mesmo padrão usado em /chat e /historico) =====
+    function setupTituloRename(aid, currentTitleInicial) {
+        var titleEl = document.getElementById('detalhe-titulo');
+        var editBtn = document.getElementById('detalhe-titulo-edit');
+        if (!titleEl || !editBtn) return;
+
+        editBtn.addEventListener('click', function () {
+            var wrap = titleEl.closest('.detalhe__titulo-wrap');
+            if (wrap.querySelector('.detalhe__titulo-rename-input')) return;
+            var currentTitle = titleEl.textContent;
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentTitle;
+            input.className = 'detalhe__titulo-rename-input';
+            wrap.appendChild(input);
+            wrap.classList.add('detalhe__titulo-wrap--editing');
+            input.focus();
+            input.select();
+
+            var done = false;
+
+            function commit() {
+                if (done) return;
+                done = true;
+                var novoTitulo = input.value.trim();
+                input.remove();
+                wrap.classList.remove('detalhe__titulo-wrap--editing');
+                if (novoTitulo && novoTitulo !== currentTitle) {
+                    titleEl.textContent = novoTitulo;
+                    fetch('/analises/' + encodeURIComponent(aid) + '/titulo', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ titulo: novoTitulo })
+                    }).catch(function () {});
+                }
+            }
+
+            function cancel() {
+                if (done) return;
+                done = true;
+                input.remove();
+                wrap.classList.remove('detalhe__titulo-wrap--editing');
+            }
+
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') commit();
+                else if (e.key === 'Escape') cancel();
+            });
+            input.addEventListener('blur', commit);
+        });
     }
 
     function renderError(msg) {

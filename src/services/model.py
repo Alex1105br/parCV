@@ -260,6 +260,55 @@ def _gerar_titulo_sync(mensagem, doc_label):
     return titulo
 
 
+def gerar_titulo_analise(curriculo_text, vaga=None):
+    """Gera um título curto para uma análise de currículo (rota POST /analisar),
+    no mesmo padrão usado para títulos de conversa em /chat (ver
+    _gerar_titulo_sync acima). Chamada síncrona — não toca no banco, apenas
+    devolve a string do título; a persistência fica a cargo da rota.
+
+    Usa o início do currículo e a vaga (se informada) como contexto. Em
+    caso de erro/timeout da LLM, cai num fallback determinístico (nome ou
+    primeira linha do currículo) e, por último, um timestamp — nunca
+    devolve vazio.
+    """
+    from src.utils import sanitize_text
+    from datetime import datetime
+
+    curriculo_text = (curriculo_text or "").strip()
+    primeira_linha = curriculo_text.split("\n")[0].strip() if curriculo_text else ""
+
+    context_parts = []
+    if primeira_linha:
+        context_parts.append(f"Início do currículo: {primeira_linha}")
+    if vaga:
+        context_parts.append(f"Vaga: {vaga[:300]}")
+    context = "\n".join(context_parts)
+
+    titulo = None
+    if context:
+        prompt = (
+            "Crie um título curto (máximo 50 caracteres) para esta análise de currículo, "
+            "idealmente citando o nome do candidato (se houver) e/ou o cargo da vaga. "
+            "Responda APENAS com o título, sem aspas, sem explicações.\n\n"
+            + context
+        )
+        try:
+            titulo_raw, error = call_model(prompt, num_predict=60, timeout=15)
+            if not error and titulo_raw and titulo_raw.strip():
+                titulo = sanitize_text(titulo_raw.strip().strip('"\''))[:100]
+        except Exception:
+            pass
+
+    if not titulo:
+        fallback = primeira_linha[:60] or (vaga[:60] if vaga else "")
+        titulo = sanitize_text(fallback)[:100] if fallback else None
+
+    if not titulo:
+        titulo = datetime.now().strftime("Análise %d/%m %H:%M")
+
+    return titulo
+
+
 def call_model(prompt, num_predict=1200, timeout=None):
     """Synchronous single-prompt call. Returns (response_text, error).
 

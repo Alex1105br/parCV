@@ -54,6 +54,13 @@ def _apply_column_migrations(db):
             ADD COLUMN IF NOT EXISTS veredito JSON
             """,
         ),
+        (
+            "titulo em analise",
+            """
+            ALTER TABLE analise
+            ADD COLUMN IF NOT EXISTS titulo VARCHAR(100) NOT NULL DEFAULT ''
+            """,
+        ),
     ]
 
     with db.engine.connect() as conn:

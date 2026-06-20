@@ -52,14 +52,21 @@
         var listHtml = '<div class="analise-list">';
         data.analises.forEach(function (a) {
             var cls = scoreClass(a.score_total);
+            var titulo = a.titulo || 'Análise sem título';
             var vagaHtml = a.vaga
                 ? '<span class="analise-card__vaga">' + escapeHtml(a.vaga.slice(0, 80)) + (a.vaga.length > 80 ? '…' : '') + '</span>'
                 : '<span class="analise-card__vaga analise-card__vaga--empty">Sem descrição de vaga</span>';
 
             listHtml +=
-                '<a class="analise-card" href="/historico/' + escapeHtml(a.id) + '">' +
+                '<a class="analise-card" href="/historico/' + escapeHtml(a.id) + '" data-aid="' + escapeHtml(a.id) + '">' +
                     '<div class="score-badge ' + cls + '">' + a.score_total + '</div>' +
                     '<div class="analise-card__body">' +
+                        '<div class="analise-card__title-row">' +
+                            '<span class="analise-card__title">' + escapeHtml(titulo) + '</span>' +
+                            '<button type="button" class="analise-card__edit-btn" aria-label="Renomear análise" title="Renomear">' +
+                                '<i data-lucide="pencil"></i>' +
+                            '</button>' +
+                        '</div>' +
                         vagaHtml +
                         '<span class="analise-card__date">' + formatDate(a.criado_em) + '</span>' +
                     '</div>' +
@@ -84,10 +91,69 @@
         container.innerHTML = listHtml;
         if (window.lucide) lucide.createIcons({ nodes: [container] });
 
+        container.querySelectorAll('.analise-card__edit-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var card = btn.closest('.analise-card');
+                var titleEl = card.querySelector('.analise-card__title');
+                startInlineRename(card, card.dataset.aid, titleEl);
+            });
+        });
+
         var btnPrev = document.getElementById('btn-prev');
         var btnNext = document.getElementById('btn-next');
         if (btnPrev) btnPrev.addEventListener('click', function () { loadPage(currentPage - 1); });
         if (btnNext) btnNext.addEventListener('click', function () { loadPage(currentPage + 1); });
+    }
+
+    // ===== Renomear análise (mesmo padrão usado em /chat) =====
+    function startInlineRename(card, aid, titleEl) {
+        if (card.querySelector('.analise-card__rename-input')) return;
+        var currentTitle = titleEl.textContent;
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentTitle;
+        input.className = 'analise-card__rename-input';
+        var titleRow = card.querySelector('.analise-card__title-row');
+        titleRow.appendChild(input);
+        card.classList.add('analise-card--editing');
+        input.focus();
+        input.select();
+
+        var done = false;
+
+        function commit() {
+            if (done) return;
+            done = true;
+            var novoTitulo = input.value.trim();
+            input.remove();
+            card.classList.remove('analise-card--editing');
+            if (novoTitulo && novoTitulo !== currentTitle) {
+                titleEl.textContent = novoTitulo;
+                fetch('/analises/' + encodeURIComponent(aid) + '/titulo', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ titulo: novoTitulo })
+                }).catch(function () {});
+            }
+        }
+
+        function cancel() {
+            if (done) return;
+            done = true;
+            input.remove();
+            card.classList.remove('analise-card--editing');
+        }
+
+        input.addEventListener('click', function (e) { e.stopPropagation(); });
+        input.addEventListener('mousedown', function (e) { e.stopPropagation(); });
+        input.addEventListener('keydown', function (e) {
+            e.stopPropagation();
+            if (e.key === 'Enter') commit();
+            else if (e.key === 'Escape') cancel();
+        });
+        input.addEventListener('blur', commit);
     }
 
     function renderError(msg) {
