@@ -453,12 +453,13 @@ RESPOSTA DO CANDIDATO: {resposta}
 
 CONTEXTO: {json.dumps(contexto)}
 
-CRITÉRIOS DE PONTUAÇÃO (0-10):
-- 0: Resposta irrelevante, nula ou totalmente incorreta.
-- 1-3: Resposta muito fraca, incompleta ou com erros graves.
-- 4-6: Resposta média, básica ou que carece de profundidade técnica.
-- 7-9: Resposta boa a excelente, demonstrando domínio e clareza.
-- 10: Resposta PERFEITA, completa, articulada e sem pontos de melhoria. Não hesite em dar 10 se a resposta for exemplar.
+CRITÉRIOS DE PONTUAÇÃO (0-10) — use a régua completa, inclusive os extremos:
+- 0-2: Resposta irrelevante, nula ou totalmente incorreta (Péssimo).
+- 3-4: Resposta fraca, incompleta ou com erros técnicos relevantes (Ruim).
+- 5-6: Resposta básica/aceitável, correta mas sem profundidade ou sem exemplos concretos (Regular).
+- 7-8: Resposta BOA: correta, clara, com algum exemplo ou detalhe prático, mas com 1-2 pontos que poderiam ser mais aprofundados (Bom).
+- 9-10: Resposta EXCELENTE: tecnicamente sólida, bem estruturada, com exemplos concretos e demonstra domínio real do assunto — pequenas imperfeições de forma não te impedem de dar 9 ou 10 aqui. Use 10 para a resposta mais completa que você puder imaginar para essa pergunta; use 9 para excelente com algum detalhe a desejar.
+Não hesite em usar 9 ou 10 quando a resposta for de fato forte — não reserve essas notas só para respostas "perfeitas e sem nenhum detalhe a melhorar". Seja justo e calibrado: respostas medianas devem ficar em 5-6, não em 7.
 
 Forneça avaliação em JSON (APENAS JSON):
 {{
