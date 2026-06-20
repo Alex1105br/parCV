@@ -31,6 +31,18 @@ OPTIMIZED_STRUCTURE_EXAMPLE = (
 
 
 def build_prompt_ats(curriculo, vaga=None):
+    """Monta o prompt de análise ATS enviado à LLM.
+
+    Instrui o modelo a pontuar o currículo em 6 critérios (0-100 no total),
+    listar pontos fortes/fracos, sugestões, palavras-chave da vaga ausentes
+    no currículo e certificações sugeridas (apenas de uma lista fixa de
+    plataformas, para evitar URLs inventadas). Currículo e vaga são
+    embutidos em tags <curriculo>/<vaga> com instrução explícita para a IA
+    tratá-los como dados, não como comandos — camada extra de defesa contra
+    prompt injection, complementar à validação de `has_prompt_injection()`.
+
+    Retorna a string do prompt completo (não faz nenhuma chamada de rede).
+    """
     return (
         "Você é um sistema ATS profissional.\n"
         "Analise o currículo com base nos critérios:\n"
@@ -89,6 +101,16 @@ def build_prompt_ats(curriculo, vaga=None):
 
 
 def build_prompt_otimizar(curriculo, vaga=None):
+    """Monta o prompt de otimização/reescrita de currículo enviado à LLM.
+
+    Instrui o modelo a reescrever o currículo seguindo um formato rígido de
+    marcadores (---SECAO:---, ---EMPRESA:---, ---CARGO:---, bullets com •),
+    usados depois por `services/pdf.py` para renderizar o PDF final. Mesma
+    defesa contra prompt injection das tags <curriculo>/<vaga> aplicada em
+    `build_prompt_ats`.
+
+    Retorna a string do prompt completo (não faz nenhuma chamada de rede).
+    """
     return (
         "Você é um especialista em otimização de currículos para ATS.\n"
         "Reescreva o currículo seguindo EXATAMENTE esta estrutura e marcadores:\n"

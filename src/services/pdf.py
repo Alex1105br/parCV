@@ -56,6 +56,18 @@ def _photo_header(header_paras, foto_bytes, page_width):
 
 
 def _parse_curriculo(texto):
+    """Converte o texto do currículo (já com marcadores ---SECAO:---,
+    ---EMPRESA:---, ---CARGO:--- e bullets •) em uma lista de blocos
+    tipados — ex: {"type": "nome", "text": ...}, {"type": "bullet", ...}.
+
+    Também tenta inferir blocos a partir de texto sem marcadores (ex:
+    currículo original, ainda não otimizado pela IA), usando heurísticas
+    como posição das 3 primeiras linhas (nome/título/contato), nomes de
+    seção conhecidos e linhas com "|" + dígito (assumidas como empresa).
+
+    Usado tanto para o currículo otimizado (gerar_pdf_curriculo) quanto,
+    indiretamente, para preview do currículo original no frontend.
+    """
     blocks = []
     lines = texto.strip().split("\n")
     header_idx = 0
@@ -122,6 +134,16 @@ def _parse_curriculo(texto):
 
 
 def _find_font_dir():
+    """Localiza o diretório com as fontes Liberation Sans no sistema.
+
+    Tenta primeiro uma lista de caminhos comuns em distros Linux
+    (Ubuntu/Debian e variantes). Se nenhum tiver o arquivo .ttf esperado,
+    cai para `fc-match` (fontconfig) como fallback. Se tudo falhar, retorna
+    o primeiro candidato mesmo assim — _register_fonts() simplesmente
+    ignora a falha de registro nesse caso (try/except silencioso).
+
+    Requer o pacote de sistema `fonts-liberation` instalado (ver README).
+    """
     import os
     candidates = [
         "/usr/share/fonts/liberation-sans-fonts/",
@@ -146,6 +168,14 @@ def _find_font_dir():
 
 
 def _register_fonts(FONT_DIR):
+    """Registra as fontes Liberation Sans (Regular/Bold/Italic) no ReportLab
+    sob os nomes internos "Sans", "Sans-Bold" e "Sans-Italic", usados pelos
+    estilos de parágrafo dos templates de PDF.
+
+    Falha silenciosamente se as fontes não existirem em FONT_DIR — nesse
+    caso o ReportLab cai para sua fonte padrão (Helvetica), sem quebrar a
+    geração do PDF, mas sem suporte completo a caracteres acentuados.
+    """
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
     try:
@@ -157,6 +187,10 @@ def _register_fonts(FONT_DIR):
 
 
 def _make_doc(buffer):
+    """Cria o SimpleDocTemplate base (A4, margens padronizadas) usado por
+    todos os templates de currículo. `buffer` é um io.BytesIO onde o PDF
+    final será escrito por doc.build(story).
+    """
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.units import cm
     from reportlab.platypus import SimpleDocTemplate
@@ -173,6 +207,11 @@ def _make_doc(buffer):
 # ── Template: Clássico ────────────────────────────────────────────────────────
 
 def _build_classico(blocks, foto_bytes=None):
+    """Monta a story (lista de Flowables do ReportLab) do template
+    "clássico": layout em coluna única, preto e branco, foto opcional no
+    cabeçalho via _photo_header(). Recebe os blocos já tipados por
+    _parse_curriculo() e retorna a lista pronta para doc.build(story).
+    """
     from reportlab.lib import colors
     from reportlab.lib.units import cm
     from reportlab.platypus import Paragraph, Spacer, HRFlowable
@@ -249,6 +288,9 @@ def _build_classico(blocks, foto_bytes=None):
 # ── Template: Moderno ─────────────────────────────────────────────────────────
 
 def _build_moderno(blocks, foto_bytes=None):
+    """Monta a story do template "moderno": cabeçalho colorido com fundo,
+    seções em cards. Mesma assinatura/contrato de _build_classico().
+    """
     from reportlab.lib import colors
     from reportlab.lib.units import cm
     from reportlab.platypus import Paragraph, Spacer, Table, TableStyle
@@ -334,6 +376,9 @@ def _build_moderno(blocks, foto_bytes=None):
 # ── Template: Executivo ───────────────────────────────────────────────────────
 
 def _build_executivo(blocks, foto_bytes=None):
+    """Monta a story do template "executivo": layout mais formal/denso,
+    voltado a perfis sênior. Mesma assinatura/contrato de _build_classico().
+    """
     from reportlab.lib import colors
     from reportlab.lib.units import cm
     from reportlab.platypus import Paragraph, Spacer, Table, TableStyle, HRFlowable
@@ -429,6 +474,21 @@ TEMPLATES = {
 
 
 def gerar_pdf_curriculo(texto_ou_json, template="classico", foto_bytes=None):
+    """Gera o PDF do currículo otimizado. Ponto de entrada público desta
+    parte do módulo, chamado pela rota `/otimizar/pdf`.
+
+    Args:
+        texto_ou_json: saída bruta da IA (texto com marcadores ou JSON
+            ainda não desempacotado) — extrai_texto_curriculo() trata os
+            dois casos.
+        template: "classico", "moderno" ou "executivo". Qualquer outro
+            valor cai para "classico" (ver TEMPLATES.get(...)).
+        foto_bytes: bytes da foto do usuário (jpg/png), opcional.
+
+    Returns:
+        io.BytesIO posicionado no início (seek(0)), pronto para
+        send_file().
+    """
     texto, _ = extrair_texto_curriculo(texto_ou_json)
     texto = escape_xml(texto)
     blocks = _parse_curriculo(texto)

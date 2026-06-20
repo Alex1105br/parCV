@@ -307,6 +307,9 @@ def _doc_label(filename: str) -> str | None:
     if _UUID_RE.match(stem.replace(' ', '')):
         return None
     return stem
+
+
+@bp.route("/chat/sessao/<sid>/fixar", methods=["PATCH"])
 @login_required
 def fixar_sessao(sid):
     cs = db.session.get(ChatSession, sid)
