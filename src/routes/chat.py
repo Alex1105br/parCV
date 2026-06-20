@@ -10,7 +10,7 @@ from src.app import limiter
 from src.config import UPLOAD_FOLDER, MAX_UPLOAD_BYTES
 from src.models.db import db
 from src.models.chat_session import ChatSession
-from src.services.model import stream_resposta, call_model
+from src.services.model import stream_resposta
 from src.utils import allowed_file, carregar_arquivo, get_file_size, sanitize_text, has_prompt_injection, login_required
 
 bp = Blueprint("chat", __name__)

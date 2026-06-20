@@ -456,16 +456,14 @@ def gerar_pdf_relatorio_entrevista(entrevista):
     from reportlab.lib import colors
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.platypus import (
-        SimpleDocTemplate, Paragraph, Spacer, PageBreak,
-        Table, TableStyle, HRFlowable, Flowable
+        SimpleDocTemplate, Paragraph, Spacer,
+        Table, TableStyle, Flowable
     )
-    from reportlab.pdfgen import canvas as rl_canvas
 
     FONT_DIR = _find_font_dir()
     _register_fonts(FONT_DIR)
 
     # ── Paleta dark (espelha a tela) ──────────────────────────────────────────
-    BG_PAGE      = colors.HexColor("#1a1a2e")
     BG_CARD      = colors.HexColor("#16213e")
     BG_CARD2     = colors.HexColor("#0f3460")
     TEXTO_CLARO  = colors.HexColor("#e2e8f0")

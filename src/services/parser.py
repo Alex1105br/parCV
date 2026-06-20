@@ -41,12 +41,3 @@ def extrair_texto_curriculo(raw):
         return texto, []
 
     return raw, []
-
-
-def limpar_marcadores(texto):
-    """Remove structural markers (---SECAO:---, ---EMPRESA:---, ---CARGO:---)
-    returning clean readable text."""
-    texto = re.sub(r"---SECAO:\s*(.+?)\s*---", r"\1", texto)
-    texto = re.sub(r"---EMPRESA:\s*(.+?)\s*---", r"\1", texto)
-    texto = re.sub(r"---CARGO:\s*(.+?)\s*---", r"\1", texto)
-    return texto

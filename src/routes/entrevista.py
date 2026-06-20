@@ -1,5 +1,4 @@
 import os
-import json
 from datetime import datetime, timezone
 from io import BytesIO
 
@@ -215,7 +214,6 @@ def responder_pergunta(entrevista_id):
     data = request.get_json()
     numero_seq = data.get("numero_sequencial")
     resposta = sanitize_text(data.get("resposta", ""))
-    tipo_resposta = data.get("tipo", "principal")
     
     if not resposta or len(resposta) > 2000:
         return jsonify({"error": "Resposta inválida"}), 400

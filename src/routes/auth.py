@@ -2,11 +2,10 @@ import re
 import secrets
 from datetime import datetime, timedelta, timezone
 
-from flask import Blueprint, redirect, render_template, request, session, url_for, current_app
+from flask import Blueprint, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_mail import Message
 
-from src.config import MAIL_DEFAULT_SENDER
 from src.models.db import db
 from src.models.user import User
 
