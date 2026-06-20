@@ -1,0 +1,308 @@
+/* @theme parcv */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ===== Base Section ===== */
+section {
+    background: #1f1e24;
+    color: #e6e1e8;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 22px;
+    line-height: 1.5;
+    padding: 56px 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+/* ===== Cover / Title Slide ===== */
+section.cover {
+    justify-content: center;
+    align-items: flex-start;
+    background: #1f1e24;
+}
+
+section.cover h1 {
+    font-size: 3.2rem;
+    font-weight: 700;
+    color: #89b4fa;
+    border: none;
+    padding: 0;
+    margin: 0 0 16px 0;
+    line-height: 1.1;
+}
+
+section.cover p {
+    font-size: 1.1rem;
+    color: #9e9ba2;
+    margin: 0;
+}
+
+/* ===== Headings ===== */
+h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #89b4fa;
+    border-bottom: 2px solid #3f3f46;
+    padding-bottom: 12px;
+    margin-bottom: 28px;
+    line-height: 1.2;
+}
+
+h2 {
+    font-size: 1.7rem;
+    font-weight: 600;
+    color: #e6e1e8;
+    border-bottom: 1px solid #3f3f46;
+    padding-bottom: 8px;
+    margin-bottom: 24px;
+    line-height: 1.3;
+}
+
+h2::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 1em;
+    background: #89b4fa;
+    border-radius: 2px;
+    margin-right: 12px;
+    vertical-align: middle;
+    position: relative;
+    top: -2px;
+}
+
+h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #94e2d5;
+    margin-bottom: 12px;
+}
+
+/* ===== Tables ===== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+}
+
+thead tr {
+    background: #302f36;
+    border-bottom: 2px solid #89b4fa;
+}
+
+thead th {
+    color: #89b4fa;
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+tbody tr {
+    border-bottom: 1px solid #3f3f46;
+    transition: background 0.15s;
+}
+
+tbody tr:nth-child(even) {
+    background: rgba(48, 47, 54, 0.5);
+}
+
+tbody td {
+    padding: 10px 14px;
+    color: #e6e1e8;
+    vertical-align: middle;
+}
+
+/* checkmark column */
+tbody td:first-child {
+    color: #a6e3a1;
+    font-size: 1rem;
+    text-align: center;
+    width: 32px;
+}
+
+/* label badges */
+tbody td:nth-child(3) {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* points */
+tbody td:last-child {
+    text-align: center;
+    color: #9e9ba2;
+    font-size: 0.8rem;
+}
+
+/* ===== Blockquotes (Sprint focus) ===== */
+blockquote {
+    background: rgba(137, 180, 250, 0.08);
+    border-left: 3px solid #89b4fa;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 20px;
+    margin: 20px 0 0 0;
+    color: #9e9ba2;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+blockquote p {
+    margin: 0;
+}
+
+blockquote strong {
+    color: #89b4fa;
+    font-style: normal;
+}
+
+/* ===== Inline Code ===== */
+code {
+    background: #302f36;
+    color: #a6e3a1;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 0.85em;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    border: 1px solid #3f3f46;
+}
+
+/* ===== Code Blocks ===== */
+pre {
+    background: #28272d;
+    border: 1px solid #3f3f46;
+    border-radius: 8px;
+    padding: 20px 24px;
+    overflow: auto;
+    margin: 16px 0;
+}
+
+pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.8rem;
+    color: #e6e1e8;
+    line-height: 1.6;
+}
+
+/* ===== Lists ===== */
+ul, ol {
+    padding-left: 1.4em;
+    margin-bottom: 12px;
+}
+
+li {
+    margin-bottom: 6px;
+    color: #e6e1e8;
+}
+
+li::marker {
+    color: #89b4fa;
+}
+
+/* ===== Strong / Em ===== */
+strong {
+    color: #cdd6f4;
+    font-weight: 600;
+}
+
+em {
+    color: #f9e2af;
+}
+
+/* ===== Links ===== */
+a {
+    color: #89b4fa;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* ===== Label color coding (via scoped classes) ===== */
+.label-infra    { color: #89b4fa; }
+.label-ux       { color: #cba6f7; }
+.label-feature  { color: #a6e3a1; }
+.label-security { color: #f38ba8; }
+
+/* ===== Header / Footer ===== */
+header {
+    font-size: 0.7rem;
+    color: #9e9ba2;
+    border-bottom: 1px solid #3f3f46;
+    padding-bottom: 8px;
+    margin-bottom: 0;
+}
+
+footer {
+    font-size: 0.7rem;
+    color: #9e9ba2;
+    border-top: 1px solid #3f3f46;
+    padding-top: 8px;
+    text-align: right;
+}
+
+/* ===== Page number ===== */
+section::after {
+    content: attr(data-marpit-pagination) ' / ' attr(data-marpit-pagination-total);
+    font-size: 0.65rem;
+    color: #9e9ba2;
+    position: absolute;
+    bottom: 28px;
+    right: 40px;
+}
+
+/* ===== Divider slide (---) styling via lead class ===== */
+section.lead {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+section.lead h1,
+section.lead h2 {
+    border: none;
+    padding: 0;
+}
+
+section.lead h1 {
+    font-size: 2.8rem;
+}
+
+/* ===== Highlight boxes ===== */
+section .box-info {
+    background: rgba(137, 180, 250, 0.1);
+    border: 1px solid rgba(137, 180, 250, 0.3);
+    border-radius: 8px;
+    padding: 14px 18px;
+    color: #89b4fa;
+}
+
+section .box-success {
+    background: rgba(166, 227, 161, 0.1);
+    border: 1px solid rgba(166, 227, 161, 0.3);
+    border-radius: 8px;
+    padding: 14px 18px;
+    color: #a6e3a1;
+}
+
+section .box-warning {
+    background: rgba(249, 226, 175, 0.1);
+    border: 1px solid rgba(249, 226, 175, 0.3);
+    border-radius: 8px;
+    padding: 14px 18px;
+    color: #f9e2af;
+}
+
+section .box-danger {
+    background: rgba(243, 139, 168, 0.1);
+    border: 1px solid rgba(243, 139, 168, 0.3);
+    border-radius: 8px;
+    padding: 14px 18px;
+    color: #f38ba8;
+}
