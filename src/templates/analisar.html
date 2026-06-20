@@ -27,13 +27,9 @@
 
 <main class="analisar">
     <section class="analisar__form" aria-label="Formulário de análise">
-        <h2 class="form-section-title">
-            <i data-lucide="upload"></i>
-            Enviar currículo
-        </h2>
-
         <div class="form-group">
             <label for="ats-file" class="form-label">
+                <i data-lucide="paperclip"></i>
                 Currículo
                 <span class="form-label__hint">(PDF, DOCX ou TXT · máx. 5 MB)</span>
             </label>
@@ -57,7 +53,10 @@
         </div>
 
         <div class="form-group">
-            <label for="ats-vaga" class="form-label">Descrição da vaga <span class="form-label__hint">(opcional)</span></label>
+            <label for="ats-vaga" class="form-label">
+                <i data-lucide="briefcase"></i>
+                Descrição da vaga <span class="form-label__hint">(opcional)</span>
+            </label>
             <textarea id="ats-vaga" class="form-textarea"
                       placeholder="Cole a descrição da vaga aqui..."
                       rows="5" spellcheck="false"></textarea>
