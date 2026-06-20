@@ -450,21 +450,80 @@ deactivate
 
 ```
 Trabalho/
-├── run.py                  # entrypoint da aplicação
+├── run.py                       # entrypoint da aplicação
 ├── requirements.txt
-├── .env.example            # modelo de variáveis de ambiente
-├── vaga.txt                # exemplo de descrição de vaga (para testes)
-├── prompt-injection.txt    # caso de teste de segurança (prompt injection) — ver seção própria
-├── migrations/             # Alembic / Flask-Migrate
-├── src/
-│   ├── app.py               # factory da aplicação Flask
-│   ├── config.py            # leitura das variáveis de ambiente
-│   ├── db_init.py           # criação/atualização automática das tabelas
-│   ├── models/               # modelos SQLAlchemy (User, Analise, Otimizacao, ChatSession, Entrevista)
-│   ├── routes/                # blueprints: auth, home, analisar, chat, entrevista
-│   ├── services/               # integração com LLM, parsing, geração de PDF, prompts
-│   ├── static/                  # CSS/JS
-│   └── templates/                # HTML (Jinja2)
+├── .env.example                 # modelo de variáveis de ambiente
+├── .gitignore
+├── vaga.txt                     # exemplo de descrição de vaga (para testes)
+├── prompt-injection.txt         # caso de teste de segurança (prompt injection) — ver seção própria
+├── README.md
+├── docs/
+│   ├── API.md                   # referência completa dos endpoints HTTP
+│   └── ARCHITECTURE.md          # como as peças do sistema se conectam
+├── backlog/                      # histórico de sprints (uso interno/apresentação)
+│   ├── BACKLOG.md
+│   └── parcv-marp.css
+├── logs/                          # logs gerados em runtime (não versionado, ver .gitignore)
+│   └── parcv.log
+├── migrations/                     # Alembic / Flask-Migrate
+│   ├── alembic.ini
+│   ├── env.py
+│   ├── script.py.mako
+│   ├── README
+│   └── versions/
+│       └── 0001_initial.py        # schema único consolidado (ver seção de Banco de dados)
+└── src/
+    ├── __init__.py
+    ├── app.py                      # factory da aplicação Flask
+    ├── config.py                   # leitura das variáveis de ambiente
+    ├── db_init.py                  # criação/atualização automática das tabelas
+    ├── logging_config.py           # logging estruturado (JSON, request_id)
+    ├── utils.py                    # helpers: auth, arquivos, sanitização, prompt injection
+    ├── models/                      # modelos SQLAlchemy
+    │   ├── __init__.py
+    │   ├── db.py                    # instância SQLAlchemy
+    │   ├── user.py                  # User
+    │   ├── analise.py                # Analise
+    │   ├── otimizacao.py             # Otimizacao
+    │   ├── chat_session.py           # ChatSession
+    │   └── entrevista.py             # Entrevista, PerguntaEntrevista
+    ├── routes/                      # blueprints (camada HTTP)
+    │   ├── __init__.py
+    │   ├── auth.py                   # login, registro, logout, recuperação de senha
+    │   ├── home.py                   # página inicial
+    │   ├── analisar.py                # análise ATS, otimização de currículo, histórico, export PDF
+    │   ├── chat.py                    # chat de carreira (streaming SSE), sessões de conversa
+    │   └── entrevista.py              # simulação de entrevista (plano → execução → relatório)
+    ├── services/                    # regras de negócio
+    │   ├── __init__.py
+    │   ├── model.py                   # abstração Groq/Ollama, prompts/parsing da entrevista
+    │   ├── prompts.py                  # prompts de análise ATS e otimização de currículo
+    │   ├── parser.py                   # extração de JSON da resposta da LLM
+    │   └── pdf.py                      # geração de PDF (currículo e relatório de entrevista)
+    ├── static/                       # CSS/JS
+    │   ├── base.css
+    │   ├── home.css / home.js
+    │   ├── auth.css
+    │   ├── analisar.css / analisar.js
+    │   ├── chat.css / chat.js
+    │   ├── historico.css / historico.js
+    │   ├── historico_detalhe.js
+    │   ├── entrevista.js
+    │   └── favicon.svg
+    └── templates/                    # HTML (Jinja2)
+        ├── base.html
+        ├── home.html
+        ├── login.html
+        ├── register.html
+        ├── forgot_password.html
+        ├── reset_password.html
+        ├── analisar.html
+        ├── historico.html
+        ├── historico_detalhe.html
+        ├── chat.html
+        ├── entrevista_planejamento.html
+        ├── entrevista_execucao.html
+        └── entrevista_relatorio.html
 ```
 
 ---

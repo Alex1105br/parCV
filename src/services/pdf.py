@@ -15,6 +15,8 @@ _URL_RE = re.compile(
 def _linkify(text):
     """Wrap URLs/emails in ReportLab <link> markup and style them."""
     def repl(m):
+        """Callback de re.sub: monta o link clicável (mailto: ou https://
+        conforme o padrão casado) para um único match de URL/email."""
         raw = m.group(0)
         if '@' in raw and not raw.startswith('http'):
             href = 'mailto:' + raw
@@ -224,6 +226,9 @@ def _build_classico(blocks, foto_bytes=None):
     PAGE_WIDTH = 21 * cm - 3.6 * cm
 
     def S(name, **kw):
+        """Atalho para criar um ParagraphStyle com os defaults do
+        template clássico (fonte, cor, espaçamento), sobrescrevendo só o
+        que for passado em kw."""
         dict_styles = dict(fontName="Sans", textColor=PRETO, spaceAfter=2, spaceBefore=0, leading=14)
         dict_styles.update(kw)
         return ParagraphStyle(name, **dict_styles)
@@ -244,6 +249,11 @@ def _build_classico(blocks, foto_bytes=None):
     in_header = True
 
     def _flush_header():
+        """Despeja os parágrafos do cabeçalho (nome/título/contato) na
+        story assim que o bloco de cabeçalho termina — junta numa Table
+        com a foto ao lado se foto_bytes foi passado, senão joga os
+        parágrafos direto na story. Idempotente (nonlocal in_header):
+        chamar de novo depois do primeiro flush não faz nada."""
         nonlocal in_header
         if not in_header:
             return
@@ -302,6 +312,8 @@ def _build_moderno(blocks, foto_bytes=None):
     BRANCO   = colors.HexColor("#ffffff")
 
     def S(name, **kw):
+        """Atalho para criar um ParagraphStyle com os defaults do
+        template moderno, sobrescrevendo só o que for passado em kw."""
         dict_styles = dict(fontName="Sans", textColor=PRETO, spaceAfter=2, spaceBefore=0, leading=14)
         dict_styles.update(kw)
         return ParagraphStyle(name, **dict_styles)
@@ -324,6 +336,9 @@ def _build_moderno(blocks, foto_bytes=None):
     in_header = True
 
     def _flush_header():
+        """Mesma lógica de _flush_header() do template clássico —
+        despeja o cabeçalho (com foto, se houver) na story uma única
+        vez, antes da primeira seção."""
         nonlocal in_header
         if not in_header:
             return
@@ -390,6 +405,8 @@ def _build_executivo(blocks, foto_bytes=None):
     LINHA    = colors.HexColor("#dddddd")
 
     def S(name, **kw):
+        """Atalho para criar um ParagraphStyle com os defaults do
+        template executivo, sobrescrevendo só o que for passado em kw."""
         dict_styles = dict(fontName="Sans", textColor=CINZA_ESC, spaceAfter=2, spaceBefore=0, leading=14)
         dict_styles.update(kw)
         return ParagraphStyle(name, **dict_styles)
@@ -412,6 +429,9 @@ def _build_executivo(blocks, foto_bytes=None):
     in_header = True
 
     def _flush_header():
+        """Mesma lógica de _flush_header() do template clássico —
+        despeja o cabeçalho (com foto, se houver) na story uma única
+        vez, antes da primeira seção."""
         nonlocal in_header
         if not in_header:
             return
@@ -543,7 +563,18 @@ def gerar_pdf_relatorio_entrevista(entrevista):
 
     # ── Classe customizada para desenhar fundos arredondados robustos ─────────
     class RoundedCard(Flowable):
+        """Flowable customizado do ReportLab: desenha um retângulo com
+        cantos arredondados (ou um círculo, via force_circle) atrás de
+        um conteúdo (Paragraph ou lista de Paragraphs, virando uma Table
+        interna). Usado no relatório de entrevista para os "cards" de
+        score, pontos fortes/fracos etc. sobre o fundo escuro."""
+
         def __init__(self, content, width, bg_color, radius=10, border_color=None, border_width=0, padding=(12, 12, 12, 12), force_circle=False, forced_height=None):
+            """Calcula a altura do card a partir do conteúdo (via
+            content.wrap()) somado ao padding. Se force_circle e
+            forced_height forem passados, ignora a altura calculada e
+            força um card quadrado de lado forced_height (usado para o
+            círculo do score geral)."""
             Flowable.__init__(self)
             self.content = content
             self.width = width
@@ -581,9 +612,16 @@ def gerar_pdf_relatorio_entrevista(entrevista):
                 self.height = self.h + p_top + p_bottom
 
         def wrap(self, availWidth, availHeight):
+            """Interface exigida pelo ReportLab para qualquer Flowable:
+            devolve o tamanho (width, height) já calculado no __init__,
+            ignorando o espaço disponível recebido (o card sempre ocupa
+            seu tamanho fixo)."""
             return self.width, self.height
 
         def draw(self):
+            """Interface exigida pelo ReportLab: desenha o retângulo
+            arredondado (com borda opcional) no canvas e depois o
+            conteúdo por cima, centralizado verticalmente."""
             canvas = self.canv
             canvas.saveState()
             
@@ -602,6 +640,9 @@ def gerar_pdf_relatorio_entrevista(entrevista):
             self.content.drawOn(canvas, p_left, offset_y)
 
     def dark_background(canv, doc):
+        """Callback de página do SimpleDocTemplate (onPage): pinta o
+        fundo de toda página do relatório com a cor escura do tema,
+        antes do conteúdo ser desenhado por cima."""
         canv.saveState()
         canv.setFillColor(colors.HexColor("#1a1a2e"))
         canv.rect(0, 0, A4[0], A4[1], fill=1, stroke=0)
@@ -619,6 +660,10 @@ def gerar_pdf_relatorio_entrevista(entrevista):
 
     def ps(name, font='Sans', size=10, color=TEXTO_CLARO,
             bold=False, after=6, before=0, leading=None, alignment=0):
+        """Atalho para criar um ParagraphStyle do relatório de
+        entrevista (tema escuro) sem repetir os parâmetros comuns a
+        cada estilo — leading default é 1.35x o tamanho da fonte se não
+        especificado."""
         return ParagraphStyle(
             name,
             fontName='Sans-Bold' if bold else font,
@@ -631,6 +676,10 @@ def gerar_pdf_relatorio_entrevista(entrevista):
         )
 
     def get_status_info(score_val):
+        """Converte um score (0-10) em (rótulo, cor, cor_de_fundo_clara)
+        para exibição no relatório — 5 faixas: Excelente (≥9), Bom (≥7),
+        Regular (≥5), Ruim (≥3), Péssimo (abaixo disso). Valor inválido
+        ou ausente é tratado como 0.0 (cai em "Péssimo")."""
         try:
             val = float(score_val)
         except (ValueError, TypeError):
@@ -730,6 +779,9 @@ def gerar_pdf_relatorio_entrevista(entrevista):
     CARD_W = (CONTENT_W - 0.6 * cm) / 3
 
     def build_list_card(titulo, icone_cor, itens):
+        """Monta um RoundedCard com título colorido + lista de itens
+        (ou "—" se a lista vier vazia). Reutilizado para os 3 cards
+        lado a lado: Pontos Fortes, Pontos a Melhorar e Recomendações."""
         rows = [Paragraph(titulo, ps(f'ct_{titulo}', bold=True, size=10, color=icone_cor, after=10))]
         for item in itens:
             rows.append(Paragraph(item, ps(f'ci_{titulo}_{item[:8]}', size=8.5, color=TEXTO_CLARO, after=8, leading=12)))

@@ -23,6 +23,16 @@ mail = Mail()
 
 
 def create_app():
+    """Application factory do Flask. Monta a app completa: configura
+    logging estruturado, lê config (secret key, banco, SMTP), inicializa
+    extensões (SQLAlchemy, Flask-Mail, Flask-Migrate, Flask-Limiter),
+    registra os models para o Alembic enxergar o schema, define os hooks
+    globais de request (geração de request_id, log de cada requisição,
+    handler de rate limit) e registra os 5 blueprints de rota.
+
+    Chamada uma vez na inicialização (run.py) — não deve ser chamada
+    mais de uma vez no mesmo processo (Migrate(app, db) e limiter.init_app
+    não são idempotentes)."""
     setup_logging()
 
     app = Flask(__name__)
@@ -73,6 +83,10 @@ def create_app():
 
     @app.before_request
     def _before():
+        """Gera um request_id curto por requisição (8 chars), guardado em
+        g.request_id e no ContextVar request_id_var — este último permite
+        que código fora do contexto de request (ex: dentro do generator
+        de streaming do chat) ainda consiga logar com o id correto."""
         rid = str(uuid.uuid4())[:8]
         request_id_var.set(rid)
         g.request_id = rid
@@ -80,6 +94,10 @@ def create_app():
 
     @app.after_request
     def _after(response):
+        """Loga método, path, status e duração de toda requisição
+        concluída, e devolve o request_id ao cliente no header
+        X-Request-Id (útil para correlacionar um erro relatado pelo
+        usuário com a linha exata no log do servidor)."""
         duration_ms = int((time.time() - g.start_time) * 1000)
         logger.info(
             "request",
@@ -95,6 +113,9 @@ def create_app():
 
     @app.errorhandler(429)
     def ratelimit_handler(e):
+        """Resposta JSON padronizada quando o Flask-Limiter bloqueia uma
+        requisição por excesso de chamadas (em vez da página HTML padrão
+        do limiter)."""
         return jsonify({"error": "Muitas requisições. Aguarde antes de tentar novamente."}), 429
 
     from src.routes.auth import bp as auth_bp

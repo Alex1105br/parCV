@@ -25,7 +25,11 @@ bp = Blueprint("entrevista", __name__, url_prefix="/entrevista")
 
 
 def _get_entrevista_or_404(entrevista_id: str):
-    """Helper: pega entrevista ou 404"""
+    """Busca uma Entrevista pelo id e confere se pertence ao usuário logado.
+    Devolve None tanto se o id não existir quanto se pertencer a outro
+    usuário — as duas situações são tratadas pelo chamador como 404, sem
+    distinguir "não existe" de "não é seu" (evita confirmar a um usuário
+    que um id de entrevista de outra pessoa é válido)."""
     entrevista = Entrevista.query.get(entrevista_id)
     if not entrevista or entrevista.user_id != session.get("user_id"):
         return None
@@ -35,7 +39,9 @@ def _get_entrevista_or_404(entrevista_id: str):
 @bp.route("/", methods=["GET"])
 @login_required
 def entrevista_page():
-    """Página inicial de planejamento"""
+    """Página inicial do simulador de entrevista (entrevista_planejamento.html),
+    onde o usuário envia o currículo e a descrição da vaga para iniciar o
+    fluxo. O envio em si é feito via JS, chamando POST /entrevista/gerar-plano."""
     return render_template("entrevista_planejamento.html")
 
 
@@ -43,8 +49,20 @@ def entrevista_page():
 @login_required
 @limiter.limit("5 per minute")
 def gerar_plano():
-    """Gera plano de entrevista a partir de currículo + vaga"""
-    
+    """Inicia uma simulação de entrevista a partir de currículo + vaga.
+
+    Valida arquivo e descrição da vaga, extrai o texto do currículo,
+    checa prompt injection em ambos os campos e chama a IA
+    (gerar_plano_entrevista) para montar o plano: 10 perguntas fixas
+    (1-6 hard skills, 7-10 soft skills — convenção fixada no código, não
+    numa coluna própria do schema). Cria o registro Entrevista e, a
+    partir de plano["questoes_principais"], um PerguntaEntrevista por
+    pergunta (cascade delete: apagar a Entrevista apaga as perguntas).
+
+    Usa db.session.flush() antes do commit para ter o id da Entrevista
+    disponível e poder referenciá-lo como entrevista_id nas perguntas
+    filhas, sem precisar de dois commits separados."""
+
     # Validar multipart
     if "curriculo" not in request.files:
         return jsonify({"error": "Currículo não fornecido"}), 400
@@ -132,25 +150,29 @@ def gerar_plano():
         return jsonify({"error": "Erro ao gerar plano"}), 500
 
 
-
 @bp.route("/<entrevista_id>/executar", methods=["GET"])
 @login_required
 def executar_entrevista(entrevista_id):
-    """Serve a página de execução da entrevista"""
+    """Página de execução da entrevista (entrevista_execucao.html), onde o
+    usuário responde pergunta a pergunta. Apenas serve o HTML — o
+    carregamento de cada pergunta e o envio de respostas é feito via JS,
+    chamando GET /entrevista/<id>/pergunta/<numero> e
+    POST /entrevista/<id>/responder. 404 (texto simples, não JSON) se a
+    entrevista não existir ou não pertencer ao usuário logado."""
     entrevista = _get_entrevista_or_404(entrevista_id)
     if not entrevista:
         return "Entrevista não encontrada", 404
     return render_template("entrevista_execucao.html", entrevista_id=entrevista_id)
 
 
-
-
-
-
 @bp.route("/<entrevista_id>", methods=["GET"])
 @login_required
 def get_entrevista(entrevista_id):
-    """Retorna dados da entrevista"""
+    """Dados completos de uma entrevista: status, plano gerado pela IA,
+    relatório final (se já concluída) e a lista de todas as perguntas
+    com a respectiva resposta do usuário e avaliação da IA, quando
+    existirem. Usado para repopular a tela de execução/relatório após
+    um reload, sem precisar buscar pergunta por pergunta."""
     entrevista = _get_entrevista_or_404(entrevista_id)
     if not entrevista:
         return jsonify({"error": "Entrevista não encontrada"}), 404
@@ -179,7 +201,13 @@ def get_entrevista(entrevista_id):
 @bp.route("/<entrevista_id>/pergunta/<int:numero>", methods=["GET"])
 @login_required
 def get_pergunta(entrevista_id, numero):
-    """Retorna pergunta específica"""
+    """Dados de uma pergunta específica da entrevista, pelo número
+    sequencial (1-10). Usado pela tela de execução para carregar cada
+    pergunta sob demanda, conforme o usuário avança. O campo
+    aprofundamentos_pendentes existe no contrato de resposta por
+    compatibilidade com o frontend, mas a funcionalidade de perguntas de
+    aprofundamento foi removida — perguntas_aprofundamento nunca é mais
+    populada, então este campo sempre será 0."""
     entrevista = _get_entrevista_or_404(entrevista_id)
     if not entrevista:
         return jsonify({"error": "Entrevista não encontrada"}), 404
@@ -206,7 +234,17 @@ def get_pergunta(entrevista_id, numero):
 @login_required
 @limiter.limit("30 per minute")
 def responder_pergunta(entrevista_id):
-    """Salva resposta e gera aprofundamentos se necessário"""
+    """Salva a resposta do usuário a uma pergunta e dispara a avaliação
+    por IA (avaliar_resposta). Na primeira resposta de uma entrevista,
+    move o status de em_planejamento para em_andamento.
+
+    O campo "aprofundamentos" da resposta é sempre uma lista vazia: a
+    funcionalidade de perguntas de aprofundamento (avaliacao.deve_aprofundar
+    -> novas perguntas extras sobre a mesma resposta) foi removida do
+    fluxo — a entrevista é direta, com as 10 perguntas fixas definidas
+    no plano e nenhuma pergunta adicional gerada dinamicamente. O campo
+    é mantido no contrato de resposta por compatibilidade com o
+    frontend existente."""
     entrevista = _get_entrevista_or_404(entrevista_id)
     if not entrevista:
         return jsonify({"error": "Entrevista não encontrada"}), 404
@@ -263,7 +301,8 @@ def responder_pergunta(entrevista_id):
             "aprofundar": avaliacao.get("deve_aprofundar", False)
         }
         
-        # Aprofundamentos removidos — entrevista direta com 5 perguntas
+        # Aprofundamentos removidos da funcionalidade — entrevista é direta,
+        # com as 10 perguntas fixas do plano (ver docstring da rota acima)
         aprofundamentos_resposta = []
         
         db.session.commit()
@@ -283,7 +322,13 @@ def responder_pergunta(entrevista_id):
 @bp.route("/<entrevista_id>/finalizar", methods=["POST"])
 @login_required
 def finalizar_entrevista(entrevista_id):
-    """Marca entrevista como concluída e gera relatório final"""
+    """Encerra a entrevista e gera o relatório executivo final.
+
+    Exige que todas as 10 perguntas já tenham resposta_usuario preenchida
+    (400 caso contrário). Em sucesso, chama gerar_relatorio_final — que
+    compila as avaliações de hard e soft skills em um parecer único — e
+    grava o resultado em Entrevista.relatorio_final, junto com o status
+    "concluida" e o timestamp finalizado_em."""
     entrevista = _get_entrevista_or_404(entrevista_id)
     if not entrevista:
         return jsonify({"error": "Entrevista não encontrada"}), 404
@@ -320,7 +365,9 @@ def finalizar_entrevista(entrevista_id):
 @bp.route("/<entrevista_id>/relatorio", methods=["GET"])
 @login_required
 def relatorio(entrevista_id):
-    """Exibe página do relatório"""
+    """Página HTML do relatório final (entrevista_relatorio.html). Os
+    dados do relatório em si são carregados via JS, chamando
+    GET /entrevista/<id> e lendo o campo relatorio_final."""
     entrevista = _get_entrevista_or_404(entrevista_id)
     if not entrevista:
         return jsonify({"error": "Entrevista não encontrada"}), 404
@@ -331,7 +378,11 @@ def relatorio(entrevista_id):
 @bp.route("/<entrevista_id>/exportar-pdf", methods=["GET"])
 @login_required
 def exportar_pdf(entrevista_id):
-    """Exporta relatório em PDF"""
+    """Gera e devolve o relatório final da entrevista como PDF para
+    download (gerar_pdf_relatorio_entrevista). Não exige que a entrevista
+    esteja com status "concluida" no código desta rota — se chamada antes
+    de /finalizar, gerar_pdf_relatorio_entrevista é quem decide como
+    tratar um relatorio_final ainda vazio."""
     entrevista = _get_entrevista_or_404(entrevista_id)
     if not entrevista:
         return jsonify({"error": "Entrevista não encontrada"}), 404

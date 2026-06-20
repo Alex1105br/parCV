@@ -42,6 +42,8 @@ def _get_or_create_chat_session():
 
 
 def _save_chat_session(cs, mensagens):
+    """Persiste a lista de mensagens na sessão e atualiza o timestamp de
+    última atividade (usado para ordenar a lista de conversas)."""
     cs.mensagens = mensagens
     cs.atualizado_em = datetime.now(timezone.utc)
     db.session.commit()
@@ -50,6 +52,10 @@ def _save_chat_session(cs, mensagens):
 @bp.route("/chat")
 @login_required
 def chat_page():
+    """Página do chat. Carrega as listas de sessões fixadas e recentes do
+    usuário (só sessões com mensagens reais, via filtro mensagens != None)
+    para montar a barra lateral; o conteúdo da conversa em si é carregado
+    via JS chamando /chat/sessao/<sid>."""
     user_id = session["user_id"]
     sessao_atual = session.get("chat_sid")
     sessoes_fixadas = (ChatSession.query
@@ -68,6 +74,19 @@ def chat_page():
 @login_required
 @limiter.limit("20 per minute; 100 per hour")
 def chat():
+    """Envia uma mensagem ao chat e devolve a resposta da IA como stream
+    SSE (Server-Sent Events), token a token, via stream_resposta(). Na
+    primeira mensagem de uma sessão, também dispara a geração automática
+    de título (titulo_ctx) — a flag titulo_gerado é marcada como True
+    *antes* do streaming começar, para evitar que uma segunda mensagem
+    concorrente da mesma sessão tente gerar título de novo.
+
+    Detalhe de implementação: como o generator interno (generate()) pode
+    seguir rodando depois que esta função já retornou a Response, o
+    histórico final só é salvo no banco dentro do bloco finally,
+    reabrindo um contexto de aplicação explícito (app.app_context()) —
+    necessário porque esse trecho roda fora do contexto da requisição
+    HTTP original."""
     data = request.get_json()
     mensagem = sanitize_text(data.get("mensagem", ""))
     if not mensagem:
@@ -99,6 +118,12 @@ def chat():
     titulo_holder = {}
 
     def generate():
+        """Generator consumido pela Response SSE: repassa cada chunk de
+        stream_resposta() ao cliente (yield), capturando de passagem o
+        evento de título gerado pela IA (se houver). No finally — que
+        roda mesmo se o cliente desconectar no meio do stream — salva o
+        histórico final no banco, reabrindo app_context() porque esse
+        trecho executa fora do contexto da requisição HTTP original."""
         try:
             for chunk in stream_resposta(historico, mensagem, skip_append_user=True,
                                           session_id=sid_for_stream, titulo_ctx=titulo_ctx):
@@ -131,6 +156,13 @@ def chat():
 @login_required
 @limiter.limit("10 per minute")
 def upload():
+    """Envia um arquivo para o chat, com mensagem opcional. Se houver
+    mensagem (e ela passar na checagem de prompt injection), o
+    comportamento é igual ao endpoint /chat: devolve um stream SSE com a
+    resposta da IA já considerando o conteúdo do documento no histórico.
+    Sem mensagem (ou mensagem rejeitada), apenas confirma o upload em
+    JSON normal e usa o nome do arquivo para sugerir um título de sessão
+    (via _doc_label) caso ainda não tenha um."""
     if "arquivo" not in request.files:
         return jsonify({"error": "Nenhum arquivo enviado"}), 400
 
@@ -177,6 +209,9 @@ def upload():
         titulo_holder = {}
 
         def generate():
+            """Mesma lógica do generate() de chat(): repassa o stream
+            SSE da resposta da IA e, no finally, persiste o histórico
+            (e o título, se gerado) reabrindo app_context()."""
             try:
                 for chunk in stream_resposta(historico, mensagem, skip_append_user=True,
                                               session_id=upload_sid_for_stream, titulo_ctx=titulo_ctx):
@@ -222,6 +257,8 @@ def upload():
 @bp.route("/limpar", methods=["POST"])
 @login_required
 def limpar():
+    """Apaga todas as mensagens da sessão de chat atual, mantendo a
+    sessão (id, título, fixado) intacta."""
     cs = _get_or_create_chat_session()
     _save_chat_session(cs, [])
     return jsonify({"success": True})
@@ -230,6 +267,10 @@ def limpar():
 @bp.route("/chat/nova", methods=["POST"])
 @login_required
 def nova_conversa():
+    """Inicia uma nova sessão de chat (remove chat_sid da session, fazendo
+    a próxima mensagem criar uma ChatSession nova). Se a sessão anterior
+    nunca teve mensagens reais nem título, ela é deletada do banco em vez
+    de ficar acumulando sessões vazias na lista do usuário."""
     sid = session.pop("chat_sid", None)
     # Deleta a sessão anterior apenas se estava vazia (sem mensagens e sem título)
     if sid:
@@ -245,6 +286,9 @@ def nova_conversa():
 @bp.route("/chat/sessoes")
 @login_required
 def listar_sessoes():
+    """Lista todas as sessões de chat do usuário (resumo: id, título,
+    fixado, última atualização), ordenadas da mais recente para a mais
+    antiga. Usada para popular a barra lateral de conversas."""
     sessoes = (ChatSession.query
                .filter_by(user_id=session["user_id"])
                .order_by(ChatSession.atualizado_em.desc()).all())
@@ -257,6 +301,11 @@ def listar_sessoes():
 @bp.route("/chat/sessao/<sid>", methods=["POST"])
 @login_required
 def trocar_sessao(sid):
+    """Troca a sessão de chat ativa (atualiza session["chat_sid"]) e
+    devolve o histórico filtrado para exibição: mensagens de sistema são
+    removidas, e o marcador interno de "documento carregado" (usado para
+    dar contexto à IA) vira uma mensagem de sistema visível e amigável
+    no lugar do texto bruto do documento."""
     cs = db.session.get(ChatSession, sid)
     if not cs or cs.user_id != session["user_id"]:
         return jsonify({"error": "Sessão não encontrada"}), 404
@@ -281,6 +330,9 @@ def trocar_sessao(sid):
 @bp.route("/chat/sessao/<sid>/titulo", methods=["PATCH"])
 @login_required
 def renomear_sessao(sid):
+    """Renomeia manualmente o título de uma sessão de chat. Marca
+    titulo_gerado=True para que a geração automática de título (na
+    próxima mensagem) não sobrescreva o nome escolhido pelo usuário."""
     cs = db.session.get(ChatSession, sid)
     if not cs or cs.user_id != session["user_id"]:
         return jsonify({"error": "Sessão não encontrada"}), 404
@@ -300,6 +352,11 @@ _UUID_RE = re.compile(
 )
 
 def _doc_label(filename: str) -> str | None:
+    """Tenta transformar o nome de um arquivo enviado num título legível
+    de sessão de chat (ex: "curriculo_joao.pdf" -> "curriculo joao").
+    Devolve None (sem sugestão) se o nome resultante for muito curto/longo
+    ou for essencialmente um UUID/hash — nesses casos não vale a pena usar
+    como título, e o chamador cai para um título genérico com timestamp."""
     stem = os.path.splitext(filename)[0]
     stem = stem.replace('_', ' ').replace('-', ' ').strip()
     if len(stem) < 3 or len(stem) > 80:
@@ -312,6 +369,8 @@ def _doc_label(filename: str) -> str | None:
 @bp.route("/chat/sessao/<sid>/fixar", methods=["PATCH"])
 @login_required
 def fixar_sessao(sid):
+    """Alterna (toggle) o estado fixado/não-fixado de uma sessão de chat
+    — usado para fixar conversas importantes no topo da lista lateral."""
     cs = db.session.get(ChatSession, sid)
     if not cs or cs.user_id != session["user_id"]:
         return jsonify({"error": "Sessão não encontrada"}), 404
@@ -323,6 +382,10 @@ def fixar_sessao(sid):
 @bp.route("/chat/sessao/<sid>", methods=["DELETE"])
 @login_required
 def excluir_sessao(sid):
+    """Exclui uma sessão de chat permanentemente. Se for a sessão
+    atualmente ativa, limpa session["chat_sid"] para que a próxima
+    mensagem crie uma sessão nova em vez de referenciar um id já
+    excluído."""
     cs = db.session.get(ChatSession, sid)
     if not cs or cs.user_id != session["user_id"]:
         return jsonify({"error": "Sessão não encontrada"}), 404

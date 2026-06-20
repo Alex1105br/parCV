@@ -15,11 +15,17 @@ EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def is_valid_email(email: str) -> bool:
+    """Validação simples de formato (regex usuario@dominio.tld) — não checa
+    existência real do domínio/caixa postal, só formato sintático."""
     return bool(email and EMAIL_REGEX.match(email))
 
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
+    """Tela e processamento de login. GET renderiza o formulário; POST
+    valida email/senha contra o hash salvo e, se válido, inicia a sessão
+    (session["user_id"], session["user_name"]) e redireciona para home.
+    Já logado, redireciona direto para home sem mostrar o formulário."""
     if "user_id" in session:
         return redirect(url_for("home.index"))
 
@@ -47,6 +53,11 @@ def login():
 
 @bp.route("/register", methods=["GET", "POST"])
 def register():
+    """Tela e processamento de cadastro. Valida campos obrigatórios, formato
+    de email, tamanho mínimo de senha (8), confirmação de senha e
+    unicidade do email. Em sucesso, cria o User (senha já com hash),
+    inicia a sessão e redireciona para home — mesmo comportamento pós-login
+    do endpoint /login."""
     if "user_id" in session:
         return redirect(url_for("home.index"))
 
@@ -85,6 +96,7 @@ def register():
 
 @bp.route("/logout", methods=["POST"])
 def logout():
+    """Encerra a sessão atual (session.clear()) e volta para /login."""
     session.clear()
     return redirect(url_for("auth.login"))
 
@@ -95,6 +107,10 @@ def logout():
 
 @bp.route("/esqueci-senha", methods=["GET", "POST"])
 def forgot_password():
+    """Solicitação de redefinição de senha. Sempre devolve a mesma mensagem
+    genérica, exista ou não o email — evita enumeração de usuários. Se o
+    email existir, gera (ou reaproveita, caso ainda recente) um token
+    válido por 1h e dispara o e-mail de redefinição via SMTP."""
     if "user_id" in session:
         return redirect(url_for("home.index"))
 
@@ -140,6 +156,10 @@ def forgot_password():
 
 @bp.route("/redefinir-senha/<token>", methods=["GET", "POST"])
 def reset_password(token):
+    """Tela e processamento de redefinição de senha a partir do link
+    recebido por e-mail. Se o token não existir ou estiver expirado,
+    renderiza a página em modo "expirado" (sem formulário). Em sucesso,
+    atualiza a senha (hash) e invalida o token (uso único)."""
     if "user_id" in session:
         return redirect(url_for("home.index"))
 

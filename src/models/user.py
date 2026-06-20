@@ -5,6 +5,11 @@ from src.models.db import db
 
 
 class User(db.Model):
+    """Usuário cadastrado no sistema. Senha armazenada como hash
+    (werkzeug.security). Os campos reset_token/reset_token_expires_at
+    suportam o fluxo de "esqueci minha senha" (token de uso único,
+    válido por 1h). Ponto central do schema: toda análise, otimização,
+    sessão de chat e entrevista pertence a um User."""
     __tablename__ = "users"
 
     id        = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))

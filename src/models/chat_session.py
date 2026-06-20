@@ -5,6 +5,13 @@ from src.models.db import db
 
 
 class ChatSession(db.Model):
+    """Uma conversa do chat de carreira. `mensagens` guarda o histórico
+    completo como JSON (lista de {role, content, ...}), incluindo a
+    mensagem de system prompt — rotas de leitura (ex: GET
+    /chat/sessao/<sid>) filtram o que é exibido ao usuário.
+    `titulo_gerado` controla se o título já foi definido (manualmente ou
+    pela IA, na primeira mensagem) para não ser sobrescrito depois.
+    `fixado` controla a exibição na seção "fixadas" da barra lateral."""
     __tablename__ = "chat_session"
 
     id           = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))

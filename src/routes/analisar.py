@@ -22,6 +22,11 @@ bp = Blueprint("analisar", __name__)
 @login_required
 @limiter.limit("5 per minute; 30 per hour", methods=["POST"])
 def analisar():
+    """Análise ATS do currículo. GET renderiza a tela; POST recebe arquivo
+    (+ vaga opcional), extrai o texto, valida prompt injection, chama a
+    LLM (build_prompt_ats) e persiste o resultado em Analise. Mesmo se a
+    persistência falhar, o resultado da análise é devolvido ao usuário —
+    o erro de banco só é logado, não impede a resposta."""
     if request.method == "GET":
         return render_template("analisar.html")
 
@@ -84,6 +89,10 @@ def analisar():
 @bp.route("/analises", methods=["GET"])
 @login_required
 def list_analises():
+    """Lista paginada (page/per_page, máx 50 por página) das análises do
+    usuário logado, ordenadas da mais recente para a mais antiga. Devolve
+    apenas um resumo de cada análise (sem os campos pesados como
+    pontos_fortes/fracos) — para o detalhe completo, ver get_analise()."""
     page = request.args.get("page", 1, type=int)
     per_page = min(request.args.get("per_page", 20, type=int), 50)
     pagination = (
@@ -111,18 +120,25 @@ def list_analises():
 @bp.route("/historico")
 @login_required
 def historico():
+    """Página HTML de histórico de análises do usuário (dados carregados
+    via JS, chamando GET /analises)."""
     return render_template("historico.html")
 
 
 @bp.route("/historico/<string:analise_id>")
 @login_required
 def historico_detalhe(analise_id):
+    """Página HTML de detalhe de uma análise específica (dados carregados
+    via JS, chamando GET /analises/<analise_id>)."""
     return render_template("historico_detalhe.html", analise_id=analise_id)
 
 
 @bp.route("/analises/<string:analise_id>", methods=["GET"])
 @login_required
 def get_analise(analise_id):
+    """Dados completos de uma análise (todos os campos). 404 se não
+    existir ou pertencer a outro usuário — checagem de posse feita aqui,
+    não delegada ao banco (não há filtro user_id na query do get)."""
     analise = db.session.get(Analise, analise_id)
     if analise is None or analise.user_id != session["user_id"]:
         return jsonify({"error": "Análise não encontrada"}), 404
@@ -144,6 +160,12 @@ def get_analise(analise_id):
 @login_required
 @limiter.limit("5 per minute; 30 per hour")
 def otimizar():
+    """Reescreve o currículo otimizado para a vaga informada. Mesmo fluxo
+    de validação/extração de /analisar, mas usa build_prompt_otimizar e
+    extrai o texto reescrito (com marcadores ---SECAO:--- etc., consumidos
+    depois por services/pdf.py). O texto otimizado fica salvo em
+    session["curriculo_otimizado"] para uso posterior por /otimizar/pdf
+    sem precisar reenviar o texto inteiro."""
     if "arquivo" not in request.files:
         return jsonify({"error": "Nenhum arquivo enviado"}), 400
 
@@ -211,6 +233,12 @@ def otimizar():
 @login_required
 @limiter.limit("10 per minute", methods=["POST"])
 def otimizar_pdf():
+    """Gera o PDF do currículo otimizado. GET usa o texto já salvo em
+    session["curriculo_otimizado"] (fluxo padrão pós-/otimizar); POST
+    aceita texto explícito no body — usado quando o usuário editou o
+    texto antes de exportar. Aceita foto opcional (jpg/png, ≤2MB) para o
+    cabeçalho e template (classico/moderno/executivo, default classico —
+    qualquer valor inválido cai silenciosamente para classico)."""
     if request.method == "POST":
         curriculo_texto = sanitize_text(request.form.get("texto", ""), max_length=20000)
         if not curriculo_texto:

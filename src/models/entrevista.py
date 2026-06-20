@@ -5,6 +5,16 @@ from src.models.db import db
 
 
 class Entrevista(db.Model):
+    """Uma simulação de entrevista completa. Criada a partir de um
+    currículo + descrição de vaga (POST /entrevista/gerar-plano), que a
+    IA transforma em `plano_entrevista` (JSON com tópicos, estratégia e
+    as 10 perguntas) e em 10 registros filhos `PerguntaEntrevista`
+    (cascade delete: apagar a Entrevista apaga as perguntas).
+
+    `status` segue em_planejamento -> em_andamento (na 1ª resposta) ->
+    concluida (em /finalizar, que também preenche relatorio_final com o
+    parecer executivo gerado pela IA: score geral, pontos fortes/fracos,
+    recomendações)."""
     __tablename__ = "entrevista"
 
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -30,6 +40,15 @@ class Entrevista(db.Model):
 
 
 class PerguntaEntrevista(db.Model):
+    """Uma das 10 perguntas de uma Entrevista (numero_sequencial 1-6 =
+    hard skills, 7-10 = soft skills — convenção fixada no código de
+    services/model.py, não numa coluna própria desta tabela).
+    `resposta_usuario` e `avaliacao_resposta` (JSON com score 0-10 e
+    feedback da IA) ficam vazios até o usuário responder via POST
+    /entrevista/<id>/responder. `perguntas_aprofundamento` existe no
+    schema mas não é mais populada — a funcionalidade de perguntas de
+    aprofundamento foi removida, a rota /responder sempre devolve
+    aprofundamentos vazio."""
     __tablename__ = "pergunta_entrevista"
 
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))

@@ -14,9 +14,12 @@ from src.config import ALLOWED_EXTENSIONS
 # ---------------------------------------------------------------------------
 
 def login_required(f):
-    """Decorator: redireciona para login se o usuário não estiver autenticado."""
+    """Decorator: redireciona para /login se o usuário não estiver autenticado."""
     @wraps(f)
     def decorated(*args, **kwargs):
+        """Wrapper que checa session["user_id"] antes de chamar a view
+        original; devolve o redirect em vez de propagar a chamada se não
+        houver sessão ativa."""
         if "user_id" not in session:
             return redirect(url_for("auth.login"))
         return f(*args, **kwargs)
@@ -28,12 +31,16 @@ def login_required(f):
 # ---------------------------------------------------------------------------
 
 def allowed_file(filename):
-    """Check if filename has an allowed extension."""
+    """Checa se o nome do arquivo tem uma das extensões permitidas
+    (definidas em config.ALLOWED_EXTENSIONS: txt, pdf, docx)."""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def carregar_arquivo(caminho):
-    """Load text content from a .txt, .pdf or .docx file. Returns (text, error)."""
+    """Extrai o texto de um arquivo .txt, .pdf ou .docx salvo em disco.
+    PDF usa o binário externo `pdftotext` (precisa estar instalado no
+    sistema); DOCX usa python-docx; TXT é lido direto como UTF-8.
+    Retorna (texto, erro) — exatamente um dos dois é None."""
     if not os.path.isfile(caminho):
         return None, "Arquivo não encontrado."
 
@@ -71,12 +78,16 @@ def carregar_arquivo(caminho):
 
 
 def escape_xml(text):
-    """Escape characters that break ReportLab's XML parser."""
+    """Escapa &, < e > para não quebrar o parser de XML/markup interno
+    do ReportLab ao montar parágrafos do PDF."""
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
 def get_file_size(arquivo):
-    """Return file size in bytes without consuming the stream."""
+    """Calcula o tamanho em bytes de um arquivo enviado (FileStorage do
+    Flask) sem consumir o stream — vai até o fim, lê a posição e volta
+    pro início, deixando o arquivo pronto pra ser lido normalmente
+    depois (ex: .save() ou .read())."""
     arquivo.seek(0, 2)
     size = arquivo.tell()
     arquivo.seek(0)
@@ -102,12 +113,19 @@ _INJECTION_PATTERNS = re.compile(
 
 
 def has_prompt_injection(text):
-    """Return True if text contains prompt injection patterns."""
+    """Checagem determinística (regex) de padrões característicos de
+    prompt injection, em português e inglês — ex: "ignore as instruções",
+    "you are now", "[INST]", tokens de chat de sistema. Primeira camada
+    de defesa, usada antes de qualquer texto livre do usuário ser
+    enviado para a LLM (ver docs/ARCHITECTURE.md, seção de segurança)."""
     return bool(_INJECTION_PATTERNS.search(text))
 
 
 def sanitize_text(text, max_length=5000):
-    """Strip HTML tags and control characters. Limit length."""
+    """Remove tags HTML e caracteres de controle não-imprimíveis de um
+    texto livre vindo do usuário, e trunca para max_length caracteres.
+    Usada em todo input de texto antes de salvar no banco ou montar
+    prompts para a LLM."""
     text = re.sub(r"<[^>]+>", "", text)
     text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
     return text[:max_length].strip()

@@ -6,7 +6,7 @@
 // ===== VARIÁVEIS GLOBAIS =====
 let entrevistaId = null;
 let perguntaAtual = 1;
-let totalPerguntas = 5;
+let totalPerguntas = 10; // valor inicial — sobrescrito pelo total_perguntas real vindo da API
 
 // ===== UTILIDADES =====
 

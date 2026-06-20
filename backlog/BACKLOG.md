@@ -43,7 +43,7 @@ class: cover
 | | título | label | pts |
 | - | :- | :-: | :-: |
 | ✓ | Validação de tamanho máximo de upload e sanitização de input | security | 3 |
-| ✓ | 3 templates visuais de PDF (minimalista, moderno, acadêmico) | feature | 7 |
+| ✓ | 3 templates visuais de PDF (clássico, moderno, executivo) | feature | 7 |
 | ✓ | Edição manual do currículo otimizado antes de gerar PDF | feature | 5 |
 | ✓ | Preview do PDF no navegador antes do download | ux | 3 |
 | ✓ | Incluir foto e links clicáveis no PDF gerado | feature | 5 |
@@ -91,7 +91,7 @@ class: cover
 | | título | label | pts |
 | - | :- | :-: | :-: |
 | ✓ | Adicionando soft skills à simulação de entrevista. | feature | 5 |
-| | Design final do projeto | ux | 5 |
-| | README atualizado com screenshots, arquitetura e contribuição | docs | 3 |
+| ✓ | Design final do projeto | ux | 5 |
+| ✓ | README atualizado | docs | 3 |
 
 > Foco: documentação.

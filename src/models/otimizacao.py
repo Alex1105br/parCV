@@ -5,6 +5,13 @@ from src.models.db import db
 
 
 class Otimizacao(db.Model):
+    """Resultado de uma otimização/reescrita de currículo (rota POST
+    /otimizar). Guarda o texto original e o texto otimizado (já com os
+    marcadores ---SECAO:--- etc., consumidos por services/pdf.py para
+    gerar o PDF) e a lista de melhorias aplicadas pela IA. analise_id é
+    opcional — vincula a otimização a uma Analise prévia quando o
+    usuário passou primeiro pelo fluxo de análise ATS, mas a otimização
+    também pode ser feita isoladamente."""
     __tablename__ = "otimizacao"
 
     id                  = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))

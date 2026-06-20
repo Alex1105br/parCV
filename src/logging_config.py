@@ -9,7 +9,16 @@ request_id_var: ContextVar[str] = ContextVar("request_id", default="-")
 
 
 class StructuredFormatter(logging.Formatter):
+    """Formatter de logging que emite cada registro como uma linha JSON
+    (em vez do texto livre padrão do logging), com request_id embutido —
+    facilita grep/parsing dos logs e correlação de várias linhas com a
+    mesma requisição HTTP."""
+
     def format(self, record: logging.LogRecord) -> str:
+        """Monta o payload JSON (timestamp, nível, request_id, mensagem,
+        traceback se houver exceção) e inclui qualquer campo extra
+        passado via logger.info(msg, extra={...}) que não seja um campo
+        interno padrão do LogRecord."""
         payload = {
             "ts": self.formatTime(record, "%Y-%m-%dT%H:%M:%S"),
             "level": record.levelname,
@@ -31,6 +40,13 @@ class StructuredFormatter(logging.Formatter):
 
 
 def setup_logging(level: str = "INFO", log_dir: str = "logs") -> None:
+    """Configura o logger raiz com StructuredFormatter, escrevendo
+    simultaneamente em stdout e em um arquivo rotativo (logs/parcv.log,
+    10 MB por arquivo, 5 backups). Limpa handlers pré-existentes do
+    logger raiz antes de adicionar os novos (evita log duplicado se
+    chamada mais de uma vez). Também abaixa o nível do logger do
+    werkzeug para WARNING, pra não poluir o log com cada request em
+    formato não-estruturado. Chamada uma vez, dentro de create_app()."""
     os.makedirs(log_dir, exist_ok=True)
     fmt = StructuredFormatter()
 
