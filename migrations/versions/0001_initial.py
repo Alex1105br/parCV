@@ -56,6 +56,7 @@ def upgrade():
         sa.Column('atualizado_em', sa.DateTime(timezone=True), nullable=False),
         sa.Column('mensagens', sa.JSON(), nullable=False),
         sa.Column('fixado', sa.Boolean(), nullable=False),
+        sa.Column('fixado_em', sa.DateTime(timezone=True), nullable=True),
         sa.Column('user_id', sa.String(36), sa.ForeignKey('users.id'), nullable=True),
     )
 

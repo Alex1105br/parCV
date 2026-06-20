@@ -11,7 +11,11 @@ class ChatSession(db.Model):
     /chat/sessao/<sid>) filtram o que é exibido ao usuário.
     `titulo_gerado` controla se o título já foi definido (manualmente ou
     pela IA, na primeira mensagem) para não ser sobrescrito depois.
-    `fixado` controla a exibição na seção "fixadas" da barra lateral."""
+    `fixado` controla a exibição na seção "fixadas" da barra lateral.
+    `fixado_em` guarda o momento em que a sessão foi fixada (None
+    enquanto não-fixada) — usado para ordenar a lista de fixadas de
+    forma estável, sem que o envio de novas mensagens (que só atualiza
+    `atualizado_em`) mude a posição da conversa na lista."""
     __tablename__ = "chat_session"
 
     id           = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -21,6 +25,7 @@ class ChatSession(db.Model):
     atualizado_em = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     mensagens    = db.Column(db.JSON, nullable=False, default=list)
     fixado       = db.Column(db.Boolean, nullable=False, default=False)
+    fixado_em    = db.Column(db.DateTime(timezone=True), nullable=True)
     user_id      = db.Column(db.String(36), db.ForeignKey("users.id"), nullable=True)
 
     user = db.relationship("User", back_populates="chat_sessions")

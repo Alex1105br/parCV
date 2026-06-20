@@ -55,13 +55,27 @@ def chat_page():
     """Página do chat. Carrega as listas de sessões fixadas e recentes do
     usuário (só sessões com mensagens reais, via filtro mensagens != None)
     para montar a barra lateral; o conteúdo da conversa em si é carregado
-    via JS chamando /chat/sessao/<sid>."""
+    via JS chamando /chat/sessao/<sid>.
+
+    A lista de fixadas é ordenada por fixado_em (momento em que a sessão
+    foi fixada) em ordem ASCENDENTE — a primeira conversa fixada pelo
+    usuário fica sempre no topo, e as fixadas depois dela são
+    adicionadas abaixo, na ordem de chegada. Isso é o que mantém a
+    posição de cada fixada estável entre reloads (F5): a ordem nunca
+    depende de atualizado_em (que mudaria a cada nova mensagem) nem da
+    fixação mais recente "subir" para o topo. nullslast() evita que
+    fixadas antigas, gravadas antes da coluna fixado_em existir (e por
+    isso com valor None), fiquem espalhadas de forma imprevisível pelo
+    Postgres (que por padrão ordena NULL antes dos demais em DESC) —
+    elas vão para o fim do grupo de fixadas até receberem um valor real.
+    A lista de recentes continua ordenada por atualizado_em, já que ali
+    a ordem por último acesso é o esperado."""
     user_id = session["user_id"]
     sessao_atual = session.get("chat_sid")
     sessoes_fixadas = (ChatSession.query
                        .filter_by(user_id=user_id, fixado=True)
                        .filter(ChatSession.mensagens != None)
-                       .order_by(ChatSession.atualizado_em.desc()).all())
+                       .order_by(ChatSession.fixado_em.asc().nullslast()).all())
     sessoes_recentes = (ChatSession.query
                         .filter_by(user_id=user_id, fixado=False)
                         .filter(ChatSession.mensagens != None)
@@ -370,11 +384,19 @@ def _doc_label(filename: str) -> str | None:
 @login_required
 def fixar_sessao(sid):
     """Alterna (toggle) o estado fixado/não-fixado de uma sessão de chat
-    — usado para fixar conversas importantes no topo da lista lateral."""
+    — usado para fixar conversas importantes no topo da lista lateral.
+
+    Ao fixar, grava o timestamp atual em fixado_em — usado por
+    chat_page() para ordenar a lista de fixadas pelo momento em que
+    cada conversa foi fixada, e não pela última atividade (que mudaria
+    a cada nova mensagem, mesmo em outra conversa). Ao desafixar, limpa
+    fixado_em (None), já que a sessão deixa de pertencer à lista
+    ordenada por esse campo."""
     cs = db.session.get(ChatSession, sid)
     if not cs or cs.user_id != session["user_id"]:
         return jsonify({"error": "Sessão não encontrada"}), 404
     cs.fixado = not cs.fixado
+    cs.fixado_em = datetime.now(timezone.utc) if cs.fixado else None
     db.session.commit()
     return jsonify({"id": cs.id, "fixado": cs.fixado})
 

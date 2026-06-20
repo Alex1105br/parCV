@@ -138,7 +138,7 @@ entrevista
 | `users` | `name`, `email` (único), `password` (hash), `reset_token`, `reset_token_expires_at` | Senha com `werkzeug.security.generate_password_hash`. Token de reset expira em 1h. |
 | `analise` | `score_total`, `criterios` (JSON), `pontos_fortes/fracos` (JSON), `sugestoes` (JSON), `palavras_chave_faltando` (JSON), `certificados_sugeridos` (JSON), `texto_original`, `vaga` | Resultado de uma análise ATS. |
 | `otimizacao` | `curriculo_original`, `curriculo_otimizado`, `melhorias` (JSON), `analise_id` (FK opcional) | Resultado de uma otimização de currículo. |
-| `chat_session` | `titulo`, `titulo_gerado` (bool), `mensagens` (JSON — lista de `{role, content}`), `fixado` (bool) | Uma sessão = uma conversa do chat. Título gerado automaticamente pela IA na primeira mensagem. |
+| `chat_session` | `titulo`, `titulo_gerado` (bool), `mensagens` (JSON — lista de `{role, content}`), `fixado` (bool), `fixado_em` (timestamp, null se não-fixada) | Uma sessão = uma conversa do chat. Título gerado automaticamente pela IA na primeira mensagem. A lista de conversas fixadas é ordenada por `fixado_em` (não por `atualizado_em`), para que enviar mensagens não mude a posição de uma conversa já fixada. |
 | `entrevista` | `curriculo_arquivo`, `vaga_descricao`, `numero_perguntas`, `plano_entrevista` (JSON), `status` (`em_planejamento`/`em_andamento`/`concluida`), `relatorio_final` (JSON) | |
 | `pergunta_entrevista` | `entrevista_id` (FK), `numero_sequencial`, `pergunta_principal`, `resposta_usuario`, `avaliacao_resposta` (JSON) | Perguntas 1-6 = hard skills, 7-10 = soft skills (convenção fixada no código, não numa coluna). |
 

@@ -661,7 +661,20 @@
         if (window.lucide) lucide.createIcons({ nodes: [item] });
         var targetList = fixado ? pinnedList : sessionList;
         if (!targetList) return;
-        targetList.prepend(item);
+        if (fixado) {
+            // Fixadas são ordenadas por ordem de chegada (a primeira
+            // fixada fica no topo, as demais entram abaixo dela) — ver
+            // chat_page() em routes/chat.py. Por isso a conversa
+            // recém-fixada vai para o FIM da lista de fixadas, nunca
+            // para o topo, senão a posição visual não bateria com o
+            // que aparece após um F5.
+            targetList.appendChild(item);
+        } else {
+            // Recentes são ordenadas por última atividade (mais recente
+            // primeiro), e desafixar é uma interação recente — então
+            // prepend aqui está correto.
+            targetList.prepend(item);
+        }
         updatePinnedSectionVisibility();
     }
 
@@ -681,23 +694,40 @@
         allSessionItems().forEach(function (el) {
             el.classList.remove('sidebar__item--active');
         });
-        var isPinned = fixado === true;
         var existing = document.querySelector('[data-sid="' + sid + '"]');
         if (!existing) {
+            var isPinned = fixado === true;
             existing = document.createElement('li');
             existing.classList.add('sidebar__item');
             existing.dataset.sid = sid;
             existing.dataset.fixado = isPinned ? 'true' : 'false';
             existing.innerHTML = buildItemHTML(titulo || 'Carregando título...', isPinned);
+            // Conversa nova: ainda não existe no DOM, então vai pro topo
+            // da lista correspondente — não há "posição anterior" a preservar.
             sessionList.prepend(existing);
             if (window.lucide) lucide.createIcons({ nodes: [existing] });
         } else {
-            // Move para o topo da lista se não estiver lá
+            // O item já existe no DOM: usa o estado de fixado já gravado
+            // nele (dataset.fixado) como fonte de verdade, em vez do
+            // parâmetro `fixado` recebido aqui — várias chamadas a esta
+            // função (ex: ao enviar mensagem) passam `false` fixo, sem
+            // saber se a conversa já está fixada, o que faria uma
+            // conversa fixada ser movida para "Recentes" incorretamente.
+            var isPinned = existing.dataset.fixado === 'true';
             var targetList = isPinned ? pinnedList : sessionList;
+            // Só move o item entre listas se ele estiver na lista errada
+            // (ex: acabou de ser fixado/desafixado via botão de Fixar).
+            // Se já está na lista certa, NÃO reordena — abrir uma
+            // conversa ou enviar mensagem nela não deve mudar sua
+            // posição na sidebar.
             if (targetList && existing.parentElement !== targetList) {
-                targetList.prepend(existing);
-            } else if (existing.previousElementSibling) {
-                existing.parentElement.prepend(existing);
+                // Fixadas: ordem de chegada, vai pro fim (ver moveItemToList).
+                // Recentes: mais recente primeiro, vai pro topo.
+                if (isPinned) {
+                    targetList.appendChild(existing);
+                } else {
+                    targetList.prepend(existing);
+                }
             }
             // Só atualiza o título se o novo não for vazio
             if (titulo) {

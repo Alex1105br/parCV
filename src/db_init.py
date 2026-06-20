@@ -32,6 +32,21 @@ def _apply_column_migrations(db):
             ADD COLUMN IF NOT EXISTS reset_token_expires_at TIMESTAMPTZ
             """,
         ),
+        (
+            "fixado_em em chat_session",
+            """
+            ALTER TABLE chat_session
+            ADD COLUMN IF NOT EXISTS fixado_em TIMESTAMPTZ
+            """,
+        ),
+        (
+            "backfill fixado_em para fixadas legadas (sem fixado_em)",
+            """
+            UPDATE chat_session
+            SET fixado_em = criado_em
+            WHERE fixado = true AND fixado_em IS NULL
+            """,
+        ),
     ]
 
     with db.engine.connect() as conn:
