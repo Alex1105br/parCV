@@ -266,29 +266,40 @@ def gerar_titulo_analise(curriculo_text, vaga=None):
     _gerar_titulo_sync acima). Chamada síncrona — não toca no banco, apenas
     devolve a string do título; a persistência fica a cargo da rota.
 
-    Usa o início do currículo e a vaga (se informada) como contexto. Em
-    caso de erro/timeout da LLM, cai num fallback determinístico (nome ou
-    primeira linha do currículo) e, por último, um timestamp — nunca
+    O título deve identificar a VAGA (cargo/área), não o candidato — ex:
+    "Análise para vaga de Desenvolvedor Android" em vez de "Análise de
+    <nome do candidato>". A vaga raramente vem com um título explícito
+    ("Vaga: Desenvolvedor X"), então a LLM precisa INFERIR o cargo a
+    partir das responsabilidades/requisitos/tecnologias citadas no texto.
+    Em caso de erro/timeout da LLM, cai num fallback determinístico
+    (início da vaga ou do currículo) e, por último, um timestamp — nunca
     devolve vazio.
     """
     from src.utils import sanitize_text
     from datetime import datetime
 
     curriculo_text = (curriculo_text or "").strip()
-    primeira_linha = curriculo_text.split("\n")[0].strip() if curriculo_text else ""
+    vaga = (vaga or "").strip()
+    primeira_linha_curriculo = curriculo_text.split("\n")[0].strip() if curriculo_text else ""
 
     context_parts = []
-    if primeira_linha:
-        context_parts.append(f"Início do currículo: {primeira_linha}")
     if vaga:
-        context_parts.append(f"Vaga: {vaga[:300]}")
-    context = "\n".join(context_parts)
+        context_parts.append(f"Descrição da vaga:\n{vaga[:800]}")
+    if primeira_linha_curriculo:
+        context_parts.append(f"Início do currículo do candidato: {primeira_linha_curriculo}")
+    context = "\n\n".join(context_parts)
 
     titulo = None
     if context:
         prompt = (
-            "Crie um título curto (máximo 50 caracteres) para esta análise de currículo, "
-            "idealmente citando o nome do candidato (se houver) e/ou o cargo da vaga. "
+            "Crie um título curto (máximo 50 caracteres) para esta análise de currículo. "
+            "O título deve focar na VAGA, não no candidato: identifique ou INFIRA o cargo/área "
+            "da vaga a partir das responsabilidades, requisitos e tecnologias citadas na "
+            "descrição — a vaga normalmente NÃO tem um título explícito, então deduza (ex: se "
+            "menciona AOSP, Qualcomm e Android, o cargo é algo como 'Desenvolvedor Android'). "
+            "NUNCA copie a frase de abertura da vaga literalmente como título. "
+            "Formato esperado: 'Análise para vaga de <cargo inferido>'. "
+            "Só use o nome do candidato do currículo se a vaga não tiver NENHUMA pista de cargo/área. "
             "Responda APENAS com o título, sem aspas, sem explicações.\n\n"
             + context
         )
@@ -300,7 +311,7 @@ def gerar_titulo_analise(curriculo_text, vaga=None):
             pass
 
     if not titulo:
-        fallback = primeira_linha[:60] or (vaga[:60] if vaga else "")
+        fallback = vaga[:60] or primeira_linha_curriculo[:60]
         titulo = sanitize_text(fallback)[:100] if fallback else None
 
     if not titulo:
