@@ -14,6 +14,14 @@
     --color-warning-text: #f9e2af;
     --color-peach: #fab387;
 
+    /* Escala de cor por score (mesma usada no relatório de /entrevista,
+       lá em 0-10, aqui proporcional em 0-100) */
+    --color-score-excelente: #4ade80;
+    --color-score-bom: #60a5fa;
+    --color-score-regular: #facc15;
+    --color-score-ruim: #fb923c;
+    --color-score-pessimo: #f87171;
+
     --color-bg: #1f1e24;
     --color-surface: #28272d;
     --color-surface-raised: #302f36;

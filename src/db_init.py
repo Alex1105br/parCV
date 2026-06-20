@@ -47,6 +47,13 @@ def _apply_column_migrations(db):
             WHERE fixado = true AND fixado_em IS NULL
             """,
         ),
+        (
+            "veredito em analise",
+            """
+            ALTER TABLE analise
+            ADD COLUMN IF NOT EXISTS veredito JSON
+            """,
+        ),
     ]
 
     with db.engine.connect() as conn:

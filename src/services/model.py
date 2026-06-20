@@ -63,7 +63,10 @@ def _groq_stream(messages, max_tokens=None):
 
 
 def _groq_call(prompt, max_tokens=None, timeout=None):
-    """Synchronous single-prompt call via Groq. Returns (response_text, error)."""
+    """Synchronous single-prompt call via Groq. Returns (response_text, error, usage).
+    usage é o dict {prompt_tokens, completion_tokens, total_tokens} devolvido
+    pela API da Groq (vazio em caso de erro) — usado por call_model() só
+    para log, não é repassado aos callers."""
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
         "Content-Type": "application/json",
@@ -81,11 +84,13 @@ def _groq_call(prompt, max_tokens=None, timeout=None):
         )
         if response.status_code != 200:
             error = response.json().get("error", {}).get("message", response.text)
-            return None, error
-        content = response.json()["choices"][0]["message"]["content"]
-        return content, None
+            return None, error, {}
+        body = response.json()
+        content = body["choices"][0]["message"]["content"]
+        usage = body.get("usage", {}) or {}
+        return content, None, usage
     except Exception as e:
-        return None, str(e)
+        return None, str(e), {}
 
 
 # ===== Ollama Backend =====
@@ -119,7 +124,11 @@ def _ollama_stream(messages):
 
 
 def _ollama_call(prompt, num_predict=1200, timeout=None):
-    """Synchronous single-prompt call via Ollama."""
+    """Synchronous single-prompt call via Ollama. Returns (response_text, error, usage).
+    Ollama devolve prompt_eval_count/eval_count (tokens de entrada/saída)
+    na resposta não-streaming — convertido para o mesmo formato de usage
+    da Groq (prompt_tokens/completion_tokens/total_tokens) para log
+    uniforme em call_model(), independente do backend configurado."""
     response = requests.post(
         OLLAMA_GENERATE_URL,
         json={
@@ -134,7 +143,17 @@ def _ollama_call(prompt, num_predict=1200, timeout=None):
         },
         timeout=timeout or TIMEOUT,
     )
-    return response.json().get("response", ""), None
+    body = response.json()
+    prompt_tokens = body.get("prompt_eval_count")
+    completion_tokens = body.get("eval_count")
+    usage = {}
+    if prompt_tokens is not None or completion_tokens is not None:
+        usage = {
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": (prompt_tokens or 0) + (completion_tokens or 0),
+        }
+    return body.get("response", ""), None, usage
 
 
 # ===== Public API =====
@@ -242,15 +261,30 @@ def _gerar_titulo_sync(mensagem, doc_label):
 
 
 def call_model(prompt, num_predict=1200, timeout=None):
-    """Synchronous single-prompt call. Returns (response_text, error)."""
+    """Synchronous single-prompt call. Returns (response_text, error).
+
+    Loga prompt_tokens/completion_tokens/total_tokens quando o backend
+    devolve essa informação (Groq sempre devolve; Ollama devolve
+    prompt_eval_count/eval_count) — usado para comparar o custo em
+    tokens de prompts diferentes (ex: antes/depois de mudanças no
+    prompt de análise ATS) sem precisar instrumentar cada chamador."""
     t0 = time.time()
     try:
         if LLM_BACKEND == "groq":
-            result, error = _groq_call(prompt, max_tokens=num_predict, timeout=timeout)
+            result, error, usage = _groq_call(prompt, max_tokens=num_predict, timeout=timeout)
         else:
-            result, error = _ollama_call(prompt, num_predict, timeout=timeout)
+            result, error, usage = _ollama_call(prompt, num_predict, timeout=timeout)
         duration_ms = int((time.time() - t0) * 1000)
-        logger.info("llm_call_done", extra={"backend": LLM_BACKEND, "duration_ms": duration_ms, "error": error is not None})
+        log_extra = {"backend": LLM_BACKEND, "duration_ms": duration_ms, "error": error is not None}
+        if usage:
+            log_extra["prompt_tokens"] = usage.get("prompt_tokens")
+            log_extra["completion_tokens"] = usage.get("completion_tokens")
+            log_extra["total_tokens"] = usage.get("total_tokens")
+        if error:
+            log_extra["erro_msg"] = str(error)[:500]
+            logger.error("llm_call_done", extra=log_extra)
+        else:
+            logger.info("llm_call_done", extra=log_extra)
         return result, error
     except Exception as e:
         duration_ms = int((time.time() - t0) * 1000)

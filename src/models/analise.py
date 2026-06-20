@@ -7,10 +7,15 @@ from src.models.db import db
 class Analise(db.Model):
     """Resultado de uma análise ATS de currículo (rota POST /analisar).
     Guarda o score e o detalhamento devolvidos pela LLM: critérios
-    avaliados, pontos fortes/fracos, sugestões, palavras-chave da vaga
-    ausentes no currículo e certificações sugeridas — todos como JSON,
-    já que são listas/dicts de tamanho variável sem necessidade de
-    query relacional própria. user_id é opcional (nullable) para
+    avaliados (cada um com nota E motivo — ver build_prompt_ats), pontos
+    fortes/fracos, sugestões, veredito (parecer direto sobre o real
+    encaixe do candidato na vaga, com recomendação de outros perfis de
+    vaga), palavras-chave da vaga ausentes no currículo e certificações
+    sugeridas — todos como JSON, já que são listas/dicts de tamanho
+    variável sem necessidade de query relacional própria.
+    `veredito` é nullable porque análises feitas antes dessa funcionalidade
+    existir não têm esse campo — o frontend trata a ausência dele
+    simplesmente não exibindo a seção. user_id é opcional (nullable) para
     suportar análises feitas antes de qualquer vínculo de usuário ser
     obrigatório no fluxo."""
     __tablename__ = "analise"
@@ -22,6 +27,7 @@ class Analise(db.Model):
     pontos_fortes          = db.Column(db.JSON, nullable=False)
     pontos_fracos          = db.Column(db.JSON, nullable=False)
     sugestoes              = db.Column(db.JSON, nullable=False)
+    veredito               = db.Column(db.JSON, nullable=True)
     palavras_chave_faltando = db.Column(db.JSON, nullable=False)
     certificados_sugeridos = db.Column(db.JSON, nullable=False)
     texto_original         = db.Column(db.Text, nullable=False)

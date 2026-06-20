@@ -182,6 +182,102 @@
         });
     }
 
+    // ===== Criterio helpers (compat: criterios antigos eram número puro,
+    // novos vêm como {nota, motivo} — ver build_prompt_ats) =====
+    function criterioNota(c) {
+        return (c && typeof c === 'object') ? c.nota : c;
+    }
+    function criterioMotivo(c, fallback) {
+        return (c && typeof c === 'object' && c.motivo) ? c.motivo : fallback;
+    }
+    function criterioLista(c, campo) {
+        return (c && typeof c === 'object' && Array.isArray(c[campo])) ? c[campo] : [];
+    }
+    // Mesma escala de cor do relatório de /entrevista (lá em 0-10, aqui em 0-100)
+    function scoreCor(score) {
+        if (score >= 90) return 'var(--color-score-excelente)';
+        if (score >= 70) return 'var(--color-score-bom)';
+        if (score >= 50) return 'var(--color-score-regular)';
+        if (score >= 30) return 'var(--color-score-ruim)';
+        return 'var(--color-score-pessimo)';
+    }
+    function nivelLabel(nivel) {
+        var map = { baixa: 'Baixa', media: 'Média', alta: 'Alta' };
+        return map[nivel] || 'Média';
+    }
+    function renderVeredito(veredito) {
+        if (!veredito) return '';
+        var nivel = veredito.nivel_aderencia || 'media';
+        return '<h3>Compatibilidade com a vaga</h3>' +
+            '<div class="veredito-box veredito-box--' + escapeHtml(nivel) + '">' +
+                '<span class="veredito-box__nivel">Aderência ' + escapeHtml(nivelLabel(nivel)) + '</span>' +
+                '<p class="veredito-box__resumo">' + escapeHtml(veredito.resumo || '') + '</p>' +
+                (veredito.vagas_recomendadas && veredito.vagas_recomendadas.length ?
+                    '<p class="veredito-box__label">Vagas com mais chance pra você:</p>' +
+                    '<div class="tags-list">' + veredito.vagas_recomendadas.map(function (v) {
+                        return '<span class="tag tag--positive">' + escapeHtml(v) + '</span>';
+                    }).join('') + '</div>'
+                : '') +
+                (veredito.motivo_recomendacao ?
+                    '<p class="veredito-box__motivo">' + escapeHtml(veredito.motivo_recomendacao) + '</p>'
+                : '') +
+            '</div>';
+    }
+
+    function renderCriterioAccordion(id, titulo, criterio, maxNota, fallbackMotivo) {
+        var nota = criterioNota(criterio);
+        var motivo = criterioMotivo(criterio, fallbackMotivo);
+        var fortes = criterioLista(criterio, 'pontos_fortes');
+        var fracos = criterioLista(criterio, 'pontos_fracos');
+
+        var fortesHtml = fortes.length
+            ? '<ul class="criterio-acc__list criterio-acc__list--fortes">' +
+                fortes.map(function (p) { return '<li>' + escapeHtml(p) + '</li>'; }).join('') +
+              '</ul>'
+            : '<p class="criterio-acc__empty">Nenhum ponto forte específico identificado.</p>';
+
+        var fracosHtml = fracos.length
+            ? '<ul class="criterio-acc__list criterio-acc__list--fracos">' +
+                fracos.map(function (p) { return '<li>' + escapeHtml(p) + '</li>'; }).join('') +
+              '</ul>'
+            : '<p class="criterio-acc__empty">Nenhum ponto fraco específico identificado.</p>';
+
+        return (
+            '<div class="criterio-acc" id="criterio-acc-' + id + '">' +
+                '<button type="button" class="criterio-acc__header" aria-expanded="false" aria-controls="criterio-acc-body-' + id + '">' +
+                    '<span class="criterio-acc__title">' + escapeHtml(titulo) + '</span>' +
+                    '<span class="criterio-acc__right">' +
+                        '<span class="criterio-acc__nota">' + escapeHtml(nota) + '/' + maxNota + '</span>' +
+                        '<i data-lucide="chevron-down" class="criterio-acc__chevron"></i>' +
+                    '</span>' +
+                '</button>' +
+                '<div class="criterio-acc__body hidden" id="criterio-acc-body-' + id + '">' +
+                    (motivo ? '<p class="criterio-acc__motivo">' + escapeHtml(motivo) + '</p>' : '') +
+                    '<div class="criterio-acc__section">' +
+                        '<h4 class="criterio-acc__heading criterio-acc__heading--fortes"><i data-lucide="thumbs-up"></i> Pontos fortes</h4>' +
+                        fortesHtml +
+                    '</div>' +
+                    '<div class="criterio-acc__section">' +
+                        '<h4 class="criterio-acc__heading criterio-acc__heading--fracos"><i data-lucide="thumbs-down"></i> Pontos fracos</h4>' +
+                        fracosHtml +
+                    '</div>' +
+                '</div>' +
+            '</div>'
+        );
+    }
+
+    function setupCriterioAccordions(container) {
+        container.querySelectorAll('.criterio-acc__header').forEach(function (header) {
+            header.addEventListener('click', function () {
+                var body = document.getElementById(this.getAttribute('aria-controls'));
+                var expanded = this.getAttribute('aria-expanded') === 'true';
+                this.setAttribute('aria-expanded', String(!expanded));
+                if (body) body.classList.toggle('hidden', expanded);
+                this.closest('.criterio-acc').classList.toggle('criterio-acc--open', !expanded);
+            });
+        });
+    }
+
     // ===== Show analysis result =====
     function mostrarResultado(data) {
         if (data.error) {
@@ -190,28 +286,27 @@
         }
 
         const score = data.score_total;
-        let cor = 'var(--color-danger)';
-        if (score > 75) cor = 'var(--color-success)';
-        else if (score > 50) cor = 'var(--color-peach)';
+        var cor = scoreCor(score);
 
         var analiseHtml =
             '<div class="score-box" style="border-color:' + cor + '">' +
                 '<h2 style="color:' + cor + '">Score ATS: ' + score + '/100</h2>' +
             '</div>' +
+            renderVeredito(data.veredito) +
             '<button class="btn btn--optimize" id="btn-otimizar" style="margin-top: 16px;"><i data-lucide="wand-2"></i> Otimizar Currículo</button>' +
             '<div id="loader-otimizar" class="loader hidden" style="margin-top: 12px;">' +
                 '<span class="loader__bar"></span>' +
                 '<span>Otimizando currículo... (pode levar alguns minutos)</span>' +
             '</div>' +
             '<h3>Critérios</h3>' +
-            '<ul class="criterios-list">' +
-                '<li><span class="criterio-icon" data-tooltip="Formatação e organização do documento"><i data-lucide="info"></i></span><strong>Estrutura:</strong> ' + escapeHtml(data.criterios.estrutura) + '/15</li>' +
-                '<li><span class="criterio-icon" data-tooltip="Qualidade da escrita e objetividade"><i data-lucide="info"></i></span><strong>Clareza:</strong> ' + escapeHtml(data.criterios.clareza) + '/15</li>' +
-                '<li><span class="criterio-icon" data-tooltip="Relevância e descrição de cargos"><i data-lucide="info"></i></span><strong>Experiência:</strong> ' + escapeHtml(data.criterios.experiencia) + '/20</li>' +
-                '<li><span class="criterio-icon" data-tooltip="Termos que sistemas ATS buscam"><i data-lucide="info"></i></span><strong>Palavras-chave:</strong> ' + escapeHtml(data.criterios.palavras_chave) + '/20</li>' +
-                '<li><span class="criterio-icon" data-tooltip="Competências técnicas listadas"><i data-lucide="info"></i></span><strong>Skills:</strong> ' + escapeHtml(data.criterios.skills) + '/15</li>' +
-                '<li><span class="criterio-icon" data-tooltip="Aderência à vaga descrita"><i data-lucide="info"></i></span><strong>Compatibilidade:</strong> ' + escapeHtml(data.criterios.compatibilidade) + '/15</li>' +
-            '</ul>' +
+            '<div class="criterios-list">' +
+                renderCriterioAccordion('estrutura', 'Estrutura', data.criterios.estrutura, 15, 'Formatação e organização do documento') +
+                renderCriterioAccordion('clareza', 'Clareza', data.criterios.clareza, 15, 'Qualidade da escrita e objetividade') +
+                renderCriterioAccordion('experiencia', 'Experiência', data.criterios.experiencia, 20, 'Relevância e descrição de cargos') +
+                renderCriterioAccordion('palavras_chave', 'Palavras-chave', data.criterios.palavras_chave, 20, 'Termos que sistemas ATS buscam') +
+                renderCriterioAccordion('skills', 'Skills', data.criterios.skills, 15, 'Competências técnicas listadas') +
+                renderCriterioAccordion('compatibilidade', 'Compatibilidade', data.criterios.compatibilidade, 15, 'Aderência à vaga descrita') +
+            '</div>' +
             '<h3>Pontos fortes</h3>' +
             '<ul>' + data.pontos_fortes.map(function (p) { return '<li>' + escapeHtml(p) + '</li>'; }).join('') + '</ul>' +
             '<h3>Pontos fracos</h3>' +
@@ -247,6 +342,7 @@
 
         if (window.lucide) lucide.createIcons({ nodes: [resultado] });
         setupTabs(resultado);
+        setupCriterioAccordions(resultado);
         document.getElementById('btn-otimizar').addEventListener('click', otimizarCurriculo);
     }
 

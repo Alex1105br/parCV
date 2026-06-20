@@ -56,7 +56,7 @@ def analisar():
     if has_prompt_injection(vaga) or has_prompt_injection(texto):
         return jsonify({"error": "Conteúdo inválido detectado"}), 422
 
-    resposta, erro = call_model(build_prompt_ats(texto, vaga))
+    resposta, erro = call_model(build_prompt_ats(texto, vaga), num_predict=2200)
     if erro:
         return jsonify({"error": erro}), 500
 
@@ -70,6 +70,7 @@ def analisar():
             pontos_fortes=result.get("pontos_fortes", []),
             pontos_fracos=result.get("pontos_fracos", []),
             sugestoes=result.get("sugestoes", []),
+            veredito=result.get("veredito"),
             palavras_chave_faltando=result.get("palavras_chave_faltando", []),
             certificados_sugeridos=result.get("certificados_sugeridos", []),
             texto_original=texto,
@@ -150,6 +151,7 @@ def get_analise(analise_id):
         "pontos_fortes": analise.pontos_fortes,
         "pontos_fracos": analise.pontos_fracos,
         "sugestoes": analise.sugestoes,
+        "veredito": analise.veredito,
         "palavras_chave_faltando": analise.palavras_chave_faltando,
         "certificados_sugeridos": analise.certificados_sugeridos,
         "vaga": analise.vaga,

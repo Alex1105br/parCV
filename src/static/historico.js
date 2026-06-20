@@ -5,10 +5,13 @@
     var totalPages = 1;
     var totalCount = 0;
 
+    // Mesma escala de cor do relatório de /entrevista (lá em 0-10, aqui em 0-100)
     function scoreClass(score) {
-        if (score > 75) return 'score-badge--high';
-        if (score > 50) return 'score-badge--mid';
-        return 'score-badge--low';
+        if (score >= 90) return 'score-badge--excelente';
+        if (score >= 70) return 'score-badge--bom';
+        if (score >= 50) return 'score-badge--regular';
+        if (score >= 30) return 'score-badge--ruim';
+        return 'score-badge--pessimo';
     }
 
     function formatDate(iso) {
