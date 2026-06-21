@@ -163,6 +163,41 @@
     visibility: hidden;
 }
 
+.analise-card__delete-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--transition), color var(--transition), background var(--transition);
+}
+
+.analise-card__delete-btn i {
+    width: 13px;
+    height: 13px;
+}
+
+.analise-card:hover .analise-card__delete-btn {
+    opacity: 1;
+}
+
+.analise-card__delete-btn:hover {
+    color: var(--color-danger-text);
+    background: var(--color-danger-bg);
+}
+
+.analise-card--deleting {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
 .analise-card__rename-input {
     position: absolute;
     inset: 0;

@@ -66,6 +66,9 @@
                             '<button type="button" class="analise-card__edit-btn" aria-label="Renomear análise" title="Renomear">' +
                                 '<i data-lucide="pencil"></i>' +
                             '</button>' +
+                            '<button type="button" class="analise-card__delete-btn" aria-label="Apagar análise" title="Apagar">' +
+                                '<i data-lucide="trash-2"></i>' +
+                            '</button>' +
                         '</div>' +
                         vagaHtml +
                         '<span class="analise-card__date">' + formatDate(a.criado_em) + '</span>' +
@@ -98,6 +101,15 @@
                 var card = btn.closest('.analise-card');
                 var titleEl = card.querySelector('.analise-card__title');
                 startInlineRename(card, card.dataset.aid, titleEl);
+            });
+        });
+
+        container.querySelectorAll('.analise-card__delete-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var card = btn.closest('.analise-card');
+                deletarAnalise(card, card.dataset.aid);
             });
         });
 
@@ -154,6 +166,32 @@
             else if (e.key === 'Escape') cancel();
         });
         input.addEventListener('blur', commit);
+    }
+
+    // ===== Apagar análise =====
+    function deletarAnalise(card, aid) {
+        var titulo = card.querySelector('.analise-card__title').textContent;
+        var confirmado = window.confirm('Apagar a análise "' + titulo + '"? Essa ação não pode ser desfeita.');
+        if (!confirmado) return;
+
+        card.classList.add('analise-card--deleting');
+
+        fetch('/analises/' + encodeURIComponent(aid), { method: 'DELETE' })
+            .then(function (resp) {
+                if (!resp.ok) throw new Error('Erro ' + resp.status);
+                return resp.json();
+            })
+            .then(function () {
+                // Se a página atual ficar vazia após remover o item e não for a
+                // primeira página, volta uma página; senão só recarrega a atual.
+                var restantes = document.querySelectorAll('.analise-card').length - 1;
+                var pagina = (restantes <= 0 && currentPage > 1) ? currentPage - 1 : currentPage;
+                loadPage(pagina);
+            })
+            .catch(function () {
+                card.classList.remove('analise-card--deleting');
+                window.alert('Não foi possível apagar a análise. Tente novamente.');
+            });
     }
 
     function renderError(msg) {

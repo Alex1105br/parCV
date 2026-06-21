@@ -254,6 +254,35 @@
         });
     }
 
+    // ===== Apagar análise =====
+    function setupDeleteButton() {
+        var btn = document.getElementById('btn-apagar-analise');
+        if (!btn) return;
+
+        btn.addEventListener('click', function () {
+            var titleEl = document.getElementById('detalhe-titulo');
+            var titulo = titleEl ? titleEl.textContent : 'esta análise';
+            var confirmado = window.confirm('Apagar a análise "' + titulo + '"? Essa ação não pode ser desfeita.');
+            if (!confirmado) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader"></i> Apagando...';
+            if (window.lucide) lucide.createIcons({ nodes: [btn] });
+
+            fetch('/analises/' + encodeURIComponent(analiseId), { method: 'DELETE' })
+                .then(function (resp) {
+                    if (!resp.ok) throw new Error('Erro ' + resp.status);
+                    window.location.href = '/historico';
+                })
+                .catch(function () {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i data-lucide="trash-2"></i> Apagar análise';
+                    if (window.lucide) lucide.createIcons({ nodes: [btn] });
+                    window.alert('Não foi possível apagar a análise. Tente novamente.');
+                });
+        });
+    }
+
     function renderError(msg) {
         var container = document.getElementById('page-content');
         container.innerHTML = '<p class="error" style="padding:40px 24px">' + escapeHtml(msg) + '</p>';
@@ -271,5 +300,6 @@
         }
     }
 
+    setupDeleteButton();
     load();
 })();

@@ -182,6 +182,25 @@ def renomear_analise(analise_id):
     return jsonify({"id": analise.id, "titulo": analise.titulo})
 
 
+@bp.route("/analises/<string:analise_id>", methods=["DELETE"])
+@login_required
+def deletar_analise(analise_id):
+    """Apaga definitivamente uma análise do histórico. 404 se não existir
+    ou pertencer a outro usuário (mesma checagem de posse usada em
+    get_analise/renomear_analise)."""
+    analise = db.session.get(Analise, analise_id)
+    if analise is None or analise.user_id != session["user_id"]:
+        return jsonify({"error": "Análise não encontrada"}), 404
+    try:
+        db.session.delete(analise)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.error("db_error", extra={"op": "deletar_analise", "erro": str(e)})
+        return jsonify({"error": "Erro ao apagar análise"}), 500
+    return jsonify({"ok": True})
+
+
 @bp.route("/otimizar", methods=["POST"])
 @login_required
 @limiter.limit("5 per minute; 30 per hour")
