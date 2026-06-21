@@ -60,14 +60,27 @@
         font-weight: 700;
     }
 
-    .ev-progress-info {
-        background: rgba(255, 255, 255, 0.05);
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 13px;
+    .ev-tracker {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .ev-tracker__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 14px;
+    }
+
+    .ev-tracker__label {
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .ev-tracker__counter {
+        color: var(--color-primary);
         font-weight: 600;
-        color: #ffffff;
-        border: 1px solid var(--color-border);
+        font-variant-numeric: tabular-nums;
     }
 
     .ev-main--exec {
@@ -81,7 +94,6 @@
         height: 6px;
         background: var(--color-border);
         border-radius: 3px;
-        margin-bottom: 32px;
         overflow: hidden;
     }
 
@@ -276,6 +288,27 @@
     }
 
     .hidden { display: none !important; }
+
+    .btn-cancelar {
+        background: rgba(239, 68, 68, 0.08);
+        color: var(--color-danger);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        font-weight: 600;
+        transition: background var(--transition, 0.2s ease), border-color var(--transition, 0.2s ease),
+                    color var(--transition, 0.2s ease), transform 0.15s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-cancelar:hover {
+        background: var(--color-danger);
+        border-color: var(--color-danger);
+        color: #ffffff;
+        transform: translateY(-1px) scale(1.03);
+        box-shadow: 0 6px 16px -2px rgba(239, 68, 68, 0.5);
+    }
+
+    .btn-cancelar:active {
+        transform: translateY(0) scale(0.98);
+    }
 </style>
 {% endblock %}
 
@@ -288,21 +321,30 @@
         </h1>
     </div>
     <div class="header__actions">
-        <div class="ev-progress-info" id="progresso-texto">Carregando...</div>
+        <button type="button" class="btn btn-cancelar" id="btn-cancelar">
+            <i data-lucide="x"></i>
+            Cancelar Entrevista
+        </button>
     </div>
 </header>
 
 <main class="ev-main ev-main--exec">
-    <div class="ev-progress-bar">
-        <div class="ev-progress-fill" id="barra-preenchimento" style="width: 0%"></div>
-    </div>
-
     <div class="ev-card ev-card--center" id="card-loading">
         <div class="ev-spinner"></div>
         <p class="ev-loading-text">Carregando pergunta...</p>
     </div>
 
     <div class="ev-card hidden" id="card-pergunta">
+        <div class="ev-tracker">
+            <div class="ev-tracker__header">
+                <span class="ev-tracker__label">Progresso da Simulação</span>
+                <span class="ev-tracker__counter" id="progresso-texto">1/10</span>
+            </div>
+            <div class="ev-progress-bar">
+                <div class="ev-progress-fill" id="barra-preenchimento" style="width: 0%"></div>
+            </div>
+        </div>
+
         <div class="ev-pergunta-meta" id="pergunta-tema"></div>
         <p class="ev-pergunta-texto" id="pergunta-titulo"></p>
 
@@ -361,6 +403,13 @@ window.addEventListener('beforeunload', function(e) {
     }
 });
 
+document.getElementById('btn-cancelar').addEventListener('click', () => {
+    const confirmar = confirm('Tem certeza que deseja cancelar a entrevista? Seu progresso será perdido.');
+    if (!confirmar) return;
+    entrevistaFinalizada = true; // evita o aviso de beforeunload
+    window.location.href = '/entrevista';
+});
+
 async function carregarPergunta() {
     document.getElementById('card-pergunta').classList.add('hidden');
     document.getElementById('card-feedback').classList.add('hidden');
@@ -374,7 +423,7 @@ async function carregarPergunta() {
         totalPerguntas = data.total_perguntas;
         document.getElementById('pergunta-titulo').textContent = data.pergunta_principal;
         document.getElementById('pergunta-tema').textContent = data.tema || '';
-        document.getElementById('progresso-texto').textContent = `Pergunta ${perguntaAtual} de ${totalPerguntas}`;
+        document.getElementById('progresso-texto').textContent = `${perguntaAtual}/${totalPerguntas}`;
         document.getElementById('barra-preenchimento').style.width = `${((perguntaAtual - 1) / totalPerguntas) * 100}%`;
         document.getElementById('resposta-input').value = '';
         document.getElementById('error-resposta').classList.add('hidden');
