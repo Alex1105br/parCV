@@ -5,24 +5,24 @@
 {% block styles %}
 <style>
     :root {
-        /* Fundos */
-        --bg-main: #1f1e24; 
-        --bg-card: #28272d; 
+        /* Fundos — alinhados ao tema dark do Dashboard (parCV) */
+        --bg-main: #0b0c10;
+        --bg-card: #161722;
 
         /* Cores principais */
-        --color-primary: #89b4fa; 
-        --color-primary-hover: #89dceb; 
-        --color-border: #3f3f46; 
-        --color-border-focus: #89b4fa; 
+        --color-primary: #6366f1;
+        --color-primary-hover: #7c7ff6;
+        --color-border: rgba(255, 255, 255, 0.06);
+        --color-border-focus: #6366f1;
 
         /* Texto */
-        --text-main: #e6e1e8; 
-        --text-muted: #9e9ba2; 
+        --text-main: #ffffff;
+        --text-muted: #a0a5b5;
 
         /* Estados  */
-        --color-success: #2e7d32;
-        --color-danger: #d32f2f;
-        --color-warning: #f57c00;
+        --color-success: #22c55e;
+        --color-danger: #ef4444;
+        --color-warning: #facc15;
 
         /* Bordas arredondadas */
         --radius-lg: 12px; 
@@ -101,7 +101,7 @@
     }
 
     .ev-card__icon {
-        background: rgba(63, 81, 181, 0.1);
+        background: rgba(99, 102, 241, 0.1);
         color: var(--color-primary);
         padding: 12px;
         border-radius: var(--radius-md);
@@ -139,13 +139,13 @@
         padding: 32px 20px;
         text-align: center;
         cursor: pointer;
-        background: rgba(36, 36, 62, 0.5);
+        background: rgba(255, 255, 255, 0.02);
         transition: all 0.2s ease;
     }
 
     .file-drop:hover, .file-drop--hover {
         border-color: var(--color-border-focus);
-        background: rgba(63, 81, 181, 0.05);
+        background: rgba(99, 102, 241, 0.05);
     }
 
     .file-drop--selected {
@@ -196,7 +196,7 @@
     .form-textarea {
         width: 100%;
         min-height: 140px;
-        background: rgba(26, 26, 46, 0.6);
+        background: rgba(11, 12, 16, 0.6);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-md);
         padding: 16px;
@@ -336,7 +336,7 @@
     }
 
     .ev-estrategia {
-        background: rgba(63, 81, 181, 0.05);
+        background: rgba(99, 102, 241, 0.05);
         border-left: 4px solid var(--color-primary);
         padding: 16px 20px;
         border-radius: 0 var(--radius-md) var(--radius-md) 0;

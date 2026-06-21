@@ -5,24 +5,24 @@
 {% block styles %}
 <style>
     :root {
-        /* Fundos */
-        --bg-main: #1f1e24; 
-        --bg-card: #28272d; 
+        /* Fundos — alinhados ao tema dark do Dashboard (parCV) */
+        --bg-main: #0b0c10;
+        --bg-card: #161722;
 
         /* Cores principais */
-        --color-primary: #89b4fa; 
-        --color-border: #3f3f46; 
+        --color-primary: #6366f1;
+        --color-border: rgba(255, 255, 255, 0.06);
 
         /* Texto */
-        --text-main: #e6e1e8; 
-        --text-muted: #9e9ba2;
+        --text-main: #ffffff;
+        --text-muted: #a0a5b5;
 
         /* Estados (Sincronizado com pdf.py) */
-        --color-excelente: #4ade80;
-        --color-bom: #60a5fa;
+        --color-excelente: #22c55e;
+        --color-bom: #3b82f6;
         --color-regular: #facc15;
         --color-ruim: #fb923c;
-        --color-pessimo: #f87171;
+        --color-pessimo: #ef4444;
 
         /* Aliases para compatibilidade */
         --color-success: var(--color-excelente);
@@ -173,9 +173,9 @@
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
 
-    .ev-resumo__col--success { border-top: 4px solid #81c784; }
-    .ev-resumo__col--warning { border-top: 4px solid #ffb74d; }
-    .ev-resumo__col--primary { border-top: 4px solid #9fa8da; }
+    .ev-resumo__col--success { border-top: 4px solid var(--color-excelente); }
+    .ev-resumo__col--warning { border-top: 4px solid var(--color-regular); }
+    .ev-resumo__col--primary { border-top: 4px solid var(--color-primary); }
 
     .ev-resumo__title {
         display: flex;
@@ -186,9 +186,9 @@
         margin: 0 0 16px 0;
     }
 
-    .ev-resumo__col--success .ev-resumo__title { color: #81c784; }
-    .ev-resumo__col--warning .ev-resumo__title { color: #ffb74d; }
-    .ev-resumo__col--primary .ev-resumo__title { color: #9fa8da; }
+    .ev-resumo__col--success .ev-resumo__title { color: var(--color-excelente); }
+    .ev-resumo__col--warning .ev-resumo__title { color: var(--color-regular); }
+    .ev-resumo__col--primary .ev-resumo__title { color: var(--color-primary); }
 
     .ev-resumo__list {
         list-style: none;
@@ -269,7 +269,7 @@
     .ev-acordeao__num {
         font-size: 13px;
         font-weight: 600;
-        color: #9fa8da;
+        color: var(--color-primary);
     }
 
     .ev-acordeao__preview {
@@ -304,7 +304,7 @@
 
     .ev-acordeao__body {
         padding: 20px;
-        background: rgba(26, 26, 46, 0.4);
+        background: rgba(11, 12, 16, 0.4);
         border-top: 1px solid var(--color-border);
         display: flex;
         flex-direction: column;
@@ -371,7 +371,7 @@
     }
 
     .btn--primary { background-color: var(--color-primary); color: white; }
-    .btn--primary:hover { background-color: #303f9f; }
+    .btn--primary:hover { background-color: var(--color-primary-hover, #7c7ff6); }
     .btn--secondary { background: rgba(255, 255, 255, 0.08); color: var(--text-main); }
     .btn--secondary:hover { background: rgba(255, 255, 255, 0.15); }
 
@@ -505,11 +505,11 @@ async function carregarRelatorio() {
         document.getElementById('score-numero').textContent = score.toFixed(1);
 
         let cor, label;
-        if (score >= 9.0)      { cor = '#4ade80'; label = 'Excelente'; }
-        else if (score >= 7.0) { cor = '#60a5fa'; label = 'Bom'; }
+        if (score >= 9.0)      { cor = '#22c55e'; label = 'Excelente'; }
+        else if (score >= 7.0) { cor = '#3b82f6'; label = 'Bom'; }
         else if (score >= 5.0) { cor = '#facc15'; label = 'Regular'; }
         else if (score >= 3.0) { cor = '#fb923c'; label = 'Ruim'; }
-        else                   { cor = '#f87171'; label = 'Péssimo'; }
+        else                   { cor = '#ef4444'; label = 'Péssimo'; }
 
         document.getElementById('score-arc').style.stroke = cor;
         document.getElementById('score-numero').style.color = cor;

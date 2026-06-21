@@ -543,19 +543,20 @@ def gerar_pdf_relatorio_entrevista(entrevista):
     FONT_DIR = _find_font_dir()
     _register_fonts(FONT_DIR)
 
-    # ── Paleta dark (espelha a tela) ──────────────────────────────────────────
-    BG_CARD      = colors.HexColor("#16213e")
-    BG_CARD2     = colors.HexColor("#0f3460")
-    TEXTO_CLARO  = colors.HexColor("#e2e8f0")
-    TEXTO_MÉDIO  = colors.HexColor("#94a3b8")
-    BORDA        = colors.HexColor("#334155")
-    
-    # Mapeamento das variáveis CSS
-    PESSIMO      = colors.HexColor("#f87171")
+    # ── Paleta dark (espelha o tema do Dashboard parCV) ───────────────────────
+    BG_CARD      = colors.HexColor("#13151c")
+    BG_CARD2     = colors.HexColor("#13151c")
+    TEXTO_CLARO  = colors.HexColor("#ffffff")
+    TEXTO_MÉDIO  = colors.HexColor("#a0a5b5")
+    BORDA        = colors.HexColor("#6366f1")
+    PRIMARY      = colors.HexColor("#6366f1")
+
+    # Mapeamento das variáveis CSS (escala de score)
+    PESSIMO      = colors.HexColor("#ef4444")
     RUIM         = colors.HexColor("#fb923c")
     REGULAR      = colors.HexColor("#facc15")
-    BOM          = colors.HexColor("#60a5fa")
-    EXCELENTE    = colors.HexColor("#4ade80")
+    BOM          = colors.HexColor("#3b82f6")
+    EXCELENTE    = colors.HexColor("#22c55e")
 
     PAGE_W, PAGE_H = A4
     MARGIN = 1.5 * cm
@@ -644,7 +645,7 @@ def gerar_pdf_relatorio_entrevista(entrevista):
         fundo de toda página do relatório com a cor escura do tema,
         antes do conteúdo ser desenhado por cima."""
         canv.saveState()
-        canv.setFillColor(colors.HexColor("#1a1a2e"))
+        canv.setFillColor(colors.HexColor("#0b0c10"))
         canv.rect(0, 0, A4[0], A4[1], fill=1, stroke=0)
         canv.restoreState()
 
@@ -684,11 +685,11 @@ def gerar_pdf_relatorio_entrevista(entrevista):
             val = float(score_val)
         except (ValueError, TypeError):
             val = 0.0
-        if val >= 9.0: return ("Excelente", EXCELENTE, colors.Color(74/255, 222/255, 128/255, alpha=0.1))
-        if val >= 7.0: return ("Bom", BOM, colors.Color(96/255, 165/255, 250/255, alpha=0.1))
-        if val >= 5.0: return ("Regular", REGULAR, colors.Color(250/255, 204/255, 21/255, alpha=0.1))
-        if val >= 3.0: return ("Ruim", RUIM, colors.Color(251/255, 146/255, 60/255, alpha=0.1))
-        return ("Péssimo", PESSIMO, colors.Color(248/255, 113/255, 113/255, alpha=0.1))
+        if val >= 9.0: return ("Excelente", EXCELENTE, colors.Color(34/255, 197/255, 94/255, alpha=0.12))
+        if val >= 7.0: return ("Bom", BOM, colors.Color(59/255, 130/255, 246/255, alpha=0.12))
+        if val >= 5.0: return ("Regular", REGULAR, colors.Color(250/255, 204/255, 21/255, alpha=0.12))
+        if val >= 3.0: return ("Ruim", RUIM, colors.Color(251/255, 146/255, 60/255, alpha=0.12))
+        return ("Péssimo", PESSIMO, colors.Color(239/255, 68/255, 68/255, alpha=0.12))
 
     # ── Dados ─────────────────────────────────────────────────────────────────
     relatorio    = entrevista.relatorio_final
@@ -722,7 +723,7 @@ def gerar_pdf_relatorio_entrevista(entrevista):
         ps('h_score_val', bold=True, size=22, color=TEXTO_CLARO, after=0, leading=22, alignment=1),
     )
     
-    score_circle = RoundedCard(score_val_p, 1.8 * cm, colors.HexColor("#121829"), radius=9, border_color=s_cor, border_width=1.5, padding=(6, 2, 6, 2), force_circle=True, forced_height=1.8 * cm)
+    score_circle = RoundedCard(score_val_p, 1.8 * cm, colors.HexColor("#0b0c10"), radius=9, border_color=s_cor, border_width=1.5, padding=(6, 2, 6, 2), force_circle=True, forced_height=1.8 * cm)
 
     # Combinamos "PONTUAÇÃO GERAL" e "(0 A 10)" com alignment=1 para garantir a simetria horizontal exata
     score_text_label = Paragraph(
@@ -807,7 +808,7 @@ def gerar_pdf_relatorio_entrevista(entrevista):
     parecer_header_p = Paragraph("Parecer Geral", ps('ph', bold=True, size=11, color=TEXTO_CLARO, after=0))
     parecer_header_tbl = Table([[parecer_header_p]], colWidths=[CONTENT_W])
     parecer_header_tbl.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), colors.Color(15/255, 52/255, 96/255, alpha=0.5)),
+        ('BACKGROUND', (0,0), (-1,-1), colors.Color(99/255, 102/255, 241/255, alpha=0.12)),
         ('LEFTPADDING', (0,0), (-1,-1), 20),
         ('TOPPADDING', (0,0), (-1,-1), 12),
         ('BOTTOMPADDING', (0,0), (-1,-1), 12),
@@ -830,7 +831,7 @@ def gerar_pdf_relatorio_entrevista(entrevista):
     # ─── DETALHES DAS PERGUNTAS ────────────────────────────────────────────────
     det_header = Paragraph("Detalhes das Perguntas", ps('dh', bold=True, size=14, color=TEXTO_CLARO, after=15))
     det_header_tbl = Table([[det_header]], colWidths=[CONTENT_W])
-    det_header_tbl.setStyle(TableStyle([('LEFTPADDING', (0,0), (-1,-1), 12), ('LINEBEFORE', (0,0), (0,0), 4, BG_CARD2)]))
+    det_header_tbl.setStyle(TableStyle([('LEFTPADDING', (0,0), (-1,-1), 12), ('LINEBEFORE', (0,0), (0,0), 4, PRIMARY)]))
     story.append(det_header_tbl)
     story.append(Spacer(1, 10))
 
@@ -840,11 +841,11 @@ def gerar_pdf_relatorio_entrevista(entrevista):
         
         _, q_color, q_bg_alpha = get_status_info(score)
         
-        num_p = Paragraph(f"Pergunta {i}", ps(f'pnum{i}', bold=True, size=11, color=TEXTO_CLARO, after=0))
+        num_p = Paragraph(f"Pergunta {i}", ps(f'pnum{i}', bold=True, size=11, color=PRIMARY, after=0))
         badge_p = Paragraph(f"<b>{score}/10</b>", ps(f'pbadge{i}', bold=True, size=11, color=q_color, after=0))
         perg_hdr = Table([[num_p, badge_p]], colWidths=[CONTENT_W - 4 * cm, 3 * cm])
         perg_hdr.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,-1), colors.Color(15/255, 52/255, 96/255, alpha=0.4)),
+            ('BACKGROUND', (0,0), (-1,-1), BG_CARD),
             ('LEFTPADDING', (0,0), (-1,-1), 20),
             ('RIGHTPADDING', (0,0), (-1,-1), 20),
             ('TOPPADDING', (0,0), (-1,-1), 12),
@@ -853,6 +854,7 @@ def gerar_pdf_relatorio_entrevista(entrevista):
             ('ALIGN', (1,0), (1,0), 'RIGHT'),
         ]))
 
+        perg_label = Paragraph("PERGUNTA", ps(f'plbl{i}', bold=True, size=8, color=TEXTO_MÉDIO, after=6))
         enunciado = Paragraph(pergunta.pergunta_principal, ps(f'ptxt{i}', bold=True, size=11, color=TEXTO_CLARO, after=15, leading=15))
         resp_label = Paragraph("SUA RESPOSTA", ps(f'rlbl{i}', bold=True, size=8, color=TEXTO_MÉDIO, after=6))
         resp_txt = Paragraph(pergunta.resposta_usuario or "Não fornecida.", ps(f'resp{i}', size=10, color=TEXTO_CLARO, leading=15))
@@ -862,6 +864,7 @@ def gerar_pdf_relatorio_entrevista(entrevista):
         fb_box = RoundedCard([fb_label, fb_txt], CONTENT_W - 2.2 * cm, q_bg_alpha, radius=6, border_color=q_color, border_width=0.5, padding=15)
 
         corpo_card = Table([
+            [perg_label],
             [enunciado],
             [resp_label],
             [resp_txt],
