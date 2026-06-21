@@ -5,11 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="parCV — análise de currículo com IA para estudantes e profissionais em transição de carreira. Score ATS, simulação de entrevista e otimização de currículo.">
     <title>{% block title %}parCV{% endblock %}</title>
-    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon/favicon.svg') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon/favicon-16x16.png') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='favicon/site.webmanifest') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
     <!-- Lucide com versão fixada (evita quebras por upgrades automáticos) -->
     <script src="https://unpkg.com/lucide@0.383.0/dist/umd/lucide.min.js"
             onerror="window._lucideFailed=true"></script>
+    <!-- Modal de confirmação global (substitui window.confirm) -->
+    <script src="{{ url_for('static', filename='confirm-modal.js') }}"></script>
     {% block styles %}{% endblock %}
 </head>
 <body>

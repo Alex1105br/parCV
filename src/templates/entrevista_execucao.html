@@ -403,8 +403,14 @@ window.addEventListener('beforeunload', function(e) {
     }
 });
 
-document.getElementById('btn-cancelar').addEventListener('click', () => {
-    const confirmar = confirm('Tem certeza que deseja cancelar a entrevista? Seu progresso será perdido.');
+document.getElementById('btn-cancelar').addEventListener('click', async () => {
+    const confirmar = await confirmModal({
+        title: 'Cancelar entrevista',
+        message: 'Tem certeza que deseja cancelar a entrevista? Seu progresso será perdido.',
+        confirmText: 'Cancelar entrevista',
+        cancelText: 'Voltar',
+        danger: true
+    });
     if (!confirmar) return;
     entrevistaFinalizada = true; // evita o aviso de beforeunload
     window.location.href = '/entrevista';

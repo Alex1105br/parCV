@@ -39,10 +39,9 @@ body {
 }
 
 .brand__logo {
-    width: 44px;
-    height: 44px;
-    object-fit: contain;
-    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    color: var(--color-primary);
 }
 
 .brand__text {
