@@ -104,10 +104,23 @@ _INJECTION_PATTERNS = re.compile(
     r"|\byou\s+are\s+now\b|\bact\s+as\b"
     r"|\bpretend\s+(?:to\s+be|you\s+are)\b"
     r"|\byour\s+new\s+(?:role|task|persona|instructions?)\b"
-    r"|\bignore\s+as\s+instru[cç][oõ]es\b|\besque[cç]a\b"
-    r"|\bnovo\s+papel\b|\bfinja\s+(?:ser|que)\b"
+    r"|\bignore\s+as\s+instru[cç][oõ]es\b|\besque[cç]a\s+(?:tudo|todas|as\s+regras|suas\s+regras|suas\s+instru[cç][oõ]es)\b"
+    r"|\bnovo\s+papel\b|\bfinja\s+(?:ser|que)\b|\bsimule\s+(?:ser|que\s+(?:[ée]|voc[eê]\s+[ée]))\b"
     r"|\[/?INST\]|<\|(?:system|user|assistant)\|>"
-    r"|\[(?:SYSTEM|USER|ASSISTANT)\]",
+    r"|\[(?:SYSTEM|USER|ASSISTANT)\]"
+    # Tentativas de assumir nova persona / desativar restrições
+    r"|\bdesconsidere\s+(?:suas|as)\s+(?:regras|diretrizes|instru[cç][oõ]es)\b"
+    r"|\bsaia\s+do\s+seu\s+papel\b|\bdeixe\s+de\s+ser\b"
+    r"|\bmodo\s+(?:desenvolvedor|deus|god|sem\s+filtro|sem\s+censura|dan)\b"
+    r"|\bdeveloper\s+mode\b|\bgod\s+mode\b|\bdan\s+mode\b|\bjailbreak\b"
+    r"|\bsem\s+(?:nenhuma\s+)?(?:restri[cç][ãa]o(?:\s+alguma)?|filtro|censura)\b|\buncensored\b"
+    r"|\bfrom\s+now\s+on\b|\ba\s+partir\s+de\s+agora\s+voc[eê]\b"
+    # Tentativas de extrair/expor o próprio system prompt
+    r"|\b(qual|quais)\s+(?:[ée]|eh|s[ãa]o)\s+(?:o\s+seu|seu|suas|as\s+suas)\s+(?:instru[cç][oõ]es|prompt|regras)\b"
+    r"|\bmostre\s+(?:suas|as)\s+instru[cç][oõ]es\b|\brepita\s+(?:suas|as|o)\s+(?:instru[cç][oõ]es|prompt)\b"
+    r"|\b(?:reveal|show|print)\s+(?:me\s+)?your\s+(?:system\s+)?(?:prompt|instructions)\b"
+    r"|\bwhat\s+(?:is|are)\s+your\s+(?:system\s+)?(?:prompt|instructions)\b"
+    r"|\bsystem\s+prompt\b|\bprompt\s+de\s+sistema\b",
     re.IGNORECASE,
 )
 
@@ -115,9 +128,12 @@ _INJECTION_PATTERNS = re.compile(
 def has_prompt_injection(text):
     """Checagem determinística (regex) de padrões característicos de
     prompt injection, em português e inglês — ex: "ignore as instruções",
-    "you are now", "[INST]", tokens de chat de sistema. Primeira camada
-    de defesa, usada antes de qualquer texto livre do usuário ser
-    enviado para a LLM (ver docs/ARQUITETURA.md, seção de segurança)."""
+    "you are now", "[INST]", tokens de chat de sistema, pedidos para
+    assumir nova persona / "modo sem filtro" / "modo desenvolvedor", e
+    tentativas de fazer a IA revelar seu prompt de sistema. Primeira
+    camada de defesa, usada antes de qualquer texto livre do usuário
+    (ou de documento anexado) ser enviado para a LLM (ver
+    docs/ARQUITETURA.md, seção de segurança)."""
     return bool(_INJECTION_PATTERNS.search(text))
 
 
