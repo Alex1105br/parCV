@@ -9,7 +9,7 @@
     const form = document.getElementById('input-area');
     const btnNovaConversa = document.getElementById('btn-nova-conversa');
     const sessionList = document.getElementById('session-list');
-    const pinnedList = document.getElementById('pinned-list');
+    let pinnedList = document.getElementById('pinned-list');
     const sidebar = document.getElementById('sidebar');
     const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
 
@@ -605,6 +605,11 @@
                 await fetch('/chat/sessao/' + sid, { method: 'DELETE' });
                 const wasActive = item.classList.contains('sidebar__item--active');
                 item.remove();
+                // Se o item excluído era o último (ou único) fixado, o
+                // cabeçalho "Fixadas" precisa sumir imediatamente — sem
+                // isso, ele ficava visível pairando sobre uma lista vazia
+                // até a próxima recarga da página.
+                updatePinnedSectionVisibility();
                 if (wasActive) clearChatUI();
             } catch (err) {
                 addMessage('Erro ao excluir: ' + err.message, 'error');
@@ -655,11 +660,44 @@
             '</div>';
     }
 
+    function ensurePinnedSection() {
+        // Cria o cabeçalho "Fixadas" + <ul id="pinned-list"> sob demanda,
+        // caso ainda não existam no DOM. Isso acontece sempre que a página
+        // foi carregada (ou recarregada) com 0 conversas fixadas: o
+        // template só renderiza esse bloco via Jinja quando
+        // `sessoes_fixadas` não está vazio (ver chat.html), então fixar a
+        // primeira conversa de uma sessão "do zero" não tinha onde
+        // aparecer — o item ficava preso em "Recentes" com o ícone de pin,
+        // mas sem nenhum cabeçalho "Fixadas" acima dele.
+        if (pinnedList) return pinnedList;
+
+        var section = document.createElement('div');
+        section.className = 'sidebar__section';
+        section.innerHTML = '<span class="sidebar__section-label">Fixadas</span>';
+
+        var ul = document.createElement('ul');
+        ul.className = 'sidebar__list';
+        ul.id = 'pinned-list';
+
+        // A seção "Fixadas" sempre vem antes de "Recentes" na sidebar —
+        // insere os dois elementos novos logo antes do cabeçalho de
+        // "Recentes" (primeiro .sidebar__section já presente em sidebarContent).
+        var sidebarContent = sessionList.parentElement;
+        var recentesSection = sidebarContent.querySelector('.sidebar__section');
+        sidebarContent.insertBefore(section, recentesSection);
+        sidebarContent.insertBefore(ul, recentesSection);
+
+        ul.addEventListener('click', handleSidebarClick);
+
+        pinnedList = ul;
+        return pinnedList;
+    }
+
     function moveItemToList(item, fixado) {
         item.dataset.fixado = fixado ? 'true' : 'false';
         item.innerHTML = buildItemHTML(item.querySelector('.sidebar__item-title').textContent, fixado);
         if (window.lucide) lucide.createIcons({ nodes: [item] });
-        var targetList = fixado ? pinnedList : sessionList;
+        var targetList = fixado ? ensurePinnedSection() : sessionList;
         if (!targetList) return;
         if (fixado) {
             // Fixadas são ordenadas por ordem de chegada (a primeira

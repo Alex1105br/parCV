@@ -34,7 +34,6 @@
                 <li class="sidebar__item{% if s.id == sessao_atual %} sidebar__item--active{% endif %}" data-sid="{{ s.id }}" data-fixado="true">
                     <i data-lucide="pin" class="sidebar__item-pin-icon"></i>
                     <span class="sidebar__item-title">{{ s.titulo if s.titulo else "Conversa " ~ s.criado_em.strftime('%d/%m %H:%M') }}</span>
-                    <span class="sidebar__item-date">{{ s.criado_em.strftime('%d/%m %H:%M') }}</span>
                     <button class="sidebar__item-menu" title="Opções" aria-label="Opções da conversa">
                         <i data-lucide="ellipsis"></i>
                     </button>
@@ -63,7 +62,6 @@
                 {% for s in sessoes_recentes %}
                 <li class="sidebar__item{% if s.id == sessao_atual %} sidebar__item--active{% endif %}" data-sid="{{ s.id }}" data-fixado="false">
                     <span class="sidebar__item-title">{{ s.titulo if s.titulo else "Conversa " ~ s.criado_em.strftime('%d/%m %H:%M') }}</span>
-                    <span class="sidebar__item-date">{{ s.criado_em.strftime('%d/%m %H:%M') }}</span>
                     <button class="sidebar__item-menu" title="Opções" aria-label="Opções da conversa">
                         <i data-lucide="ellipsis"></i>
                     </button>

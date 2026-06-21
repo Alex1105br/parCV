@@ -700,12 +700,3 @@ body {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
-/* ===== Session date in sidebar ===== */
-.sidebar__item-date {
-    font-size: 11px;
-    color: var(--text-muted, #9e9ba2);
-    white-space: nowrap;
-    flex-shrink: 0;
-    margin-left: auto;
-    padding-right: 4px;
-}
