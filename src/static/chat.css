@@ -98,6 +98,8 @@ body {
     text-decoration: none;
     font-size: var(--font-size-lg);
     font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .sidebar__brand:hover {
@@ -128,6 +130,7 @@ body {
     color: var(--color-text);
     font-size: var(--font-size-base);
     cursor: pointer;
+    white-space: nowrap;
     transition: background var(--transition);
 }
 
@@ -139,6 +142,12 @@ body {
     width: 18px;
     height: 18px;
     color: var(--color-text-muted);
+    flex-shrink: 0;
+}
+
+.sidebar__nav-item span {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Section label */
