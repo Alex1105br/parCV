@@ -346,6 +346,66 @@ def gerar_titulo_analise(curriculo_text, vaga=None):
     return titulo
 
 
+def gerar_titulo_entrevista(vaga_descricao, curriculo_text=None):
+    """Gera um título curto para uma simulação de entrevista (rota POST
+    /entrevista/gerar-plano), no mesmo padrão de gerar_titulo_analise
+    acima — mesma lógica de inferência do cargo a partir da vaga e mesmo
+    fallback determinístico (vaga/currículo truncado e, por último, um
+    timestamp) em caso de erro/timeout da LLM. Chamada síncrona — não
+    toca no banco, apenas devolve a string do título.
+
+    Único ajuste em relação a gerar_titulo_analise: o formato esperado é
+    "Entrevista para vaga de <cargo>" em vez de "Análise para vaga de...",
+    já que aqui o registro persistido é uma simulação de entrevista
+    (Entrevista), não uma análise de currículo.
+    """
+    from src.utils import sanitize_text
+    from datetime import datetime
+
+    vaga_descricao = (vaga_descricao or "").strip()
+    curriculo_text = (curriculo_text or "").strip()
+    primeira_linha_curriculo = curriculo_text.split("\n")[0].strip() if curriculo_text else ""
+
+    context_parts = []
+    if vaga_descricao:
+        context_parts.append(f"Descrição da vaga:\n{vaga_descricao[:800]}")
+    if primeira_linha_curriculo:
+        context_parts.append(f"Início do currículo do candidato: {primeira_linha_curriculo}")
+    context = "\n\n".join(context_parts)
+
+    titulo = None
+    if context:
+        prompt = (
+            "Crie um título curto (máximo 50 caracteres) para esta simulação de "
+            "entrevista de emprego. O título deve focar na VAGA, não no candidato: "
+            "identifique ou INFIRA o cargo/área da vaga a partir das "
+            "responsabilidades, requisitos e tecnologias citadas na descrição — a "
+            "vaga normalmente NÃO tem um título explícito, então deduza (ex: se "
+            "menciona AOSP, Qualcomm e Android, o cargo é algo como 'Desenvolvedor "
+            "Android'). NUNCA copie a frase de abertura da vaga literalmente como "
+            "título. Formato esperado: 'Entrevista para vaga de <cargo inferido>'. "
+            "Só use o nome do candidato do currículo se a vaga não tiver NENHUMA "
+            "pista de cargo/área. Responda APENAS com o título, sem aspas, sem "
+            "explicações.\n\n"
+            + context
+        )
+        try:
+            titulo_raw, error = call_model(prompt, num_predict=60, timeout=15)
+            if not error and titulo_raw and titulo_raw.strip():
+                titulo = sanitize_text(titulo_raw.strip().strip('"\''))[:100]
+        except Exception:
+            pass
+
+    if not titulo:
+        fallback = vaga_descricao[:60] or primeira_linha_curriculo[:60]
+        titulo = sanitize_text(fallback)[:100] if fallback else None
+
+    if not titulo:
+        titulo = datetime.now().strftime("Entrevista %d/%m %H:%M")
+
+    return titulo
+
+
 def call_model(prompt, num_predict=1200, timeout=None):
     """Synchronous single-prompt call. Returns (response_text, error).
 

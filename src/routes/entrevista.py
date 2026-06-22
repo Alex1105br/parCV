@@ -13,7 +13,8 @@ from src.models.entrevista import Entrevista, PerguntaEntrevista
 from src.services.model import (
     gerar_plano_entrevista,
     avaliar_resposta,
-    gerar_relatorio_final
+    gerar_relatorio_final,
+    gerar_titulo_entrevista
 )
 from src.services.pdf import gerar_pdf_relatorio_entrevista
 from src.utils import (
@@ -109,10 +110,15 @@ def gerar_plano():
         # Chamar IA para gerar plano
         logger.info("Gerando plano de entrevista com IA")
         plano = gerar_plano_entrevista(curriculo_text, vaga_descricao)
-        
+
+        # Título automático (mesmo padrão de gerar_titulo_analise, usado em
+        # /analisar) — pode ser renomeado depois via PATCH /entrevista/<id>/titulo
+        titulo = gerar_titulo_entrevista(vaga_descricao, curriculo_text)
+
         # Criar registro Entrevista
         entrevista = Entrevista(
             user_id=session["user_id"],
+            titulo=titulo,
             curriculo_arquivo=filename,
             vaga_descricao=vaga_descricao,
             numero_perguntas=plano["numero_perguntas"],
@@ -137,6 +143,7 @@ def gerar_plano():
         
         return jsonify({
             "entrevista_id": entrevista.id,
+            "titulo": entrevista.titulo,
             "numero_perguntas": plano["numero_perguntas"],  # 10 (6 hard skills + 4 soft skills)
             "plano": {
                 "topicos": plano["topicos_principais"],
@@ -148,6 +155,42 @@ def gerar_plano():
     except Exception as e:
         logger.error(f"Erro ao gerar plano: {str(e)}")
         return jsonify({"error": "Erro ao gerar plano"}), 500
+
+
+@bp.route("/lista", methods=["GET"])
+@login_required
+def list_entrevistas():
+    """Lista paginada (page/per_page, máx 50 por página) das entrevistas do
+    usuário logado, ordenadas da mais recente para a mais antiga. Mesmo
+    padrão de list_analises (routes/analisar.py) — devolve um resumo de
+    cada entrevista (sem o plano completo nem as perguntas). Inclui
+    score_geral (extraído de relatorio_final, quando a entrevista já
+    estiver concluída) para exibir um indicador de desempenho na lista,
+    análogo ao score_total das análises."""
+    page = request.args.get("page", 1, type=int)
+    per_page = min(request.args.get("per_page", 20, type=int), 50)
+    pagination = (
+        Entrevista.query
+        .filter_by(user_id=session["user_id"])
+        .order_by(Entrevista.criado_em.desc())
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
+    return jsonify({
+        "entrevistas": [
+            {
+                "id": e.id,
+                "titulo": e.titulo,
+                "status": e.status,
+                "vaga_descricao": e.vaga_descricao,
+                "criado_em": e.criado_em.isoformat(),
+                "score_geral": (e.relatorio_final or {}).get("score_geral"),
+            }
+            for e in pagination.items
+        ],
+        "total": pagination.total,
+        "page": pagination.page,
+        "pages": pagination.pages,
+    })
 
 
 @bp.route("/<entrevista_id>/executar", methods=["GET"])
@@ -179,6 +222,7 @@ def get_entrevista(entrevista_id):
     
     return jsonify({
         "id": entrevista.id,
+        "titulo": entrevista.titulo,
         "status": entrevista.status,
         "numero_perguntas": entrevista.numero_perguntas,
         "plano_entrevista": entrevista.plano_entrevista,
@@ -197,6 +241,44 @@ def get_entrevista(entrevista_id):
             for p in entrevista.perguntas
         ]
     }), 200
+
+
+@bp.route("/<entrevista_id>/titulo", methods=["PATCH"])
+@login_required
+def renomear_entrevista(entrevista_id):
+    """Renomeia manualmente o título de uma entrevista (gerado automaticamente
+    na criação — ver gerar_titulo_entrevista). Mesmo padrão da rota análoga
+    em /analises/<id>/titulo (routes/analisar.py)."""
+    entrevista = _get_entrevista_or_404(entrevista_id)
+    if not entrevista:
+        return jsonify({"error": "Entrevista não encontrada"}), 404
+    data = request.get_json(silent=True) or {}
+    titulo = sanitize_text(data.get("titulo", ""))[:100].strip()
+    if not titulo:
+        return jsonify({"error": "Título vazio"}), 400
+    entrevista.titulo = titulo
+    db.session.commit()
+    return jsonify({"id": entrevista.id, "titulo": entrevista.titulo})
+
+
+@bp.route("/<entrevista_id>", methods=["DELETE"])
+@login_required
+def deletar_entrevista(entrevista_id):
+    """Apaga definitivamente uma entrevista do histórico — cascade delete
+    remove também as PerguntaEntrevista filhas (ver relationship em
+    models/entrevista.py). Mesmo padrão de deletar_analise
+    (routes/analisar.py)."""
+    entrevista = _get_entrevista_or_404(entrevista_id)
+    if not entrevista:
+        return jsonify({"error": "Entrevista não encontrada"}), 404
+    try:
+        db.session.delete(entrevista)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.error("db_error", extra={"op": "deletar_entrevista", "erro": str(e)})
+        return jsonify({"error": "Erro ao apagar entrevista"}), 500
+    return jsonify({"ok": True})
 
 
 @bp.route("/<entrevista_id>/pergunta/<int:numero>", methods=["GET"])

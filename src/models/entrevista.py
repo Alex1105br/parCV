@@ -14,12 +14,19 @@ class Entrevista(db.Model):
     `status` segue em_planejamento -> em_andamento (na 1ª resposta) ->
     concluida (em /finalizar, que também preenche relatorio_final com o
     parecer executivo gerado pela IA: score geral, pontos fortes/fracos,
-    recomendações)."""
+    recomendações).
+
+    `titulo` é gerado automaticamente na criação (ver
+    services/model.gerar_titulo_entrevista, mesmo padrão usado em
+    Analise.titulo) e pode ser renomeado manualmente pelo usuário
+    (PATCH /entrevista/<id>/titulo) — exibido e editável na aba
+    "Entrevistas" do Histórico (GET /entrevista/lista)."""
     __tablename__ = "entrevista"
 
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = db.Column(db.String(36), db.ForeignKey("users.id"), nullable=False)
-    
+    titulo = db.Column(db.String(100), nullable=False, default="")
+
     curriculo_arquivo = db.Column(db.String(255), nullable=False)
     vaga_descricao = db.Column(db.Text, nullable=False)
     numero_perguntas = db.Column(db.Integer, nullable=False)

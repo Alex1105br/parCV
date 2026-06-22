@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Histórico de Análises - parCV{% endblock %}
+{% block title %}Histórico - parCV{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='historico.css') }}">
@@ -14,10 +14,14 @@
         </a>
         <h1 class="header__title">
             <i data-lucide="history"></i>
-            Histórico de Análises
+            Histórico
         </h1>
     </div>
     <div class="header__actions">
+        <a href="/entrevista" class="btn btn--secondary">
+            <i data-lucide="user-check"></i>
+            Nova entrevista
+        </a>
         <a href="/analisar" class="btn btn--primary">
             <i data-lucide="plus"></i>
             Nova análise
@@ -26,30 +30,58 @@
 </header>
 
 <main class="historico">
-    <div id="list-container">
-        <div class="analise-list" id="skeleton-list">
-            <div class="skeleton-card">
-                <div class="skeleton skeleton-circle"></div>
-                <div class="skeleton-lines">
-                    <div class="skeleton skeleton-line" style="width:55%"></div>
-                    <div class="skeleton skeleton-line skeleton-line--short"></div>
+    <div class="historico__columns">
+
+        <section class="historico__column">
+            <h2 class="historico__column-title">
+                <i data-lucide="scan-search"></i>
+                Análises
+            </h2>
+            <div id="list-container-analises">
+                <div class="analise-list" id="skeleton-list-analises">
+                    <div class="skeleton-card">
+                        <div class="skeleton skeleton-circle"></div>
+                        <div class="skeleton-lines">
+                            <div class="skeleton skeleton-line" style="width:55%"></div>
+                            <div class="skeleton skeleton-line skeleton-line--short"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton skeleton-circle"></div>
+                        <div class="skeleton-lines">
+                            <div class="skeleton skeleton-line" style="width:70%"></div>
+                            <div class="skeleton skeleton-line skeleton-line--short"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="skeleton-card">
-                <div class="skeleton skeleton-circle"></div>
-                <div class="skeleton-lines">
-                    <div class="skeleton skeleton-line" style="width:70%"></div>
-                    <div class="skeleton skeleton-line skeleton-line--short"></div>
+        </section>
+
+        <section class="historico__column">
+            <h2 class="historico__column-title">
+                <i data-lucide="user-check"></i>
+                Entrevistas
+            </h2>
+            <div id="list-container-entrevistas">
+                <div class="analise-list" id="skeleton-list-entrevistas">
+                    <div class="skeleton-card">
+                        <div class="skeleton skeleton-circle"></div>
+                        <div class="skeleton-lines">
+                            <div class="skeleton skeleton-line" style="width:55%"></div>
+                            <div class="skeleton skeleton-line skeleton-line--short"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton skeleton-circle"></div>
+                        <div class="skeleton-lines">
+                            <div class="skeleton skeleton-line" style="width:70%"></div>
+                            <div class="skeleton skeleton-line skeleton-line--short"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="skeleton-card">
-                <div class="skeleton skeleton-circle"></div>
-                <div class="skeleton-lines">
-                    <div class="skeleton skeleton-line" style="width:45%"></div>
-                    <div class="skeleton skeleton-line skeleton-line--short"></div>
-                </div>
-            </div>
-        </div>
+        </section>
+
     </div>
 </main>
 {% endblock %}

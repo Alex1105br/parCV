@@ -1,9 +1,32 @@
 /* ===== Historico Page ===== */
 
 .historico {
-    max-width: 860px;
+    max-width: 1320px;
     margin: 0 auto;
     padding: calc(var(--spacing-xl) + 12px) var(--spacing-xl);
+}
+
+.historico__columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-2xl);
+    align-items: start;
+}
+
+.historico__column-title {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.historico__column-title i {
+    width: 18px;
+    height: 18px;
+    color: var(--color-primary);
 }
 
 .historico__header {
@@ -78,6 +101,47 @@
     color: var(--color-score-pessimo);
     border-color: var(--color-score-pessimo);
     background: rgba(248, 113, 113, 0.1);
+}
+
+.score-badge--decimal {
+    font-size: var(--font-size-xs);
+}
+
+/* ===== Status Pill (entrevistas ainda sem score final) ===== */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.15;
+    text-align: center;
+    border: 2px solid;
+    flex-shrink: 0;
+    padding: 0 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+}
+
+.status-pill--neutro {
+    color: var(--color-text-muted);
+    border-color: var(--color-border);
+    background: var(--color-surface-raised);
+}
+
+.status-pill--andamento {
+    color: var(--color-warning-text);
+    border-color: var(--color-warning);
+    background: var(--color-warning-bg);
+}
+
+.status-pill--concluida {
+    color: var(--color-primary-hover);
+    border-color: var(--color-primary);
+    background: var(--color-primary-subtle);
 }
 
 /* ===== Analysis List ===== */
@@ -548,6 +612,11 @@
 
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
+    .historico__columns {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-xl);
+    }
+
     .detalhe {
         flex-direction: column;
         padding: var(--spacing-lg);
