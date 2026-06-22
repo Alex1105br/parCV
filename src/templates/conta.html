@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}Configurações da Conta - parCV{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='conta.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="layout">
+
+    <aside class="sidebar" id="sidebar" aria-label="Menu de navegação">
+        <div class="sidebar__brand">
+            <button class="sidebar__toggle" id="sidebar-toggle" aria-label="Contrair menu" aria-expanded="true">
+                <i data-lucide="panel-left-close"></i>
+            </button>
+            <span class="sidebar__brand-text">parCV</span>
+        </div>
+
+        <nav class="sidebar__nav">
+            <a href="/" class="sidebar__item">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="/analisar" class="sidebar__item">
+                <i data-lucide="scan-search"></i>
+                <span>Analisar currículo</span>
+            </a>
+
+            <a href="/chat" class="sidebar__item">
+                <i data-lucide="message-square"></i>
+                <span>Chat com IA</span>
+            </a>
+
+            <a href="/entrevista" class="sidebar__item">
+                <i data-lucide="user-check"></i>
+                <span>Simulação de entrevista</span>
+            </a>
+
+            <a href="/curriculos" class="sidebar__item">
+                <i data-lucide="file-text"></i>
+                <span>Currículos</span>
+            </a>
+
+            <a href="/historico" class="sidebar__item">
+                <i data-lucide="history"></i>
+                <span>Histórico</span>
+            </a>
+        </nav>
+
+        <div class="sidebar__footer">
+            <a href="/conta" class="sidebar__user sidebar__user--link sidebar__user--active" title="Configurações da conta">
+                <i data-lucide="user"></i>
+                <span>{{ user_name }}</span>
+                <i data-lucide="settings" class="sidebar__user-settings"></i>
+            </a>
+
+            <form method="post" action="{{ url_for('auth.logout') }}">
+                <button type="submit" class="sidebar__logout" aria-label="Sair">
+                    <i data-lucide="log-out"></i>
+                    <span>Sair</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="home-header">
+            <h1 class="home-header__title">Configurações da Conta</h1>
+            <p class="home-header__subtitle">Gerencie suas informações pessoais e preferências de segurança.</p>
+        </header>
+
+        <!-- Toast de feedback global -->
+        <div id="toast" class="toast" role="alert" aria-live="assertive"></div>
+
+        <div class="account-sections">
+
+            <!-- ── Seção 1: Dados cadastrais ─────────────────────────── -->
+            <section class="account-card" id="section-dados">
+                <div class="account-card__header">
+                    <div class="account-card__icon">
+                        <i data-lucide="user"></i>
+                    </div>
+                    <div>
+                        <h2 class="account-card__title">Informações pessoais</h2>
+                        <p class="account-card__desc">Atualize seu nome e outras informações do perfil.</p>
+                    </div>
+                </div>
+
+                <form id="form-dados" class="account-form" novalidate>
+                    <div class="account-field">
+                        <label class="account-label" for="nome">Nome completo</label>
+                        <input
+                            id="nome"
+                            name="nome"
+                            type="text"
+                            class="account-input"
+                            value="{{ user.name }}"
+                            maxlength="100"
+                            autocomplete="name"
+                            required
+                        />
+                    </div>
+
+                    <div class="account-field">
+                        <label class="account-label" for="email">E-mail</label>
+                        <input
+                            id="email"
+                            type="email"
+                            class="account-input account-input--disabled"
+                            value="{{ user.email }}"
+                            disabled
+                            title="O e-mail não pode ser alterado."
+                        />
+                        <span class="account-field-hint">O e-mail é usado para autenticação e não pode ser alterado.</span>
+                    </div>
+
+                    <div class="account-field-row">
+                        <div class="account-field">
+                            <label class="account-label" for="telefone">Telefone <span class="account-optional">(opcional)</span></label>
+                            <input
+                                id="telefone"
+                                name="telefone"
+                                type="tel"
+                                class="account-input"
+                                value="{{ user.telefone if user.telefone is defined and user.telefone else '' }}"
+                                maxlength="20"
+                                autocomplete="tel"
+                                placeholder="(00) 00000-0000"
+                            />
+                        </div>
+                        <div class="account-field">
+                            <label class="account-label" for="profissao">Área profissional <span class="account-optional">(opcional)</span></label>
+                            <input
+                                id="profissao"
+                                name="profissao"
+                                type="text"
+                                class="account-input"
+                                value="{{ user.profissao if user.profissao is defined and user.profissao else '' }}"
+                                maxlength="100"
+                                placeholder="ex: Desenvolvedor de Software"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="account-form-footer">
+                        <p id="erro-dados" class="account-form-error" hidden></p>
+                        <button type="submit" class="btn btn--primary" id="btn-dados">
+                            Salvar alterações
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- ── Seção 2: Alterar senha ─────────────────────────────── -->
+            <section class="account-card" id="section-senha">
+                <div class="account-card__header">
+                    <div class="account-card__icon">
+                        <i data-lucide="lock"></i>
+                    </div>
+                    <div>
+                        <h2 class="account-card__title">Alterar senha</h2>
+                        <p class="account-card__desc">Use uma senha forte com pelo menos 8 caracteres.</p>
+                    </div>
+                </div>
+
+                <form id="form-senha" class="account-form" novalidate autocomplete="off">
+                    <div class="account-field">
+                        <label class="account-label" for="senha-atual">Senha atual</label>
+                        <div class="account-input-password-wrap">
+                            <input
+                                id="senha-atual"
+                                name="senha_atual"
+                                type="password"
+                                class="account-input"
+                                autocomplete="current-password"
+                                required
+                            />
+                            <button type="button" class="account-toggle-password" data-target="senha-atual" aria-label="Mostrar senha">
+                                <svg class="eye-icon eye-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <svg class="eye-icon eye-hide" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="account-field-row">
+                        <div class="account-field">
+                            <label class="account-label" for="nova-senha">Nova senha</label>
+                            <div class="account-input-password-wrap">
+                                <input
+                                    id="nova-senha"
+                                    name="nova_senha"
+                                    type="password"
+                                    class="account-input"
+                                    autocomplete="new-password"
+                                    required
+                                    minlength="8"
+                                />
+                                <button type="button" class="account-toggle-password" data-target="nova-senha" aria-label="Mostrar senha">
+                                    <svg class="eye-icon eye-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <svg class="eye-icon eye-hide" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="account-field">
+                            <label class="account-label" for="confirmar-senha">Confirmar nova senha</label>
+                            <div class="account-input-password-wrap">
+                                <input
+                                    id="confirmar-senha"
+                                    name="confirmar_senha"
+                                    type="password"
+                                    class="account-input"
+                                    autocomplete="new-password"
+                                    required
+                                />
+                                <button type="button" class="account-toggle-password" data-target="confirmar-senha" aria-label="Mostrar senha">
+                                    <svg class="eye-icon eye-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <svg class="eye-icon eye-hide" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="account-password-strength" id="password-strength" hidden>
+                        <div class="account-strength-bar">
+                            <div class="account-strength-fill" id="strength-fill"></div>
+                        </div>
+                        <span class="account-strength-label" id="strength-label"></span>
+                    </div>
+
+                    <div class="account-form-footer">
+                        <p id="erro-senha" class="account-form-error" hidden></p>
+                        <button type="submit" class="btn btn--primary" id="btn-senha">
+                            Alterar senha
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- ── Seção 3: Zona de perigo ────────────────────────────── -->
+            <section class="account-card account-card--danger" id="section-excluir">
+                <div class="account-card__header">
+                    <div class="account-card__icon account-card__icon--danger">
+                        <i data-lucide="trash-2"></i>
+                    </div>
+                    <div>
+                        <h2 class="account-card__title account-card__title--danger">Excluir conta</h2>
+                        <p class="account-card__desc">Esta ação é permanente e não pode ser desfeita.</p>
+                    </div>
+                </div>
+
+                <div class="account-danger-body">
+                    <p class="account-danger-warning">
+                        Ao excluir sua conta, <strong>todos os seus dados serão apagados permanentemente</strong>:
+                        análises de currículo, histórico de chat, simulações de entrevista e currículos salvos.
+                        Essa ação não pode ser revertida.
+                    </p>
+                    <button type="button" class="btn btn--danger" id="btn-abrir-modal-excluir">
+                        Excluir minha conta
+                    </button>
+                </div>
+            </section>
+
+        </div><!-- /.account-sections -->
+    </main>
+</div>
+
+<!-- ── Modal de confirmação de exclusão ───────────────────────── -->
+<div id="modal-excluir" class="account-modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+    <div class="account-modal">
+        <div class="account-modal__header">
+            <div class="account-modal__icon">
+                <i data-lucide="alert-triangle"></i>
+            </div>
+            <h3 id="modal-titulo" class="account-modal__title">Confirmar exclusão de conta</h3>
+        </div>
+
+        <p class="account-modal__desc">
+            Para confirmar, digite sua senha atual abaixo. Esta ação é
+            <strong>irreversível</strong> — todos os seus dados serão excluídos permanentemente.
+        </p>
+
+        <div class="account-field">
+            <label class="account-label" for="senha-excluir">Sua senha</label>
+            <div class="account-input-password-wrap">
+                <input
+                    id="senha-excluir"
+                    type="password"
+                    class="account-input"
+                    placeholder="Digite sua senha para confirmar"
+                    autocomplete="current-password"
+                />
+                <button type="button" class="account-toggle-password" data-target="senha-excluir" aria-label="Mostrar senha">
+                    <svg class="eye-icon eye-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg class="eye-icon eye-hide" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <p id="erro-excluir" class="account-form-error" hidden></p>
+
+        <div class="account-modal__actions">
+            <button type="button" class="btn btn--secondary" id="btn-cancelar-modal">Cancelar</button>
+            <button type="button" class="btn btn--danger" id="btn-confirmar-excluir">
+                Sim, excluir minha conta
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='home.js') }}"></script>
+<script src="{{ url_for('static', filename='conta.js') }}"></script>
+{% endblock %}

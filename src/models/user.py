@@ -22,6 +22,10 @@ class User(db.Model):
     reset_token            = db.Column(db.String(100), nullable=True)
     reset_token_expires_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
+    # Campos de perfil estendido (adicionados em 0004_user_perfil_extra)
+    telefone  = db.Column(db.String(20),  nullable=True)
+    profissao = db.Column(db.String(100), nullable=True)
+
     # Contador usado para distribuir automaticamente as cores das labels de
     # currículo em sequência round-robin (ver Curriculo.CORES_PERMITIDAS).
     # Sempre incrementa, nunca decresce — garante que a sequência de cores

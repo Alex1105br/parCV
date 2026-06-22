@@ -125,6 +125,7 @@ def create_app():
     from src.routes.analisar import bp as analisar_bp
     from src.routes.entrevista import bp as entrevista_bp
     from src.routes.curriculo import bp as curriculo_bp
+    from src.routes.conta import bp as conta_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(home_bp)
@@ -132,5 +133,6 @@ def create_app():
     app.register_blueprint(analisar_bp)
     app.register_blueprint(entrevista_bp)
     app.register_blueprint(curriculo_bp)
+    app.register_blueprint(conta_bp)
 
     return app

@@ -473,3 +473,40 @@ body {
         gap: var(--spacing-md);
     }
 }
+/* ── Configurações de conta: sidebar__user como link clicável ────── */
+.sidebar__user--link {
+    text-decoration: none;
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 8px 12px;
+    transition: background 0.15s, color 0.15s;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: #ffffff;
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+}
+
+.sidebar__user--link:hover {
+    background: rgba(99, 102, 241, 0.12);
+    color: #a5b4fc;
+}
+
+.sidebar__user--link .sidebar__user-settings {
+    margin-left: auto;
+    opacity: 0;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+    width: 14px;
+    height: 14px;
+}
+
+.sidebar__user--link:hover .sidebar__user-settings {
+    opacity: 1;
+}
+
+/* Oculta o ícone de settings quando sidebar colapsada */
+.sidebar--collapsed .sidebar__user-settings {
+    display: none;
+}

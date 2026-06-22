@@ -1,0 +1,378 @@
+/* =============================================================================
+   Página de Configurações da Conta (/conta)
+   — Reutiliza a sidebar/layout de base.css + home.css (mesmo padrão das
+     outras páginas internas). Este arquivo cuida apenas do conteúdo da
+     página: cards de seção, formulários, modal de exclusão e toast.
+   — Classes prefixadas com "account-" para não colidir com ".card",
+     ".btn" etc. já definidos em home.css/base.css.
+   ========================================================================= */
+
+/* Destaca o link de usuário na sidebar quando já se está em /conta,
+   no mesmo padrão visual de .sidebar__item--active (home.css). */
+.sidebar__user--active {
+    background: var(--color-primary-subtle);
+    border-radius: var(--radius-md);
+    color: var(--color-primary);
+}
+
+.sidebar__user--active .sidebar__user-settings {
+    color: var(--color-primary);
+    opacity: 1;
+}
+
+.account-sections {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+    max-width: 760px;
+}
+
+/* ── Cards de seção ───────────────────────────────────────────────── */
+
+.account-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+}
+
+.account-card--danger {
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.account-card__header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.account-card__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: var(--radius-md);
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+}
+
+.account-card__icon i {
+    width: 20px;
+    height: 20px;
+}
+
+.account-card__icon--danger {
+    background: var(--color-danger-bg);
+    color: var(--color-danger-text);
+}
+
+.account-card__title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.account-card__title--danger {
+    color: var(--color-danger-text);
+}
+
+.account-card__desc {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    margin-top: 2px;
+}
+
+/* ── Formulários ──────────────────────────────────────────────────── */
+
+.account-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.account-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    flex: 1;
+}
+
+.account-field-row {
+    display: flex;
+    gap: var(--spacing-lg);
+}
+
+.account-field-row .account-field {
+    flex: 1;
+}
+
+.account-label {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.account-optional {
+    font-weight: 400;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+}
+
+.account-input {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+    font-size: var(--font-size-base);
+    font-family: inherit;
+    padding: 10px 14px;
+    outline: none;
+    width: 100%;
+    transition: border-color var(--transition);
+}
+
+.account-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-primary-subtle);
+}
+
+.account-input::placeholder {
+    color: var(--color-text-muted);
+}
+
+.account-input--disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.account-field-hint {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+/* Campo de senha com botão de mostrar/ocultar */
+.account-input-password-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.account-input-password-wrap .account-input {
+    padding-right: 44px;
+}
+
+.account-toggle-password {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    transition: color var(--transition);
+}
+
+.account-toggle-password:hover {
+    color: var(--color-text);
+}
+
+/* ── Indicador de força de senha ──────────────────────────────────── */
+
+.account-password-strength {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.account-strength-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--color-border);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.account-strength-fill {
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    transition: width 0.3s, background 0.3s;
+}
+
+.account-strength-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    min-width: 64px;
+}
+
+/* ── Rodapé do formulário ─────────────────────────────────────────── */
+
+.account-form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    padding-top: var(--spacing-xs);
+}
+
+.account-form-error {
+    flex: 1;
+    font-size: var(--font-size-sm);
+    color: var(--color-danger-text);
+}
+
+/* ── Zona de perigo ───────────────────────────────────────────────── */
+
+.account-danger-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.account-danger-warning {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    line-height: 1.6;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--color-danger-bg);
+    border-left: 3px solid var(--color-danger);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.account-danger-warning strong {
+    color: var(--color-text);
+}
+
+/* ── Toast de feedback ────────────────────────────────────────────── */
+
+.toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 100;
+    padding: 12px 20px;
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.2s, transform 0.2s;
+    max-width: 360px;
+    box-shadow: var(--shadow-md);
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.toast--success {
+    background: var(--color-success-text);
+    color: var(--color-text-inverse);
+    border: 1px solid var(--color-success);
+}
+
+.toast--error {
+    background: var(--color-danger-bg);
+    color: var(--color-danger-text);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* ── Modal de confirmação de exclusão ─────────────────────────────── */
+
+.account-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-lg);
+    backdrop-filter: blur(4px);
+}
+
+.account-modal-overlay[hidden] {
+    display: none;
+}
+
+.account-modal {
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: var(--spacing-xl);
+    width: 100%;
+    max-width: 440px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    animation: account-modal-in 0.2s ease;
+}
+
+@keyframes account-modal-in {
+    from { opacity: 0; transform: scale(0.95) translateY(-8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.account-modal__header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.account-modal__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: var(--radius-md);
+    background: var(--color-danger-bg);
+    color: var(--color-danger-text);
+}
+
+.account-modal__icon i {
+    width: 22px;
+    height: 22px;
+}
+
+.account-modal__title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.account-modal__desc {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    line-height: 1.6;
+}
+
+.account-modal__desc strong {
+    color: var(--color-text);
+}
+
+.account-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    padding-top: var(--spacing-xs);
+}
+
+/* ── Responsivo ───────────────────────────────────────────────────── */
+
+@media (max-width: 680px) {
+    .account-field-row {
+        flex-direction: column;
+    }
+}

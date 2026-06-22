@@ -134,6 +134,14 @@ def _apply_column_migrations(db):
             ADD COLUMN IF NOT EXISTS proximo_indice_cor INTEGER NOT NULL DEFAULT 0
             """,
         ),
+        (
+            "telefone e profissao em users",
+            """
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS telefone VARCHAR(20),
+            ADD COLUMN IF NOT EXISTS profissao VARCHAR(100)
+            """,
+        ),
     ]
 
     with db.engine.connect() as conn:

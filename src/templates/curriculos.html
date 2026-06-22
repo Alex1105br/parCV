@@ -45,10 +45,11 @@
         </nav>
 
         <div class="sidebar__footer">
-            <span class="sidebar__user">
+            <a href="/conta" class="sidebar__user sidebar__user--link" title="Configurações da conta">
                 <i data-lucide="user"></i>
                 <span>{{ user_name }}</span>
-            </span>
+                <i data-lucide="settings" class="sidebar__user-settings"></i>
+            </a>
             <form method="post" action="{{ url_for('auth.logout') }}">
                 <button type="submit" class="sidebar__logout" aria-label="Sair">
                     <i data-lucide="log-out"></i>
