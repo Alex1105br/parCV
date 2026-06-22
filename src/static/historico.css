@@ -576,6 +576,33 @@
     color: var(--color-text-muted);
 }
 
+.detalhe__curriculo-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-primary);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    transition: all var(--transition);
+}
+
+.detalhe__curriculo-btn:hover {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.detalhe__curriculo-btn i {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
 /* Result sections reuse analisar.css classes */
 .detalhe__content h3 {
     margin-top: var(--spacing-xl);

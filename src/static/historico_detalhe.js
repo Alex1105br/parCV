@@ -44,6 +44,57 @@
         var map = { baixa: 'Baixa', media: 'Média', alta: 'Alta' };
         return map[nivel] || 'Média';
     }
+
+    // ── Modal PDF para visualizar currículo ──────────────────────────────────
+    function openPdfModal(id, label) {
+        var overlay = document.createElement('div');
+        overlay.className = 'pdf-modal-overlay';
+        overlay.innerHTML =
+            '<div class="pdf-modal">' +
+                '<div class="pdf-modal__header">' +
+                    '<h3 class="pdf-modal__title">' + escapeHtml(label) + '</h3>' +
+                    '<div style="display:flex; gap:8px; align-items:center;">' +
+                        '<button type="button" class="pdf-modal__download" title="Baixar PDF" style="background:none; border:none; cursor:pointer; color:#666; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.2s;">' +
+                            '<i data-lucide="download"></i>' +
+                        '</button>' +
+                        '<button type="button" class="pdf-modal__close" title="Fechar (Esc)">' +
+                            '<i data-lucide="x"></i>' +
+                        '</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="pdf-modal__body">' +
+                    '<iframe class="pdf-modal__iframe" src="/curriculos/pdf/' + id + '"></iframe>' +
+                '</div>' +
+            '</div>';
+
+        document.body.appendChild(overlay);
+        if (window.lucide) lucide.createIcons({ nodes: [overlay] });
+
+        function close() {
+            document.removeEventListener('keydown', onKeyDown);
+            overlay.remove();
+        }
+
+        function onKeyDown(e) {
+            if (e.key === 'Escape') close();
+        }
+
+        overlay.querySelector('.pdf-modal__close').addEventListener('click', close);
+        overlay.querySelector('.pdf-modal__download').addEventListener('click', function() {
+            window.location.href = '/curriculos/download/' + id;
+        });
+        
+        // Efeito hover no botão de download via JS
+        var btnDownload = overlay.querySelector('.pdf-modal__download');
+        btnDownload.onmouseover = function() { this.style.color = '#333'; };
+        btnDownload.onmouseout = function() { this.style.color = '#666'; };
+
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) close();
+        });
+        document.addEventListener('keydown', onKeyDown);
+    }
+
     function renderVeredito(veredito) {
         if (!veredito) return '';
         var nivel = veredito.nivel_aderencia || 'media';
@@ -135,6 +186,15 @@
                 '<span class="detalhe__score-num ' + scoreClass + '">' + data.score_total + '</span>' +
                 '<span class="detalhe__score-sub">de 100 pontos</span>' +
             '</div>' +
+            (data.curriculo
+                ? '<div class="detalhe__meta">' +
+                    '<p class="detalhe__meta-label">Currículo</p>' +
+                    '<button type="button" class="detalhe__curriculo-btn" id="detalhe-curriculo-view" data-id="' + escapeHtml(data.curriculo.id) + '" data-label="' + escapeHtml(data.curriculo.label) + '" title="Visualizar currículo">' +
+                        '<i data-lucide="eye"></i>' +
+                        '<span>' + escapeHtml(data.curriculo.label) + '</span>' +
+                    '</button>' +
+                  '</div>'
+                : '') +
             '<div class="detalhe__meta">' +
                 '<p class="detalhe__meta-label">Data</p>' +
                 '<p class="detalhe__meta-value">' + formatDate(data.criado_em) + '</p>' +
@@ -200,6 +260,7 @@
         if (window.lucide) lucide.createIcons({ nodes: [container] });
         setupCriterioAccordions(container);
         setupTituloRename(data.id || analiseId, data.titulo || 'Análise sem título');
+        setupCurriculoView();
     }
 
     // ===== Renomear análise (mesmo padrão usado em /chat e /historico) =====
@@ -251,6 +312,17 @@
                 else if (e.key === 'Escape') cancel();
             });
             input.addEventListener('blur', commit);
+        });
+    }
+
+    // ===== Visualizar currículo =====
+    function setupCurriculoView() {
+        var btn = document.getElementById('detalhe-curriculo-view');
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+            var id = btn.dataset.id;
+            var label = btn.dataset.label || 'este currículo';
+            openPdfModal(id, label);
         });
     }
 

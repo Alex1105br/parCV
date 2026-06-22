@@ -170,6 +170,16 @@ def get_analise(analise_id):
     analise = db.session.get(Analise, analise_id)
     if analise is None or analise.user_id != session["user_id"]:
         return jsonify({"error": "Análise não encontrada"}), 404
+    
+    # Preparar dados do currículo vinculado, se existir
+    curriculo_data = None
+    if analise.curriculo_id and analise.curriculo:
+        curriculo_data = {
+            "id": analise.curriculo.id,
+            "label": analise.curriculo.label,
+            "tem_arquivo_pdf": analise.curriculo.arquivo_pdf is not None,
+        }
+    
     return jsonify({
         "id": analise.id,
         "titulo": analise.titulo,
@@ -183,6 +193,7 @@ def get_analise(analise_id):
         "palavras_chave_faltando": analise.palavras_chave_faltando,
         "certificados_sugeridos": analise.certificados_sugeridos,
         "vaga": analise.vaga,
+        "curriculo": curriculo_data,
     })
 
 
