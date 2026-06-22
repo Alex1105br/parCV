@@ -3,6 +3,8 @@
 {% block title %}Relatório de Entrevista - parCV{% endblock %}
 
 {% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='historico.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='curriculos.css') }}">
 <style>
     :root {
         /* Fundos — alinhados ao tema dark do Dashboard (parCV) */
@@ -78,10 +80,25 @@
         gap: 12px;
     }
 
+    /* Layout ajustado para ter sidebar como no histórico */
+    .ev-layout {
+        display: flex;
+        align-items: flex-start;
+        padding: calc(var(--spacing-xl) + 12px);
+        gap: calc(var(--spacing-2xl) + 8px);
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
     .ev-main {
-        max-width: 1000px;
-        margin: 40px auto;
-        padding: 0 24px;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .ev-sidebar {
+        flex: 0 0 260px;
+        max-width: 260px;
+        min-width: 220px;
     }
 
     .ev-card {
@@ -105,9 +122,14 @@
     /* Redesenho Inteligente do Card de Score: Tamanho controlado e texto centralizado de forma absoluta */
     .ev-card--score {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: var(--spacing-xl);
-        background: rgba(255, 255, 255, 0.02);
+        gap: var(--spacing-sm);
+        padding: var(--spacing-lg);
+        background: var(--bg-card);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--spacing-lg);
     }
 
     .ev-score-ring {
@@ -144,10 +166,14 @@
         margin-top: 2px;
     }
 
+    .ev-score-meta {
+        text-align: center;
+    }
+
     .ev-score-meta__title {
-        font-size: 20px;
+        font-size: 16px;
         font-weight: 700;
-        margin-bottom: 6px;
+        margin-bottom: 4px;
     }
 
     .ev-score-meta__label {
@@ -392,6 +418,24 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .ev-loading-text { color: var(--text-muted); font-size: 15px; }
     .hidden { display: none !important; }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+        .ev-layout {
+            flex-direction: column;
+            padding: var(--spacing-lg);
+        }
+        .ev-sidebar {
+            width: 100%;
+            max-width: none;
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+        .ev-card--score, .detalhe__meta {
+            flex: 1;
+            margin-bottom: 0;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -418,79 +462,117 @@
     </div>
 </header>
 
-<main class="ev-main">
-    <div class="ev-card--center" id="card-loading">
-        <div class="ev-spinner"></div>
-        <p class="ev-loading-text">Carregando relatório...</p>
-    </div>
+<div class="ev-layout">
+    <aside class="ev-sidebar" id="sidebar-content">
+        <!-- Preenchido via JS -->
+    </aside>
 
-    <div class="hidden" id="relatorio-content">
+    <main class="ev-main">
+        <div class="ev-card--center" id="card-loading">
+            <div class="ev-spinner"></div>
+            <p class="ev-loading-text">Carregando relatório...</p>
+        </div>
 
-        <!-- Score Geral Redesenhado -->
-        <div class="ev-card ev-card--score" id="card-score">
-            <div class="ev-score-ring" id="score-ring">
-                <svg viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="42" fill="none" stroke="var(--color-border)" stroke-width="8"/>
-                    <circle cx="50" cy="50" r="42" fill="none" stroke="var(--color-primary)" stroke-width="8"
-                        stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="264"
-                        id="score-arc" style="transition: stroke-dashoffset 1s ease; transform: rotate(-90deg); transform-origin: 50% 50%;"/>
-                </svg>
-                <div class="ev-score-ring__value">
-                    <span id="score-numero">-</span>
-                    <span class="ev-score-ring__denom">/10</span>
+        <div class="hidden" id="relatorio-content">
+            <div class="ev-resumo">
+                <div class="ev-resumo__col ev-resumo__col--success">
+                    <h3 class="ev-resumo__title">
+                        <i data-lucide="check-circle"></i>
+                        Pontos Fortes
+                    </h3>
+                    <ul id="pontos-fortes" class="ev-resumo__list"></ul>
+                </div>
+                <div class="ev-resumo__col ev-resumo__col--warning">
+                    <h3 class="ev-resumo__title">
+                        <i data-lucide="alert-triangle"></i>
+                        Pontos a Melhorar
+                    </h3>
+                    <ul id="pontos-fracos" class="ev-resumo__list"></ul>
+                </div>
+                <div class="ev-resumo__col ev-resumo__col--primary">
+                    <h3 class="ev-resumo__title">
+                        <i data-lucide="lightbulb"></i>
+                        Recomendações
+                    </h3>
+                    <ul id="recomendacoes" class="ev-resumo__list"></ul>
                 </div>
             </div>
-            <div class="ev-score-meta">
-                <h2 class="ev-score-meta__title">Desempenho Geral</h2>
-                <p class="ev-score-meta__label" id="score-label">—</p>
-            </div>
-        </div>
 
-        <div class="ev-resumo">
-            <div class="ev-resumo__col ev-resumo__col--success">
-                <h3 class="ev-resumo__title">
-                    <i data-lucide="check-circle"></i>
-                    Pontos Fortes
+            <div class="ev-card ev-card--parecer">
+                <h3 class="ev-card__section-title">
+                    <i data-lucide="message-square"></i>
+                    Parecer Geral
                 </h3>
-                <ul id="pontos-fortes" class="ev-resumo__list"></ul>
+                <p id="parecer-final" class="ev-parecer-texto"></p>
             </div>
-            <div class="ev-resumo__col ev-resumo__col--warning">
-                <h3 class="ev-resumo__title">
-                    <i data-lucide="alert-triangle"></i>
-                    Pontos a Melhorar
+
+            <div class="ev-card">
+                <h3 class="ev-card__section-title">
+                    <i data-lucide="list"></i>
+                    Detalhes das Perguntas
                 </h3>
-                <ul id="pontos-fracos" class="ev-resumo__list"></ul>
-            </div>
-            <div class="ev-resumo__col ev-resumo__col--primary">
-                <h3 class="ev-resumo__title">
-                    <i data-lucide="lightbulb"></i>
-                    Recomendações
-                </h3>
-                <ul id="recomendacoes" class="ev-resumo__list"></ul>
+                <div id="perguntas-container" class="ev-acordeao"></div>
             </div>
         </div>
-
-        <div class="ev-card ev-card--parecer">
-            <h3 class="ev-card__section-title">
-                <i data-lucide="message-square"></i>
-                Parecer Geral
-            </h3>
-            <p id="parecer-final" class="ev-parecer-texto"></p>
-        </div>
-
-        <div class="ev-card">
-            <h3 class="ev-card__section-title">
-                <i data-lucide="list"></i>
-                Detalhes das Perguntas
-            </h3>
-            <div id="perguntas-container" class="ev-acordeao"></div>
-        </div>
-
-    </div>
-</main>
+    </main>
+</div>
 
 <script>
 let entrevistaId = '{{ entrevista_id }}';
+
+function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+// ── Modal PDF para visualizar currículo ──────────────────────────────────
+function openPdfModal(id, label) {
+    var overlay = document.createElement('div');
+    overlay.className = 'pdf-modal-overlay';
+    overlay.innerHTML =
+        '<div class="pdf-modal">' +
+            '<div class="pdf-modal__header">' +
+                '<h3 class="pdf-modal__title">' + escapeHtml(label) + '</h3>' +
+                '<div style="display:flex; gap:8px; align-items:center;">' +
+                    '<button type="button" class="pdf-modal__download" title="Baixar PDF" style="background:none; border:none; cursor:pointer; color:#666; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.2s;">' +
+                        '<i data-lucide="download"></i>' +
+                    '</button>' +
+                    '<button type="button" class="pdf-modal__close" title="Fechar (Esc)">' +
+                        '<i data-lucide="x"></i>' +
+                    '</button>' +
+                '</div>' +
+            '</div>' +
+            '<div class="pdf-modal__body">' +
+                '<iframe class="pdf-modal__iframe" src="/curriculos/pdf/' + id + '"></iframe>' +
+            '</div>' +
+        '</div>';
+
+    document.body.appendChild(overlay);
+    if (window.lucide) lucide.createIcons({ nodes: [overlay] });
+
+    function close() {
+        document.removeEventListener('keydown', onKeyDown);
+        overlay.remove();
+    }
+
+    function onKeyDown(e) {
+        if (e.key === 'Escape') close();
+    }
+
+    overlay.querySelector('.pdf-modal__close').addEventListener('click', close);
+    overlay.querySelector('.pdf-modal__download').addEventListener('click', function() {
+        window.location.href = '/curriculos/download/' + id;
+    });
+    
+    overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) close();
+    });
+    document.addEventListener('keydown', onKeyDown);
+}
 
 async function carregarRelatorio() {
     try {
@@ -506,8 +588,6 @@ async function carregarRelatorio() {
         }
 
         const score = relatorio.score_geral ?? 0;
-        document.getElementById('score-numero').textContent = score.toFixed(1);
-
         let cor, label;
         if (score >= 9.0)      { cor = '#22c55e'; label = 'Excelente'; }
         else if (score >= 7.0) { cor = '#3b82f6'; label = 'Bom'; }
@@ -515,25 +595,49 @@ async function carregarRelatorio() {
         else if (score >= 3.0) { cor = '#fb923c'; label = 'Ruim'; }
         else                   { cor = '#ef4444'; label = 'Péssimo'; }
 
-        document.getElementById('score-arc').style.stroke = cor;
-        document.getElementById('score-numero').style.color = cor;
-        document.getElementById('score-label').textContent = label;
-        document.getElementById('score-label').style.color = cor;
+        // Renderizar Sidebar
+        const sidebar = document.getElementById('sidebar-content');
+        sidebar.innerHTML = `
+            <div class="ev-card--score">
+                <div class="ev-score-ring">
+                    <svg viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="var(--color-border)" stroke-width="8"/>
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="${cor}" stroke-width="8"
+                            stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="${264 * (1 - score / 10)}"
+                            style="transition: stroke-dashoffset 1s ease; transform: rotate(-90deg); transform-origin: 50% 50%;"/>
+                    </svg>
+                    <div class="ev-score-ring__value">
+                        <span id="score-numero" style="color: ${cor}">${score.toFixed(1)}</span>
+                        <span class="ev-score-ring__denom">/10</span>
+                    </div>
+                </div>
+                <div class="ev-score-meta">
+                    <h2 class="ev-score-meta__title">Score Final</h2>
+                    <p class="ev-score-meta__label" style="color: ${cor}">${label}</p>
+                </div>
+            </div>
+            ${data.curriculo ? `
+            <div class="detalhe__meta">
+                <p class="detalhe__meta-label">Currículo</p>
+                <button type="button" class="detalhe__curriculo-btn" id="btn-view-cv" data-id="${data.curriculo.id}" data-label="${escapeHtml(data.curriculo.label)}">
+                    <i data-lucide="eye"></i>
+                    <span>${escapeHtml(data.curriculo.label)}</span>
+                </button>
+            </div>
+            ` : ''}
+            <div class="detalhe__meta">
+                <p class="detalhe__meta-label">Vaga</p>
+                <p class="detalhe__meta-value">${escapeHtml(data.vaga_descricao || 'Não informada')}</p>
+            </div>
+        `;
 
-        requestAnimationFrame(() => {
-            const offset = 264 * (1 - score / 10);
-            const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            const arc = document.getElementById('score-arc');
-            if (prefersReduced) {
-                // Aplica diretamente sem transição
-                arc.style.transition = 'none';
-                arc.style.strokeDashoffset = offset;
-            } else {
-                arc.style.strokeDashoffset = offset;
-            }
-        });
+        if (data.curriculo) {
+            document.getElementById('btn-view-cv').addEventListener('click', function() {
+                openPdfModal(this.dataset.id, this.dataset.label);
+            });
+        }
 
-        const toLi = arr => (arr || []).map(x => `<li>${x}</li>`).join('');
+        const toLi = arr => (arr || []).map(x => `<li>${escapeHtml(x)}</li>`).join('');
         document.getElementById('pontos-fortes').innerHTML = toLi(relatorio.pontos_fortes);
         document.getElementById('pontos-fracos').innerHTML = toLi(relatorio.pontos_fracos);
         document.getElementById('recomendacoes').innerHTML = toLi(relatorio.recomendacoes);
@@ -556,22 +660,22 @@ async function carregarRelatorio() {
                 <button class="ev-acordeao__header" aria-expanded="false">
                     <span class="ev-acordeao__num">Pergunta ${i + 1}</span>
                     <span class="ev-badge ev-badge--${temaKey}">${temaLabel}</span>
-                    <span class="ev-acordeao__preview">${p.pergunta_principal || ''}</span>
+                    <span class="ev-acordeao__preview">${escapeHtml(p.pergunta_principal || '')}</span>
                     <span class="ev-badge ev-badge--${sLabel}">${s}/10</span>
                     <i data-lucide="chevron-down" class="ev-acordeao__chevron"></i>
                 </button>
                 <div class="ev-acordeao__body hidden">
                     <div class="ev-detalhe-bloco">
                         <h4>Pergunta</h4>
-                        <p>${p.pergunta_principal || ''}</p>
+                        <p>${escapeHtml(p.pergunta_principal || '')}</p>
                     </div>
                     <div class="ev-detalhe-bloco">
                         <h4>Sua resposta</h4>
-                        <p>${p.resposta_usuario || '<em>Não respondida</em>'}</p>
+                        <p>${escapeHtml(p.resposta_usuario || '') || '<em>Não respondida</em>'}</p>
                     </div>
                     <div class="ev-detalhe-bloco ev-detalhe-bloco--feedback ev-detalhe-bloco--${sLabel}">
                         <h4>Feedback</h4>
-                        <p>${p.avaliacao_resposta?.feedback || 'Sem feedback'}</p>
+                        <p>${escapeHtml(p.avaliacao_resposta?.feedback || 'Sem feedback')}</p>
                     </div>
                 </div>
             `;

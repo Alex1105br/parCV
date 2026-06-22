@@ -241,14 +241,25 @@ def get_entrevista(entrevista_id):
     if not entrevista:
         return jsonify({"error": "Entrevista não encontrada"}), 404
     
+    # Preparar dados do currículo vinculado, se existir
+    curriculo_data = None
+    if entrevista.curriculo_id and entrevista.curriculo:
+        curriculo_data = {
+            "id": entrevista.curriculo.id,
+            "label": entrevista.curriculo.label,
+            "tem_arquivo_pdf": entrevista.curriculo.arquivo_pdf is not None,
+        }
+    
     return jsonify({
         "id": entrevista.id,
         "titulo": entrevista.titulo,
         "status": entrevista.status,
+        "vaga_descricao": entrevista.vaga_descricao,
         "numero_perguntas": entrevista.numero_perguntas,
         "plano_entrevista": entrevista.plano_entrevista,
         "criado_em": entrevista.criado_em.isoformat(),
         "relatorio_final": entrevista.relatorio_final,
+        "curriculo": curriculo_data,
         "perguntas": [
             {
                 "numero_sequencial": p.numero_sequencial,
