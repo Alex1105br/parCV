@@ -120,6 +120,13 @@ def _apply_column_migrations(db):
             REFERENCES curriculo(id) ON DELETE SET NULL
             """,
         ),
+        (
+            "cor em curriculo",
+            """
+            ALTER TABLE curriculo
+            ADD COLUMN IF NOT EXISTS cor VARCHAR(7) NOT NULL DEFAULT '#6366f1'
+            """,
+        ),
     ]
 
     with db.engine.connect() as conn:

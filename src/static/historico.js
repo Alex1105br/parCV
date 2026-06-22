@@ -29,6 +29,30 @@
             .replace(/"/g, '&quot;');
     }
 
+    var COR_PADRAO_CURRICULO = '#6366f1';
+
+    function hexToRgba(hex, alpha) {
+        var h = (hex || COR_PADRAO_CURRICULO).replace('#', '');
+        var r = parseInt(h.substring(0, 2), 16);
+        var g = parseInt(h.substring(2, 4), 16);
+        var b = parseInt(h.substring(4, 6), 16);
+        return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+    }
+
+    // Monta a badge de currículo (label + cor escolhida pelo usuário em
+    // /curriculos) usada nos cards de Análises e Entrevistas. Mantém o
+    // roxo padrão da marca quando nenhuma cor foi definida.
+    function curriculoBadgeHtml(label, cor) {
+        if (!label) return '';
+        var corFinal = cor || COR_PADRAO_CURRICULO;
+        var style = '--cor-label:' + corFinal +
+            ';--cor-label-bg:' + hexToRgba(corFinal, 0.1) +
+            ';--cor-label-border:' + hexToRgba(corFinal, 0.25);
+        return '<span class="historico-curriculo-badge" style="' + escapeHtml(style) + '">' +
+            '<i data-lucide="file-text"></i>' + escapeHtml(label) +
+            '</span>';
+    }
+
     var STATUS_LABELS = {
         em_planejamento: 'Em planejamento',
         em_andamento: 'Em andamento',
@@ -69,9 +93,7 @@
                 var vagaHtml = a.vaga
                     ? '<span class="analise-card__vaga">' + escapeHtml(a.vaga.slice(0, 80)) + (a.vaga.length > 80 ? '…' : '') + '</span>'
                     : '<span class="analise-card__vaga analise-card__vaga--empty">Sem descrição de vaga</span>';
-                var curriculoHtml = a.curriculo_label
-                    ? '<span class="historico-curriculo-badge"><i data-lucide="file-text"></i>' + escapeHtml(a.curriculo_label) + '</span>'
-                    : '';
+                var curriculoHtml = curriculoBadgeHtml(a.curriculo_label, a.curriculo_cor);
 
                 listHtml +=
                     '<a class="analise-card" href="/historico/' + escapeHtml(a.id) + '" data-aid="' + escapeHtml(a.id) + '">' +
@@ -271,9 +293,7 @@
                 var vagaHtml = e.vaga_descricao
                     ? '<span class="analise-card__vaga">' + escapeHtml(e.vaga_descricao.slice(0, 80)) + (e.vaga_descricao.length > 80 ? '…' : '') + '</span>'
                     : '<span class="analise-card__vaga analise-card__vaga--empty">Sem descrição de vaga</span>';
-                var curriculoHtml = e.curriculo_label
-                    ? '<span class="historico-curriculo-badge"><i data-lucide="file-text"></i>' + escapeHtml(e.curriculo_label) + '</span>'
-                    : '';
+                var curriculoHtml = curriculoBadgeHtml(e.curriculo_label, e.curriculo_cor);
 
                 var indicadorHtml;
                 if (e.status === 'concluida' && e.score_geral != null) {

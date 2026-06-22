@@ -204,6 +204,7 @@ def list_entrevistas():
                 "criado_em": e.criado_em.isoformat(),
                 "score_geral": (e.relatorio_final or {}).get("score_geral"),
                 "curriculo_label": e.curriculo.label if e.curriculo else None,
+                "curriculo_cor":   e.curriculo.cor if e.curriculo else None,
                 "curriculo_id":    e.curriculo_id,
             }
             for e in pagination.items
@@ -247,6 +248,7 @@ def get_entrevista(entrevista_id):
         curriculo_data = {
             "id": entrevista.curriculo.id,
             "label": entrevista.curriculo.label,
+            "cor": entrevista.curriculo.cor,
             "tem_arquivo_pdf": entrevista.curriculo.arquivo_pdf is not None,
         }
     

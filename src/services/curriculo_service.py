@@ -187,3 +187,26 @@ def renomear_label(
     label_final = _label_unica(user_id, novo_label, excluir_id=curriculo.id)
     curriculo.label = label_final
     return True, None
+
+
+# ---------------------------------------------------------------------------
+# Edição de cor
+# ---------------------------------------------------------------------------
+
+def alterar_cor(curriculo: Curriculo, nova_cor: str) -> tuple[bool, str | None]:
+    """Altera a cor da label de um currículo.
+
+    `nova_cor` deve ser exatamente um dos valores em
+    `Curriculo.CORES_PERMITIDAS` (paleta fixa de 30 cores) — qualquer outro
+    valor é rejeitado para impedir cores arbitrárias/inválidas no banco.
+
+    Retorna (True, None) em caso de sucesso ou (False, mensagem_de_erro).
+    O commit fica a cargo do chamador.
+    """
+    nova_cor = (nova_cor or "").strip().lower()
+    permitidas = {c.lower() for c in Curriculo.CORES_PERMITIDAS}
+    if nova_cor not in permitidas:
+        return False, "Cor inválida"
+
+    curriculo.cor = nova_cor
+    return True, None

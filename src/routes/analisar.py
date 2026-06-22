@@ -135,6 +135,7 @@ def list_analises():
                 "criado_em": a.criado_em.isoformat(),
                 "vaga": a.vaga,
                 "curriculo_label": a.curriculo.label if a.curriculo else None,
+                "curriculo_cor":   a.curriculo.cor if a.curriculo else None,
                 "curriculo_id":    a.curriculo_id,
             }
             for a in pagination.items
@@ -177,6 +178,7 @@ def get_analise(analise_id):
         curriculo_data = {
             "id": analise.curriculo.id,
             "label": analise.curriculo.label,
+            "cor": analise.curriculo.cor,
             "tem_arquivo_pdf": analise.curriculo.arquivo_pdf is not None,
         }
     

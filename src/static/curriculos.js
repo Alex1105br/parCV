@@ -3,6 +3,42 @@
 
     var container = document.getElementById('curriculos-container');
 
+    // ── Paleta de cores ──────────────────────────────────────────────────
+    // Carregada do backend (fonte única de verdade) para garantir que o
+    // front-end nunca ofereça uma cor que o servidor não aceitaria.
+    var CORES = [];
+    var COR_PADRAO = '#6366f1';
+
+    async function carregarCores() {
+        try {
+            var resp = await fetch('/curriculos/cores');
+            var data = await resp.json();
+            if (resp.ok && Array.isArray(data.cores) && data.cores.length) {
+                CORES = data.cores;
+                COR_PADRAO = data.cor_padrao || CORES[0];
+            }
+        } catch (err) {
+            // Mantém fallback vazio — o popover simplesmente não abrirá
+            // até a próxima tentativa de carregamento da lista.
+        }
+    }
+
+    function hexToRgba(hex, alpha) {
+        var h = hex.replace('#', '');
+        var r = parseInt(h.substring(0, 2), 16);
+        var g = parseInt(h.substring(2, 4), 16);
+        var b = parseInt(h.substring(4, 6), 16);
+        return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+    }
+
+    // Aplica a cor escolhida nas variáveis CSS do badge da label de um card
+    function aplicarCorLabel(labelEl, cor) {
+        cor = cor || COR_PADRAO;
+        labelEl.style.setProperty('--cor-label', cor);
+        labelEl.style.setProperty('--cor-label-bg', hexToRgba(cor, 0.15));
+        labelEl.style.setProperty('--cor-label-border', hexToRgba(cor, 0.3));
+    }
+
     // ── Helpers ─────────────────────────────────────────────────────────
     function esc(str) {
         return String(str)
@@ -35,11 +71,13 @@
         var html = '<ul class="curriculos-list">';
         curriculos.forEach(function (c) {
             var nomeArquivo = c.arquivo_nome || (c.label + '.pdf');
+            var cor = c.cor || COR_PADRAO;
             html +=
                 '<li class="curriculo-card" data-id="' + esc(c.id) + '">' +
                     '<div class="curriculo-card__icon"><i data-lucide="file-text"></i></div>' +
                     '<div class="curriculo-card__body">' +
                         '<div class="curriculo-card__top">' +
+                            '<button type="button" class="curriculo-color-btn" data-action="cor" data-id="' + esc(c.id) + '" data-cor="' + esc(cor) + '" style="--cor-label:' + esc(cor) + '" title="Alterar cor da label" aria-label="Alterar cor da label"></button>' +
                             '<span class="curriculo-label" data-id="' + esc(c.id) + '" title="Clique duas vezes para editar">' +
                                 esc(c.label) +
                             '</span>' +
@@ -63,6 +101,13 @@
         html += '</ul>';
         container.innerHTML = html;
         if (window.lucide) lucide.createIcons({ nodes: [container] });
+
+        // Aplica a cor salva de cada label (badge)
+        container.querySelectorAll('.curriculo-label').forEach(function (labelEl) {
+            var card = labelEl.closest('.curriculo-card');
+            var colorBtn = card ? card.querySelector('.curriculo-color-btn') : null;
+            aplicarCorLabel(labelEl, colorBtn ? colorBtn.dataset.cor : COR_PADRAO);
+        });
 
         // Duplo clique na label → edição inline
         container.querySelectorAll('.curriculo-label').forEach(function (labelEl) {
@@ -135,6 +180,106 @@
         }
     }
 
+    // ── Popover de seleção de cor ────────────────────────────────────────
+    var popoverAtual = null;
+
+    function closeColorPopover() {
+        if (popoverAtual) {
+            popoverAtual.remove();
+            popoverAtual = null;
+            document.removeEventListener('click', onDocClickClosePopover, true);
+            document.removeEventListener('keydown', onEscClosePopover);
+        }
+    }
+
+    function onDocClickClosePopover(e) {
+        if (popoverAtual && !popoverAtual.contains(e.target) && e.target.dataset.action !== 'cor') {
+            closeColorPopover();
+        }
+    }
+
+    function onEscClosePopover(e) {
+        if (e.key === 'Escape') closeColorPopover();
+    }
+
+    function openColorPopover(btn) {
+        closeColorPopover();
+        if (!CORES.length) return;
+
+        var id = btn.dataset.id;
+        var corAtual = btn.dataset.cor || COR_PADRAO;
+
+        var pop = document.createElement('div');
+        pop.className = 'curriculo-color-popover';
+        pop.innerHTML = CORES.map(function (cor) {
+            var ativa = cor.toLowerCase() === corAtual.toLowerCase();
+            return '<button type="button" class="curriculo-color-swatch' +
+                (ativa ? ' curriculo-color-swatch--active' : '') +
+                '" style="background:' + esc(cor) + '" data-cor="' + esc(cor) + '" ' +
+                'title="' + esc(cor) + '" aria-label="Usar cor ' + esc(cor) + '"></button>';
+        }).join('');
+
+        document.body.appendChild(pop);
+        popoverAtual = pop;
+
+        // Posiciona o popover abaixo do botão (ajustado para a viewport)
+        var rect = btn.getBoundingClientRect();
+        var popRect = pop.getBoundingClientRect();
+        var top = window.scrollY + rect.bottom + 6;
+        var left = window.scrollX + rect.left;
+        if (left + popRect.width > window.innerWidth - 8) {
+            left = window.innerWidth - popRect.width - 8;
+        }
+        pop.style.position = 'absolute';
+        pop.style.top = top + 'px';
+        pop.style.left = left + 'px';
+
+        pop.querySelectorAll('.curriculo-color-swatch').forEach(function (sw) {
+            sw.addEventListener('click', function () {
+                var novaCor = sw.dataset.cor;
+                closeColorPopover();
+                if (novaCor.toLowerCase() === corAtual.toLowerCase()) return;
+                saveCor(id, novaCor, corAtual);
+            });
+        });
+
+        setTimeout(function () {
+            document.addEventListener('click', onDocClickClosePopover, true);
+            document.addEventListener('keydown', onEscClosePopover);
+        }, 0);
+    }
+
+    async function saveCor(id, novaCor, corAnterior) {
+        var card = container.querySelector('.curriculo-card[data-id="' + id + '"]');
+        var colorBtn = card ? card.querySelector('.curriculo-color-btn') : null;
+        var labelEl = card ? card.querySelector('.curriculo-label') : null;
+
+        // Atualização otimista — aplica antes de confirmar com o servidor
+        if (colorBtn) {
+            colorBtn.dataset.cor = novaCor;
+            colorBtn.style.setProperty('--cor-label', novaCor);
+        }
+        if (labelEl) aplicarCorLabel(labelEl, novaCor);
+
+        try {
+            var resp = await fetch('/curriculos/' + id + '/cor', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cor: novaCor }),
+            });
+            var data = await resp.json();
+            if (!resp.ok) throw new Error(data.error || 'Erro ao salvar cor');
+        } catch (err) {
+            // Reverte em caso de falha
+            if (colorBtn) {
+                colorBtn.dataset.cor = corAnterior;
+                colorBtn.style.setProperty('--cor-label', corAnterior);
+            }
+            if (labelEl) aplicarCorLabel(labelEl, corAnterior);
+            window.alert('Não foi possível salvar a cor: ' + err.message);
+        }
+    }
+
     // ── Modal PDF (Task 4) ──────────────────────────────────────────────
     function openPdfModal(id, label) {
         var overlay = document.createElement('div');
@@ -194,6 +339,11 @@
         var id     = btn.dataset.id;
         var label  = btn.dataset.label || 'este currículo';
 
+        if (action === 'cor') {
+            openColorPopover(btn);
+            return;
+        }
+
         if (action === 'visualizar') {
             openPdfModal(id, label);
             return;
@@ -228,8 +378,10 @@
     // ── Carga inicial ───────────────────────────────────────────────────
     async function load() {
         try {
+            var coresPromise = carregarCores();
             var resp = await fetch('/curriculos/lista');
             var data = await resp.json();
+            await coresPromise;
             if (!resp.ok) throw new Error(data.error || 'Erro');
             renderList(data.curriculos);
         } catch (err) {

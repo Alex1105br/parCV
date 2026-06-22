@@ -21,15 +21,59 @@ class Curriculo(db.Model):
     `texto` armazena o texto extraído (sem o binário original) — conteúdo
     suficiente para reuso em análises/entrevistas futuras.
 
+    `cor` é a cor da label/tag escolhida pelo usuário, em hexadecimal
+    (ex: '#6366f1'). Deve ser um dos valores da paleta fixa definida em
+    `CORES_PERMITIDAS`. O padrão é sempre o roxo da marca (COR_PADRAO).
+
     `curriculo_id` em Analise e Entrevista referencia este model (nullable
     para registros criados antes desta feature existir).
     """
     __tablename__ = "curriculo"
 
+    # ── Paleta de cores disponível para a label ────────────────────────────
+    # 30 cores fixas que o usuário pode escolher para identificar visualmente
+    # cada currículo. A primeira (índice 0) é o roxo padrão da marca, usado
+    # automaticamente em todo novo currículo até que o usuário altere.
+    COR_PADRAO = "#6366f1"
+    CORES_PERMITIDAS = [
+        "#6366f1",  # roxo / índigo (padrão)
+        "#8b5cf6",  # violeta
+        "#a855f7",  # púrpura
+        "#c026d3",  # fúcsia
+        "#d946ef",  # magenta
+        "#ec4899",  # rosa
+        "#f43f5e",  # rosa avermelhado
+        "#ef4444",  # vermelho
+        "#dc2626",  # vermelho escuro
+        "#f97316",  # laranja
+        "#ea580c",  # laranja escuro
+        "#f59e0b",  # âmbar
+        "#a16207",  # âmbar escuro
+        "#eab308",  # amarelo
+        "#84cc16",  # lima
+        "#4d7c0f",  # verde-oliva
+        "#22c55e",  # verde
+        "#15803d",  # verde escuro
+        "#10b981",  # esmeralda
+        "#14b8a6",  # verde-azulado
+        "#0f766e",  # verde-azulado escuro
+        "#06b6d4",  # ciano
+        "#0ea5e9",  # azul-claro
+        "#3b82f6",  # azul
+        "#1d4ed8",  # azul escuro
+        "#64748b",  # ardósia
+        "#78716c",  # pedra
+        "#374151",  # cinza-chumbo
+        "#7e22ce",  # púrpura escuro
+        "#be185d",  # rosa escuro
+    ]
+
     id            = db.Column(db.String(36),  primary_key=True,
                               default=lambda: str(uuid.uuid4()))
     user_id       = db.Column(db.String(36),  db.ForeignKey("users.id"), nullable=False)
     label         = db.Column(db.String(80),  nullable=False)
+    cor           = db.Column(db.String(7),   nullable=False, default=COR_PADRAO,
+                              server_default=COR_PADRAO)
     hash_conteudo = db.Column(db.String(64),  nullable=False)   # SHA-256 hex
     texto         = db.Column(db.Text,        nullable=False)
     criado_em     = db.Column(db.DateTime(timezone=True), nullable=False,

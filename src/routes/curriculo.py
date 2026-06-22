@@ -4,7 +4,7 @@ import io
 from src.logging_config import logger
 from src.models.curriculo import Curriculo
 from src.models.db import db
-from src.services.curriculo_service import renomear_label
+from src.services.curriculo_service import renomear_label, alterar_cor
 from src.utils import login_required, sanitize_text
 
 bp = Blueprint("curriculo", __name__, url_prefix="/curriculos")
@@ -15,6 +15,17 @@ bp = Blueprint("curriculo", __name__, url_prefix="/curriculos")
 def curriculos_page():
     """Página HTML de gestão de currículos (dados carregados via JS)."""
     return render_template("curriculos.html")
+
+
+@bp.route("/cores", methods=["GET"])
+@login_required
+def listar_cores():
+    """Devolve a paleta fixa de cores disponíveis para a label, e qual
+    delas é o padrão (usado em todo novo currículo)."""
+    return jsonify({
+        "cores": Curriculo.CORES_PERMITIDAS,
+        "cor_padrao": Curriculo.COR_PADRAO,
+    })
 
 
 @bp.route("/", methods=["GET"])
@@ -32,6 +43,7 @@ def listar():
             {
                 "id":        c.id,
                 "label":     c.label,
+                "cor":       c.cor,
                 "criado_em": c.criado_em.isoformat(),
                 "preview":   c.texto[:200].replace("\n", " "),
             }
@@ -59,6 +71,7 @@ def listar_api():
             {
                 "id":              c.id,
                 "label":           c.label,
+                "cor":             c.cor,
                 "criado_em":       c.criado_em.isoformat(),
                 "arquivo_nome":    c.arquivo_nome,
                 "tem_arquivo_pdf": c.arquivo_pdf is not None,
@@ -78,6 +91,7 @@ def get_curriculo(curriculo_id):
     return jsonify({
         "id":        c.id,
         "label":     c.label,
+        "cor":       c.cor,
         "texto":     c.texto,
         "criado_em": c.criado_em.isoformat(),
     })
@@ -108,6 +122,37 @@ def editar_label(curriculo_id):
         return jsonify({"error": "Erro ao salvar"}), 500
 
     return jsonify({"id": c.id, "label": c.label})
+
+
+@bp.route("/<string:curriculo_id>/cor", methods=["PATCH"])
+@login_required
+def editar_cor(curriculo_id):
+    """Altera a cor da label de um currículo.
+
+    A cor deve ser exatamente uma das opções da paleta fixa devolvida por
+    GET /curriculos/cores — qualquer outro valor é rejeitado.
+    """
+    c = db.session.get(Curriculo, curriculo_id)
+    if not c or c.user_id != session["user_id"]:
+        return jsonify({"error": "Currículo não encontrado"}), 404
+
+    data = request.get_json(silent=True) or {}
+    nova_cor = (data.get("cor") or "").strip()
+    if not nova_cor:
+        return jsonify({"error": "Cor não informada"}), 400
+
+    ok, erro = alterar_cor(c, nova_cor)
+    if not ok:
+        return jsonify({"error": erro}), 400
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.error("db_error", extra={"op": "editar_cor_curriculo", "erro": str(e)})
+        return jsonify({"error": "Erro ao salvar"}), 500
+
+    return jsonify({"id": c.id, "cor": c.cor})
 
 
 @bp.route("/<string:curriculo_id>", methods=["DELETE"])

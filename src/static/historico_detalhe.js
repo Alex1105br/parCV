@@ -189,7 +189,7 @@
             (data.curriculo
                 ? '<div class="detalhe__meta">' +
                     '<p class="detalhe__meta-label">Currículo</p>' +
-                    '<button type="button" class="detalhe__curriculo-btn" id="detalhe-curriculo-view" data-id="' + escapeHtml(data.curriculo.id) + '" data-label="' + escapeHtml(data.curriculo.label) + '" title="Visualizar currículo">' +
+                    '<button type="button" class="detalhe__curriculo-btn" id="detalhe-curriculo-view" data-id="' + escapeHtml(data.curriculo.id) + '" data-label="' + escapeHtml(data.curriculo.label) + '" style="--cor-label:' + escapeHtml(data.curriculo.cor || '#6366f1') + '" title="Visualizar currículo">' +
                         '<i data-lucide="eye"></i>' +
                         '<span>' + escapeHtml(data.curriculo.label) + '</span>' +
                     '</button>' +
