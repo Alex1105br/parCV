@@ -9,6 +9,7 @@ from src.logging_config import logger
 from src.models.analise import Analise
 from src.models.db import db
 from src.models.otimizacao import Otimizacao
+from src.services.curriculo_service import obter_ou_criar_curriculo
 from src.services.model import call_model, gerar_titulo_analise
 from src.services.parser import extrair_json, extrair_texto_curriculo
 from src.services.prompts import build_prompt_ats, build_prompt_otimizar
@@ -43,6 +44,14 @@ def analisar():
         return jsonify({"error": "Arquivo muito grande. Limite: 5 MB"}), 413
 
     filename = secure_filename(arquivo.filename)
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+
+    # Preserva o binário exato enviado quando já é PDF (Task 1) — sem
+    # conversão/reprocessamento. Lido antes de salvar/extrair texto para
+    # garantir que é exatamente o que o usuário enviou.
+    arquivo_pdf_bytes = arquivo.read() if ext == "pdf" else None
+    arquivo.seek(0)
+
     caminho = os.path.join(UPLOAD_FOLDER, filename)
     arquivo.save(caminho)
     texto, erro = carregar_arquivo(caminho)
@@ -67,6 +76,16 @@ def analisar():
     result["titulo"] = titulo
 
     try:
+        # Salva/reutiliza currículo centralizado (dedup por hash de conteúdo)
+        curriculo = obter_ou_criar_curriculo(
+            user_id=session["user_id"],
+            texto=texto,
+            finalidade=vaga or None,
+            arquivo_pdf=arquivo_pdf_bytes,
+            arquivo_nome=filename if arquivo_pdf_bytes else None,
+            arquivo_mimetype="application/pdf" if arquivo_pdf_bytes else None,
+        )
+
         analise = Analise(
             titulo=titulo,
             score_total=result.get("score_total", 0),
@@ -80,6 +99,7 @@ def analisar():
             texto_original=texto,
             vaga=vaga or None,
             user_id=session["user_id"],
+            curriculo_id=curriculo.id if curriculo else None,
         )
         db.session.add(analise)
         db.session.commit()
@@ -114,6 +134,8 @@ def list_analises():
                 "score_total": a.score_total,
                 "criado_em": a.criado_em.isoformat(),
                 "vaga": a.vaga,
+                "curriculo_label": a.curriculo.label if a.curriculo else None,
+                "curriculo_id":    a.curriculo_id,
             }
             for a in pagination.items
         ],
@@ -199,20 +221,6 @@ def deletar_analise(analise_id):
         logger.error("db_error", extra={"op": "deletar_analise", "erro": str(e)})
         return jsonify({"error": "Erro ao apagar análise"}), 500
     return jsonify({"ok": True})
-
-
-@bp.route("/analises", methods=["DELETE"])
-@login_required
-def deletar_todas_analises():
-    """Apaga definitivamente todas as análises do usuário logado."""
-    try:
-        count = Analise.query.filter_by(user_id=session["user_id"]).delete()
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        logger.error("db_error", extra={"op": "deletar_todas_analises", "erro": str(e)})
-        return jsonify({"error": "Erro ao apagar análises"}), 500
-    return jsonify({"ok": True, "deletadas": count})
 
 
 @bp.route("/otimizar", methods=["POST"])

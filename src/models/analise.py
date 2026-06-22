@@ -34,6 +34,8 @@ class Analise(db.Model):
     texto_original         = db.Column(db.Text, nullable=False)
     vaga                   = db.Column(db.Text, nullable=True)
     user_id                = db.Column(db.String(36), db.ForeignKey("users.id"), nullable=True)
+    curriculo_id           = db.Column(db.String(36), db.ForeignKey("curriculo.id"), nullable=True)
 
     user        = db.relationship("User", back_populates="analises")
+    curriculo   = db.relationship("Curriculo", back_populates="analises")
     otimizacoes = db.relationship("Otimizacao", back_populates="analise", lazy="dynamic")

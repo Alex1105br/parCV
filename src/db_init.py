@@ -9,6 +9,7 @@ def init_db(app):
     import src.models.otimizacao   # noqa
     import src.models.chat_session # noqa
     import src.models.entrevista   # noqa
+    import src.models.curriculo    # noqa
 
     with app.app_context():
         db.create_all()
@@ -66,6 +67,57 @@ def _apply_column_migrations(db):
             """
             ALTER TABLE entrevista
             ADD COLUMN IF NOT EXISTS titulo VARCHAR(100) NOT NULL DEFAULT ''
+            """,
+        ),
+        (
+            "tabela curriculo",
+            """
+            CREATE TABLE IF NOT EXISTS curriculo (
+                id            VARCHAR(36)  PRIMARY KEY,
+                user_id       VARCHAR(36)  NOT NULL REFERENCES users(id),
+                label         VARCHAR(80)  NOT NULL,
+                hash_conteudo VARCHAR(64)  NOT NULL,
+                texto         TEXT         NOT NULL,
+                criado_em     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+            )
+            """,
+        ),
+        (
+            "indice curriculo user_hash",
+            """
+            CREATE INDEX IF NOT EXISTS ix_curriculo_user_hash
+            ON curriculo (user_id, hash_conteudo)
+            """,
+        ),
+        (
+            "unique curriculo user_label",
+            """
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint
+                    WHERE conname = 'uq_curriculo_user_label'
+                ) THEN
+                    ALTER TABLE curriculo
+                    ADD CONSTRAINT uq_curriculo_user_label UNIQUE (user_id, label);
+                END IF;
+            END $$
+            """,
+        ),
+        (
+            "curriculo_id em analise",
+            """
+            ALTER TABLE analise
+            ADD COLUMN IF NOT EXISTS curriculo_id VARCHAR(36)
+            REFERENCES curriculo(id) ON DELETE SET NULL
+            """,
+        ),
+        (
+            "curriculo_id em entrevista",
+            """
+            ALTER TABLE entrevista
+            ADD COLUMN IF NOT EXISTS curriculo_id VARCHAR(36)
+            REFERENCES curriculo(id) ON DELETE SET NULL
             """,
         ),
     ]

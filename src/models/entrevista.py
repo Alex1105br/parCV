@@ -26,6 +26,7 @@ class Entrevista(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = db.Column(db.String(36), db.ForeignKey("users.id"), nullable=False)
     titulo = db.Column(db.String(100), nullable=False, default="")
+    curriculo_id = db.Column(db.String(36), db.ForeignKey("curriculo.id"), nullable=True)
 
     curriculo_arquivo = db.Column(db.String(255), nullable=False)
     vaga_descricao = db.Column(db.Text, nullable=False)
@@ -42,6 +43,7 @@ class Entrevista(db.Model):
     relatorio_final = db.Column(db.JSON, nullable=True)
 
     user = db.relationship("User", back_populates="entrevistas")
+    curriculo = db.relationship("Curriculo", back_populates="entrevistas")
     perguntas = db.relationship("PerguntaEntrevista", back_populates="entrevista",
                                 cascade="all, delete-orphan")
 

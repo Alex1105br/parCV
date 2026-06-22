@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Currículos - parCV{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='curriculos.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="layout">
+    <aside class="sidebar" id="sidebar" aria-label="Menu de navegação">
+        <div class="sidebar__brand">
+            <button class="sidebar__toggle" id="sidebar-toggle" aria-label="Contrair menu" aria-expanded="true">
+                <i data-lucide="panel-left-close"></i>
+            </button>
+            <span class="sidebar__brand-text">parCV</span>
+        </div>
+
+        <nav class="sidebar__nav">
+            <a href="/" class="sidebar__item">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/analisar" class="sidebar__item">
+                <i data-lucide="scan-search"></i>
+                <span>Analisar currículo</span>
+            </a>
+            <a href="/chat" class="sidebar__item">
+                <i data-lucide="message-square"></i>
+                <span>Chat com IA</span>
+            </a>
+            <a href="/entrevista" class="sidebar__item">
+                <i data-lucide="user-check"></i>
+                <span>Simulação de entrevista</span>
+            </a>
+            <a href="/curriculos" class="sidebar__item sidebar__item--active" aria-current="page">
+                <i data-lucide="file-text"></i>
+                <span>Currículos</span>
+            </a>
+            <a href="/historico" class="sidebar__item">
+                <i data-lucide="history"></i>
+                <span>Histórico</span>
+            </a>
+        </nav>
+
+        <div class="sidebar__footer">
+            <span class="sidebar__user">
+                <i data-lucide="user"></i>
+                <span>{{ user_name }}</span>
+            </span>
+            <form method="post" action="{{ url_for('auth.logout') }}">
+                <button type="submit" class="sidebar__logout" aria-label="Sair">
+                    <i data-lucide="log-out"></i>
+                    <span>Sair</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="home-header">
+            <h1 class="home-header__title">Currículos</h1>
+            <p class="home-header__subtitle">
+                Seus currículos salvos automaticamente a cada análise ou entrevista.
+            </p>
+        </header>
+
+        <div class="curriculos-container" id="curriculos-container">
+            <div class="curriculos-loading">
+                <i data-lucide="loader-2" class="spin"></i>
+                <span>Carregando currículos…</span>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='home.js') }}"></script>
+<script src="{{ url_for('static', filename='curriculos.js') }}"></script>
+{% endblock %}

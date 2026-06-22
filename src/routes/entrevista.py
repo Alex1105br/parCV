@@ -10,6 +10,7 @@ from src.config import UPLOAD_FOLDER, MAX_UPLOAD_BYTES
 from src.logging_config import logger
 from src.models.db import db
 from src.models.entrevista import Entrevista, PerguntaEntrevista
+from src.services.curriculo_service import obter_ou_criar_curriculo
 from src.services.model import (
     gerar_plano_entrevista,
     avaliar_resposta,
@@ -91,6 +92,13 @@ def gerar_plano():
     try:
         # Salvar arquivo
         filename = secure_filename(arquivo.filename)
+        ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+
+        # Preserva o binário exato enviado quando já é PDF (Task 1) — sem
+        # conversão/reprocessamento.
+        arquivo_pdf_bytes = arquivo.read() if ext == "pdf" else None
+        arquivo.seek(0)
+
         caminho = os.path.join(UPLOAD_FOLDER, filename)
         arquivo.save(caminho)
         
@@ -115,11 +123,22 @@ def gerar_plano():
         # /analisar) — pode ser renomeado depois via PATCH /entrevista/<id>/titulo
         titulo = gerar_titulo_entrevista(vaga_descricao, curriculo_text)
 
+        # Salva/reutiliza currículo centralizado (dedup por hash de conteúdo)
+        curriculo = obter_ou_criar_curriculo(
+            user_id=session["user_id"],
+            texto=curriculo_text,
+            finalidade=vaga_descricao or None,
+            arquivo_pdf=arquivo_pdf_bytes,
+            arquivo_nome=filename if arquivo_pdf_bytes else None,
+            arquivo_mimetype="application/pdf" if arquivo_pdf_bytes else None,
+        )
+
         # Criar registro Entrevista
         entrevista = Entrevista(
             user_id=session["user_id"],
             titulo=titulo,
             curriculo_arquivo=filename,
+            curriculo_id=curriculo.id if curriculo else None,
             vaga_descricao=vaga_descricao,
             numero_perguntas=plano["numero_perguntas"],
             plano_entrevista=plano,
@@ -184,6 +203,8 @@ def list_entrevistas():
                 "vaga_descricao": e.vaga_descricao,
                 "criado_em": e.criado_em.isoformat(),
                 "score_geral": (e.relatorio_final or {}).get("score_geral"),
+                "curriculo_label": e.curriculo.label if e.curriculo else None,
+                "curriculo_id":    e.curriculo_id,
             }
             for e in pagination.items
         ],
@@ -444,22 +465,6 @@ def finalizar_entrevista(entrevista_id):
     except Exception as e:
         logger.error(f"Erro ao finalizar entrevista: {str(e)}")
         return jsonify({"error": "Erro ao gerar relatório"}), 500
-
-
-@bp.route("/todas", methods=["DELETE"])
-@login_required
-def deletar_todas_entrevistas():
-    """Apaga definitivamente todas as entrevistas do usuário logado."""
-    try:
-        entrevistas = Entrevista.query.filter_by(user_id=session["user_id"]).all()
-        for e in entrevistas:
-            db.session.delete(e)
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        logger.error("db_error", extra={"op": "deletar_todas_entrevistas", "erro": str(e)})
-        return jsonify({"error": "Erro ao apagar entrevistas"}), 500
-    return jsonify({"ok": True, "deletadas": len(entrevistas)})
 
 
 @bp.route("/<entrevista_id>/relatorio", methods=["GET"])

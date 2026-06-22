@@ -26,3 +26,4 @@ class User(db.Model):
     otimizacoes   = db.relationship("Otimizacao",  back_populates="user", lazy="dynamic")
     chat_sessions = db.relationship("ChatSession", back_populates="user", lazy="dynamic")
     entrevistas   = db.relationship("Entrevista",  back_populates="user", lazy="dynamic")
+    curriculos    = db.relationship("Curriculo",   back_populates="user", lazy="dynamic")

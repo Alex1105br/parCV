@@ -78,6 +78,7 @@ def create_app():
     import src.models.otimizacao    # noqa: F401
     import src.models.chat_session  # noqa: F401
     import src.models.entrevista    # noqa: F401
+    import src.models.curriculo     # noqa: F401
 
     limiter.init_app(app)
 
@@ -123,11 +124,13 @@ def create_app():
     from src.routes.chat import bp as chat_bp
     from src.routes.analisar import bp as analisar_bp
     from src.routes.entrevista import bp as entrevista_bp
+    from src.routes.curriculo import bp as curriculo_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(home_bp)
     app.register_blueprint(chat_bp)
     app.register_blueprint(analisar_bp)
     app.register_blueprint(entrevista_bp)
+    app.register_blueprint(curriculo_bp)
 
     return app
