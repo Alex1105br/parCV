@@ -563,7 +563,7 @@ def gerar_relatorio_final(entrevista_id):
                 "score": score,
                 "feedback": pergunta.avaliacao_resposta.get("feedback", "")[:150]
             }
-            if pergunta.numero_sequencial <= 6:
+            if pergunta.tema == "Hard skills":
                 hard_skills_info.append(entrada)
             else:
                 soft_skills_info.append(entrada)

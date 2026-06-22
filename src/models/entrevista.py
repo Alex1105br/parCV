@@ -42,7 +42,7 @@ class Entrevista(db.Model):
 class PerguntaEntrevista(db.Model):
     """Uma das 10 perguntas de uma Entrevista (numero_sequencial 1-6 =
     hard skills, 7-10 = soft skills — convenção fixada no código de
-    services/model.py, não numa coluna própria desta tabela).
+    services/model.py, exposta aqui via a property `tema`).
     `resposta_usuario` e `avaliacao_resposta` (JSON com score 0-10 e
     feedback da IA) ficam vazios até o usuário responder via POST
     /entrevista/<id>/responder. `perguntas_aprofundamento` existe no
@@ -65,3 +65,18 @@ class PerguntaEntrevista(db.Model):
     respondido_em = db.Column(db.DateTime(timezone=True), nullable=True)
 
     entrevista = db.relationship("Entrevista", back_populates="perguntas")
+
+    # Limite fixo de perguntas de hard skills (1 a HARD_SKILLS_LIMITE) antes
+    # de passar para soft skills — mesma convenção usada na geração do plano
+    # (services/model.py) e no cálculo do relatório final.
+    HARD_SKILLS_LIMITE = 6
+
+    @property
+    def tema(self) -> str:
+        """Categoria da pergunta, derivada de numero_sequencial: 'Hard skills'
+        para as 6 primeiras, 'Soft skills' para as demais. Não é uma coluna
+        própria — é calculada para manter uma única fonte da verdade com a
+        regra já usada no relatório final (ver gerar_relatorio_final)."""
+        if self.numero_sequencial <= self.HARD_SKILLS_LIMITE:
+            return "Hard skills"
+        return "Soft skills"

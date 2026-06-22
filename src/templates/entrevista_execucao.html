@@ -122,8 +122,6 @@
 
     .ev-pergunta-meta {
         display: inline-block;
-        background: rgba(99, 102, 241, 0.15);
-        color: var(--color-primary);
         padding: 4px 12px;
         border-radius: 12px;
         font-size: 12px;
@@ -131,6 +129,16 @@
         text-transform: uppercase;
         letter-spacing: 0.05em;
         margin-bottom: 16px;
+    }
+
+    .ev-pergunta-meta--hard {
+        background: rgba(99, 102, 241, 0.12);
+        color: #a5b4fc;
+    }
+
+    .ev-pergunta-meta--soft {
+        background: rgba(34, 197, 94, 0.12);
+        color: #86efac;
     }
 
     .ev-pergunta-texto {
@@ -428,7 +436,10 @@ async function carregarPergunta() {
 
         totalPerguntas = data.total_perguntas;
         document.getElementById('pergunta-titulo').textContent = data.pergunta_principal;
-        document.getElementById('pergunta-tema').textContent = data.tema || '';
+        const temaEl = document.getElementById('pergunta-tema');
+        const isHard = (data.tema || '').toLowerCase().includes('hard');
+        temaEl.textContent = data.tema || '';
+        temaEl.className = 'ev-pergunta-meta ' + (isHard ? 'ev-pergunta-meta--hard' : 'ev-pergunta-meta--soft');
         document.getElementById('progresso-texto').textContent = `${perguntaAtual}/${totalPerguntas}`;
         document.getElementById('barra-preenchimento').style.width = `${((perguntaAtual - 1) / totalPerguntas) * 100}%`;
         document.getElementById('resposta-input').value = '';

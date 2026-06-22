@@ -187,6 +187,7 @@ def get_entrevista(entrevista_id):
         "perguntas": [
             {
                 "numero_sequencial": p.numero_sequencial,
+                "tema": p.tema,
                 "pergunta_principal": p.pergunta_principal,
                 "resposta_usuario": p.resposta_usuario,
                 "respondido": p.resposta_usuario is not None,
@@ -223,6 +224,7 @@ def get_pergunta(entrevista_id, numero):
     return jsonify({
         "pergunta_id": pergunta.id,
         "numero_sequencial": pergunta.numero_sequencial,
+        "tema": pergunta.tema,
         "pergunta_principal": pergunta.pergunta_principal,
         "resposta_anterior": pergunta.resposta_usuario,
         "aprofundamentos_pendentes": len(pergunta.perguntas_aprofundamento or []) if pergunta.perguntas_aprofundamento else 0,

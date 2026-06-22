@@ -249,7 +249,7 @@
     .ev-acordeao__header {
         width: 100%;
         display: grid;
-        grid-template-columns: auto 1fr auto auto;
+        grid-template-columns: auto auto 1fr auto auto;
         align-items: center;
         gap: 16px;
         padding: 16px 20px;
@@ -275,9 +275,10 @@
     .ev-acordeao__preview {
         font-size: 14px;
         color: var(--text-muted);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+        line-height: 1.5;
     }
 
     .ev-badge {
@@ -292,6 +293,9 @@
     .ev-badge--regular { background: rgba(250, 204, 21, 0.1); color: var(--color-regular); }
     .ev-badge--ruim { background: rgba(251, 146, 60, 0.1); color: var(--color-ruim); }
     .ev-badge--pessimo { background: rgba(248, 113, 113, 0.1); color: var(--color-pessimo); }
+
+    .ev-badge--hard { background: rgba(99, 102, 241, 0.12); color: #a5b4fc; }
+    .ev-badge--soft { background: rgba(34, 197, 94, 0.12); color: #86efac; }
 
     .ev-acordeao__chevron {
         color: var(--text-muted);
@@ -546,10 +550,13 @@ async function carregarRelatorio() {
             else               sLabel = 'pessimo';
             const div = document.createElement('div');
             div.className = 'ev-acordeao__item';
+            const temaKey = (p.tema || '').toLowerCase().includes('hard') ? 'hard' : 'soft';
+            const temaLabel = (p.tema || '').toLowerCase().includes('hard') ? 'Hard Skills' : 'Soft Skills';
             div.innerHTML = `
                 <button class="ev-acordeao__header" aria-expanded="false">
                     <span class="ev-acordeao__num">Pergunta ${i + 1}</span>
-                    <span class="ev-acordeao__preview">${(p.pergunta_principal || '').substring(0, 70)}${p.pergunta_principal?.length > 70 ? '…' : ''}</span>
+                    <span class="ev-badge ev-badge--${temaKey}">${temaLabel}</span>
+                    <span class="ev-acordeao__preview">${p.pergunta_principal || ''}</span>
                     <span class="ev-badge ev-badge--${sLabel}">${s}/10</span>
                     <i data-lucide="chevron-down" class="ev-acordeao__chevron"></i>
                 </button>
