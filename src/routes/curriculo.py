@@ -14,7 +14,7 @@ bp = Blueprint("curriculo", __name__, url_prefix="/curriculos")
 @login_required
 def curriculos_page():
     """Página HTML de gestão de currículos (dados carregados via JS)."""
-    return render_template("curriculos.html")
+    return render_template("curriculos.html", user_name=session.get("user_name", ""))
 
 
 @bp.route("/cores", methods=["GET"])
