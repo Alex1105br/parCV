@@ -1,5 +1,5 @@
 """perfil extra em users — telefone e profissao, exibidos e editáveis na
-tela /conta (ver src/services/conta_service.atualizar_dados).
+tela /conta (ver src/services/conta.atualizar_dados).
 
 Revision ID: 0004_user_perfil_extra
 Revises: 0003_curriculo_arquivo_pdf

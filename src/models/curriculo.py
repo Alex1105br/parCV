@@ -14,7 +14,7 @@ class Curriculo(db.Model):
     um registro é mantido.
 
     `label` é uma tag curta (máx 80 chars) gerada automaticamente pela LLM
-    no momento do primeiro salvamento (ver curriculo_service.gerar_label).
+    no momento do primeiro salvamento (ver curriculo.gerar_label).
     Deve ser única por usuário — se houver colisão, um sufixo numérico é
     adicionado automaticamente.
 

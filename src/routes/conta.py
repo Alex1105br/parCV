@@ -11,7 +11,7 @@ from flask import Blueprint, jsonify, render_template, request, session, redirec
 from src.app import limiter
 from src.models.db import db
 from src.models.user import User
-from src.services import conta_service
+from src.services import conta as conta
 from src.utils import login_required
 
 bp = Blueprint("conta", __name__)
@@ -61,7 +61,7 @@ def atualizar_dados():
     telefone = (data.get("telefone") or "").strip()
     profissao = (data.get("profissao") or "").strip()
 
-    resultado = conta_service.atualizar_dados(
+    resultado = conta.atualizar_dados(
         user_id=session["user_id"],
         nome=nome,
         telefone=telefone,
@@ -98,7 +98,7 @@ def alterar_senha():
     nova_senha = data.get("nova_senha", "")
     confirmar_senha = data.get("confirmar_senha", "")
 
-    resultado = conta_service.alterar_senha(
+    resultado = conta.alterar_senha(
         user_id=session["user_id"],
         senha_atual=senha_atual,
         nova_senha=nova_senha,
@@ -129,7 +129,7 @@ def excluir_conta():
     data = request.get_json(silent=True) or {}
     senha = data.get("senha", "")
 
-    resultado = conta_service.excluir_conta(
+    resultado = conta.excluir_conta(
         user_id=session["user_id"],
         senha_confirmacao=senha,
     )

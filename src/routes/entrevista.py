@@ -11,7 +11,7 @@ from src.logging_config import logger
 from src.models.db import db
 from src.models.curriculo import Curriculo
 from src.models.entrevista import Entrevista, PerguntaEntrevista
-from src.services.curriculo_service import obter_ou_criar_curriculo
+from src.services.curriculo import obter_ou_criar_curriculo
 from src.services.model import (
     gerar_plano_entrevista,
     avaliar_resposta,

@@ -40,6 +40,15 @@ def create_app():
     app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
     app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    # Evita "SSL SYSCALL error: EOF detected" / conexões mortas reutilizadas
+    # pelo pool quando o banco (geralmente gerenciado na nuvem) derruba
+    # conexões ociosas. pool_pre_ping testa a conexão antes de cada uso e
+    # pool_recycle força a renovação periódica, evitando que o pool
+    # mantenha conexões além do tempo que o servidor de banco tolera.
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_pre_ping": True,
+        "pool_recycle": 280,
+    }
 
     # ── Flask-Mail (SMTP) ──────────────────────────────────────────────────
     # Configure as variáveis abaixo no seu .env.

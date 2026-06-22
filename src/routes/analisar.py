@@ -10,7 +10,7 @@ from src.models.analise import Analise
 from src.models.curriculo import Curriculo
 from src.models.db import db
 from src.models.otimizacao import Otimizacao
-from src.services.curriculo_service import obter_ou_criar_curriculo
+from src.services.curriculo import obter_ou_criar_curriculo
 from src.services.model import call_model, gerar_titulo_analise
 from src.services.parser import extrair_json, extrair_texto_curriculo
 from src.services.prompts import build_prompt_ats, build_prompt_otimizar

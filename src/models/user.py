@@ -30,7 +30,7 @@ class User(db.Model):
     # currículo em sequência round-robin (ver Curriculo.CORES_PERMITIDAS).
     # Sempre incrementa, nunca decresce — garante que a sequência de cores
     # não se repita por causa de currículos apagados (ver
-    # curriculo_service.proxima_cor_automatica).
+    # curriculo.proxima_cor_automatica).
     proximo_indice_cor = db.Column(db.Integer, nullable=False, default=0,
                                     server_default="0")
 

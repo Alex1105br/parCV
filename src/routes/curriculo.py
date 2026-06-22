@@ -4,7 +4,7 @@ import io
 from src.logging_config import logger
 from src.models.curriculo import Curriculo
 from src.models.db import db
-from src.services.curriculo_service import renomear_label, alterar_cor
+from src.services.curriculo import renomear_label, alterar_cor
 from src.utils import login_required, sanitize_text
 
 bp = Blueprint("curriculo", __name__, url_prefix="/curriculos")
