@@ -1149,3 +1149,26 @@
     color: var(--color-danger);
     margin-top: 6px;
 }
+
+.form-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 8px 0 0;
+    font-family: inherit;
+}
+
+.form-link-btn:hover {
+    text-decoration: underline;
+}
+
+.form-link-btn i {
+    width: 14px;
+    height: 14px;
+}

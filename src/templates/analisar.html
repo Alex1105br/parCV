@@ -38,6 +38,10 @@
                 <p class="file-drop__text">Arraste ou clique para selecionar</p>
                 <input type="file" id="ats-file" class="file-drop__input" accept=".pdf,.docx,.txt">
             </div>
+            <button type="button" id="btn-usar-salvo" class="form-link-btn">
+                <i data-lucide="folder-open"></i>
+                Usar um currículo salvo
+            </button>
             <div id="file-size-error" class="form-error hidden">
                 Arquivo muito grande. O limite é 5 MB.
             </div>
@@ -81,5 +85,6 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='curriculo-picker.js') }}"></script>
 <script src="{{ url_for('static', filename='analisar.js') }}"></script>
 {% endblock %}

@@ -13,6 +13,7 @@
     var textoOriginal = '';
     var photoDataUrl = null;
     var _sliderCleanup = null;
+    var selectedCurriculo = null; // currículo salvo escolhido via CurriculoPicker, se houver
 
     var MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB — deve coincidir com MAX_UPLOAD_BYTES no back-end
 
@@ -49,6 +50,7 @@
             if (e.dataTransfer.files.length) {
                 if (!validateFileSize(e.dataTransfer.files[0])) return;
                 fileInput.files = e.dataTransfer.files;
+                selectedCurriculo = null;
                 updateDropLabel();
             }
         });
@@ -59,6 +61,7 @@
                 updateDropLabel();
                 return;
             }
+            if (fileInput.files.length) selectedCurriculo = null;
             updateDropLabel();
         });
     }
@@ -93,10 +96,28 @@
         if (fileInput.files.length) {
             textEl.textContent = fileInput.files[0].name;
             fileDrop.classList.add('file-drop--active');
+        } else if (selectedCurriculo) {
+            textEl.textContent = 'Usando: ' + selectedCurriculo.label;
+            fileDrop.classList.add('file-drop--active');
         } else {
             textEl.textContent = 'Arraste ou clique para selecionar';
             fileDrop.classList.remove('file-drop--active');
         }
+    }
+
+    // ===== Usar currículo salvo =====
+    var btnUsarSalvo = document.getElementById('btn-usar-salvo');
+    if (btnUsarSalvo) {
+        btnUsarSalvo.addEventListener('click', function () {
+            if (window.CurriculoPicker) {
+                window.CurriculoPicker.open(function (curriculo) {
+                    selectedCurriculo = curriculo;
+                    fileInput.value = '';
+                    showFileSizeError(false);
+                    updateDropLabel();
+                });
+            }
+        });
     }
 
     function updatePhotoLabel() {
@@ -139,13 +160,17 @@
 
     // ===== Analysis =====
     async function enviarAnalise() {
-        if (!fileInput.files.length) {
-            alert('Selecione um arquivo');
+        if (!fileInput.files.length && !selectedCurriculo) {
+            alert('Selecione um arquivo ou um currículo salvo');
             return;
         }
 
         const formData = new FormData();
-        formData.append('arquivo', fileInput.files[0]);
+        if (selectedCurriculo) {
+            formData.append('curriculo_id', selectedCurriculo.id);
+        } else {
+            formData.append('arquivo', fileInput.files[0]);
+        }
         const vaga = vagaInput.value.trim();
         if (vaga) formData.append('vaga', vaga);
 

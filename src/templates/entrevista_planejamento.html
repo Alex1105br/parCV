@@ -193,6 +193,29 @@
         color: var(--text-main);
     }
 
+    .form-link-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: none;
+        border: none;
+        color: var(--color-primary);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        padding: 10px 0 0;
+        font-family: inherit;
+    }
+
+    .form-link-btn:hover {
+        text-decoration: underline;
+    }
+
+    .form-link-btn i {
+        width: 14px;
+        height: 14px;
+    }
+
     .form-textarea {
         width: 100%;
         min-height: 140px;
@@ -387,12 +410,16 @@
                     Currículo
                 </label>
                 <div class="file-drop" id="file-drop">
-                    <input type="file" id="curriculo" name="curriculo" accept=".pdf,.docx,.txt" required class="file-drop__input">
+                    <input type="file" id="curriculo" name="curriculo" accept=".pdf,.docx,.txt" class="file-drop__input">
                     <i data-lucide="upload-cloud" class="file-drop__icon"></i>
                     <p class="file-drop__text">Arraste ou <span>clique para selecionar</span></p>
                     <p class="file-drop__hint">PDF, DOCX ou TXT • máx. 5 MB</p>
                     <p class="file-drop__name hidden" id="file-name"></p>
                 </div>
+                <button type="button" id="btn-usar-salvo" class="form-link-btn">
+                    <i data-lucide="folder-open"></i>
+                    Usar um currículo salvo
+                </button>
             </div>
 
             <div class="form-group">
@@ -448,11 +475,13 @@
     </div>
 </main>
 
+<script src="{{ url_for('static', filename='curriculo-picker.js') }}"></script>
 <script>
 const fileInput = document.getElementById('curriculo');
 const fileNameEl = document.getElementById('file-name');
 const fileDrop = document.getElementById('file-drop');
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+let selectedCurriculo = null; // currículo salvo escolhido via CurriculoPicker, se houver
 
 function validateFile(file) {
     if (!file) return false;
@@ -467,6 +496,7 @@ fileInput.addEventListener('change', () => {
     const f = fileInput.files[0];
     if (f) {
         if (!validateFile(f)) { fileInput.value = ''; return; }
+        selectedCurriculo = null;
         fileNameEl.textContent = f.name;
         fileNameEl.classList.remove('hidden');
         fileDrop.classList.add('file-drop--selected');
@@ -484,10 +514,22 @@ fileDrop.addEventListener('drop', e => {
         const dt = new DataTransfer();
         dt.items.add(f);
         fileInput.files = dt.files;
+        selectedCurriculo = null;
         fileNameEl.textContent = f.name;
         fileNameEl.classList.remove('hidden');
         fileDrop.classList.add('file-drop--selected');
     }
+});
+
+document.getElementById('btn-usar-salvo').addEventListener('click', () => {
+    if (!window.CurriculoPicker) return;
+    window.CurriculoPicker.open(function (curriculo) {
+        selectedCurriculo = curriculo;
+        fileInput.value = '';
+        fileNameEl.textContent = 'Usando: ' + curriculo.label;
+        fileNameEl.classList.remove('hidden');
+        fileDrop.classList.add('file-drop--selected');
+    });
 });
 
 document.getElementById('form-planejamento').addEventListener('submit', async (e) => {
@@ -496,7 +538,11 @@ document.getElementById('form-planejamento').addEventListener('submit', async (e
     errorEl.classList.add('hidden');
 
     const formData = new FormData(e.target);
-    if (!fileInput.files[0]) { showError('Selecione um currículo.'); return; }
+    if (!fileInput.files[0] && !selectedCurriculo) { showError('Selecione um currículo ou escolha um salvo.'); return; }
+    if (selectedCurriculo) {
+        formData.delete('curriculo');
+        formData.append('curriculo_id', selectedCurriculo.id);
+    }
     if (!formData.get('vaga_descricao').trim()) { showError('Descreva a vaga.'); return; }
 
     document.getElementById('card-form').classList.add('hidden');

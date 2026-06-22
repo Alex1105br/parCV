@@ -14,6 +14,7 @@
     const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
 
     let selectedFile = null;
+    let selectedCurriculo = null; // currículo salvo escolhido via CurriculoPicker, se houver
     const uploadedFileNames = new Set();
     let messageCount = 0;
     let isSending = false;
@@ -165,19 +166,19 @@
 
     async function enviarMensagem() {
         const msg = msgInput.value.trim();
-        if (!msg && !selectedFile) return;
+        if (!msg && !selectedFile && !selectedCurriculo) return;
         if (isSending) return;
         isSending = true;
 
         msgInput.value = '';
-        if (msg && !selectedFile) {
+        if (msg && !selectedFile && !selectedCurriculo) {
             addMessage(msg, 'user');
             messageCount++;
         }
         setInputEnabled(false);
 
-        if (selectedFile) {
-            await sendFileAndMessage(selectedFile, msg);
+        if (selectedFile || selectedCurriculo) {
+            await sendFileAndMessage(selectedFile, msg, selectedCurriculo);
             return;
         }
 
@@ -278,19 +279,24 @@
         setInputEnabled(true);
     }
 
-    async function sendFileAndMessage(file, msg) {
+    async function sendFileAndMessage(file, msg, curriculo) {
         let assistantDiv = null;
 
-        uploadedFileNames.add(file.name);
+        const displayName = curriculo ? curriculo.label : file.name;
+        if (file) uploadedFileNames.add(file.name);
         const formData = new FormData();
-        formData.append('arquivo', file);
+        if (curriculo) {
+            formData.append('curriculo_id', curriculo.id);
+        } else {
+            formData.append('arquivo', file);
+        }
         if (msg) formData.append('mensagem', msg);
 
         // Mostra feedback imediato (mensagens do usuário + indicador de digitando)
         // ANTES do fetch, para que a animação apareça enquanto o upload/processamento ocorre,
         // em vez de só depois que a resposta começar a chegar.
         activateChat();
-        addMessage('Enviando "' + file.name + '"...', 'system');
+        addMessage('Enviando "' + displayName + '"...', 'system');
         if (msg) { addMessage(msg, 'user'); messageCount++; }
         const typingDiv = showTypingIndicator();
 
@@ -401,6 +407,7 @@
         }
 
         setSelectedFile(null);
+        setSelectedCurriculo(null);
         isSending = false;
         setInputEnabled(true);
     }
@@ -455,11 +462,13 @@
 
     function setSelectedFile(file) {
         selectedFile = file;
-        if (!file) {
+        if (file) selectedCurriculo = null;
+        if (!file && !selectedCurriculo) {
             fileNameLabel.textContent = '';
             fileNameLabel.innerHTML = '';
             return;
         }
+        if (!file) return; // selectedCurriculo cuida do próprio label via setSelectedCurriculo
         fileNameLabel.textContent = file.name;
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -467,6 +476,24 @@
         btn.setAttribute('aria-label', 'Remover arquivo');
         btn.innerHTML = '&times;';
         btn.addEventListener('click', function () { setSelectedFile(null); });
+        fileNameLabel.appendChild(btn);
+    }
+
+    function setSelectedCurriculo(curriculo) {
+        selectedCurriculo = curriculo;
+        if (curriculo) selectedFile = null;
+        if (!curriculo) {
+            fileNameLabel.textContent = '';
+            fileNameLabel.innerHTML = '';
+            return;
+        }
+        fileNameLabel.textContent = 'Usando: ' + curriculo.label;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'input-area__filename-clear';
+        btn.setAttribute('aria-label', 'Remover currículo selecionado');
+        btn.innerHTML = '&times;';
+        btn.addEventListener('click', function () { setSelectedCurriculo(null); });
         fileNameLabel.appendChild(btn);
     }
 
@@ -496,6 +523,17 @@
         setSelectedFile(file);
         fileInput.value = '';
     });
+
+    const btnUsarSalvo = document.getElementById('btn-usar-salvo');
+    if (btnUsarSalvo) {
+        btnUsarSalvo.addEventListener('click', function () {
+            if (window.CurriculoPicker) {
+                window.CurriculoPicker.open(function (curriculo) {
+                    setSelectedCurriculo(curriculo);
+                });
+            }
+        });
+    }
 
     // --- Sidebar logic ---
     const sidebarOverlay = document.getElementById('sidebar-overlay');

@@ -9,6 +9,7 @@ from src.app import limiter
 from src.config import UPLOAD_FOLDER, MAX_UPLOAD_BYTES
 from src.logging_config import logger
 from src.models.db import db
+from src.models.curriculo import Curriculo
 from src.models.entrevista import Entrevista, PerguntaEntrevista
 from src.services.curriculo_service import obter_ou_criar_curriculo
 from src.services.model import (
@@ -66,55 +67,76 @@ def gerar_plano():
     filhas, sem precisar de dois commits separados."""
 
     # Validar multipart
-    if "curriculo" not in request.files:
-        return jsonify({"error": "Currículo não fornecido"}), 400
-    
     vaga_descricao = request.form.get("vaga_descricao", "").strip()
     if not vaga_descricao:
         return jsonify({"error": "Descrição da vaga não fornecida"}), 400
-    
+
     if has_prompt_injection(vaga_descricao):
         return jsonify({"error": "Conteúdo inválido detectado"}), 422
-    
-    arquivo = request.files["curriculo"]
-    if arquivo.filename == "":
-        return jsonify({"error": "Arquivo vazio"}), 400
-    
-    # Validar arquivo
-    if not allowed_file(arquivo.filename):
-        return jsonify({"error": "Tipo de arquivo não permitido"}), 400
-    
-    # Validar tamanho
-    file_size = get_file_size(arquivo)
-    if file_size > MAX_UPLOAD_BYTES:
-        return jsonify({"error": "Arquivo muito grande"}), 413
-    
-    try:
-        # Salvar arquivo
-        filename = secure_filename(arquivo.filename)
-        ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
 
-        # Preserva o binário exato enviado quando já é PDF (Task 1) — sem
-        # conversão/reprocessamento.
-        arquivo_pdf_bytes = arquivo.read() if ext == "pdf" else None
-        arquivo.seek(0)
+    curriculo_id = (request.form.get("curriculo_id") or "").strip()
+    curriculo_existente = None
+    if curriculo_id:
+        curriculo_existente = db.session.get(Curriculo, curriculo_id)
+        if not curriculo_existente or curriculo_existente.user_id != session["user_id"]:
+            return jsonify({"error": "Currículo não encontrado"}), 404
 
-        caminho = os.path.join(UPLOAD_FOLDER, filename)
-        arquivo.save(caminho)
-        
-        # Extrair texto do currículo (PDF/DOCX/TXT)
-        curriculo_text, erro = carregar_arquivo(caminho)
-        os.remove(caminho)
-        if erro:
-            return jsonify({"error": erro}), 400
-        if not curriculo_text:
-            return jsonify({"error": "Não foi possível extrair texto do currículo"}), 400
-
-        curriculo_text = sanitize_text(curriculo_text, max_length=20000)
+    if curriculo_existente:
+        # Reaproveita um currículo já salvo em /curriculos — sem reler
+        # arquivo nem reextrair texto.
+        filename = curriculo_existente.arquivo_nome or f"{curriculo_existente.label}.pdf"
+        arquivo_pdf_bytes = curriculo_existente.arquivo_pdf
+        curriculo_text = curriculo_existente.texto
 
         if has_prompt_injection(curriculo_text):
             return jsonify({"error": "Conteúdo inválido detectado"}), 422
-        
+    else:
+        if "curriculo" not in request.files:
+            return jsonify({"error": "Currículo não fornecido"}), 400
+
+        arquivo = request.files["curriculo"]
+        if arquivo.filename == "":
+            return jsonify({"error": "Arquivo vazio"}), 400
+
+        # Validar arquivo
+        if not allowed_file(arquivo.filename):
+            return jsonify({"error": "Tipo de arquivo não permitido"}), 400
+
+        # Validar tamanho
+        file_size = get_file_size(arquivo)
+        if file_size > MAX_UPLOAD_BYTES:
+            return jsonify({"error": "Arquivo muito grande"}), 413
+
+        try:
+            # Salvar arquivo
+            filename = secure_filename(arquivo.filename)
+            ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+
+            # Preserva o binário exato enviado quando já é PDF (Task 1) — sem
+            # conversão/reprocessamento.
+            arquivo_pdf_bytes = arquivo.read() if ext == "pdf" else None
+            arquivo.seek(0)
+
+            caminho = os.path.join(UPLOAD_FOLDER, filename)
+            arquivo.save(caminho)
+
+            # Extrair texto do currículo (PDF/DOCX/TXT)
+            curriculo_text, erro = carregar_arquivo(caminho)
+            os.remove(caminho)
+            if erro:
+                return jsonify({"error": erro}), 400
+            if not curriculo_text:
+                return jsonify({"error": "Não foi possível extrair texto do currículo"}), 400
+
+            curriculo_text = sanitize_text(curriculo_text, max_length=20000)
+
+            if has_prompt_injection(curriculo_text):
+                return jsonify({"error": "Conteúdo inválido detectado"}), 422
+        except Exception as e:
+            logger.error(f"Erro ao gerar plano: {str(e)}")
+            return jsonify({"error": "Erro ao gerar plano"}), 500
+
+    try:
         # Chamar IA para gerar plano
         logger.info("Gerando plano de entrevista com IA")
         plano = gerar_plano_entrevista(curriculo_text, vaga_descricao)

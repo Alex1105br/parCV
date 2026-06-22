@@ -114,6 +114,9 @@
                         <label for="file-input" class="input-area__upload" title="Enviar documento" aria-label="Anexar arquivo">
                             <i data-lucide="paperclip"></i>
                         </label>
+                        <button type="button" id="btn-usar-salvo" class="input-area__upload" title="Usar currículo salvo" aria-label="Usar currículo salvo">
+                            <i data-lucide="folder-open"></i>
+                        </button>
                         <input type="file" id="file-input" accept=".txt,.pdf,.docx" hidden>
                         <span class="input-area__filename" id="file-name" aria-live="polite"></span>
                         <textarea id="msg-input" class="input-area__text" placeholder="" autocomplete="off" spellcheck="false" rows="1"></textarea>
@@ -126,5 +129,6 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='curriculo-picker.js') }}"></script>
 <script src="{{ url_for('static', filename='chat.js') }}"></script>
 {% endblock %}

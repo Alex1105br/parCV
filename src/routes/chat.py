@@ -9,6 +9,7 @@ from werkzeug.utils import secure_filename
 from src.app import limiter
 from src.config import UPLOAD_FOLDER, MAX_UPLOAD_BYTES
 from src.models.db import db
+from src.models.curriculo import Curriculo
 from src.models.chat_session import ChatSession
 from src.services.model import stream_resposta
 from src.utils import allowed_file, carregar_arquivo, get_file_size, sanitize_text, has_prompt_injection, login_required
@@ -210,28 +211,39 @@ def upload():
     mensagem rejeitada), apenas confirma o upload em JSON normal e usa o
     nome do arquivo para sugerir um título de sessão (via _doc_label) caso
     ainda não tenha um."""
-    if "arquivo" not in request.files:
-        return jsonify({"error": "Nenhum arquivo enviado"}), 400
+    curriculo_id = (request.form.get("curriculo_id") or "").strip()
 
-    arquivo = request.files["arquivo"]
-    if arquivo.filename == "" or not allowed_file(arquivo.filename):
-        return jsonify({"error": "Arquivo inválido"}), 400
+    if curriculo_id:
+        curriculo_existente = db.session.get(Curriculo, curriculo_id)
+        if not curriculo_existente or curriculo_existente.user_id != session["user_id"]:
+            return jsonify({"error": "Currículo não encontrado"}), 404
 
-    if get_file_size(arquivo) > MAX_UPLOAD_BYTES:
-        return jsonify({"error": "Arquivo muito grande. Limite: 5 MB"}), 413
+        mensagem = sanitize_text(request.form.get("mensagem", ""))
+        filename = curriculo_existente.arquivo_nome or f"{curriculo_existente.label}.pdf"
+        texto = sanitize_text(curriculo_existente.texto, max_length=20000)
+    else:
+        if "arquivo" not in request.files:
+            return jsonify({"error": "Nenhum arquivo enviado"}), 400
 
-    mensagem = sanitize_text(request.form.get("mensagem", ""))
+        arquivo = request.files["arquivo"]
+        if arquivo.filename == "" or not allowed_file(arquivo.filename):
+            return jsonify({"error": "Arquivo inválido"}), 400
 
-    filename = secure_filename(arquivo.filename)
-    caminho = os.path.join(UPLOAD_FOLDER, filename)
-    arquivo.save(caminho)
-    texto, erro = carregar_arquivo(caminho)
-    os.remove(caminho)
+        if get_file_size(arquivo) > MAX_UPLOAD_BYTES:
+            return jsonify({"error": "Arquivo muito grande. Limite: 5 MB"}), 413
 
-    if erro:
-        return jsonify({"error": erro}), 400
+        mensagem = sanitize_text(request.form.get("mensagem", ""))
 
-    texto = sanitize_text(texto, max_length=20000)
+        filename = secure_filename(arquivo.filename)
+        caminho = os.path.join(UPLOAD_FOLDER, filename)
+        arquivo.save(caminho)
+        texto, erro = carregar_arquivo(caminho)
+        os.remove(caminho)
+
+        if erro:
+            return jsonify({"error": erro}), 400
+
+        texto = sanitize_text(texto, max_length=20000)
 
     # O conteúdo do documento vira parte do histórico enviado à LLM, então
     # é um vetor de prompt injection tão sensível quanto a mensagem digitada

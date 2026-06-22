@@ -7,6 +7,7 @@ from src.app import limiter
 from src.config import UPLOAD_FOLDER, MAX_UPLOAD_BYTES
 from src.logging_config import logger
 from src.models.analise import Analise
+from src.models.curriculo import Curriculo
 from src.models.db import db
 from src.models.otimizacao import Otimizacao
 from src.services.curriculo_service import obter_ou_criar_curriculo
@@ -31,36 +32,51 @@ def analisar():
     if request.method == "GET":
         return render_template("analisar.html")
 
-    if "arquivo" not in request.files:
-        return jsonify({"error": "Nenhum arquivo enviado"}), 400
-
-    arquivo = request.files["arquivo"]
     vaga = sanitize_text(request.form.get("vaga", ""))
+    curriculo_id = (request.form.get("curriculo_id") or "").strip()
 
-    if arquivo.filename == "" or not allowed_file(arquivo.filename):
-        return jsonify({"error": "Arquivo inválido"}), 400
+    curriculo_existente = None
+    if curriculo_id:
+        curriculo_existente = db.session.get(Curriculo, curriculo_id)
+        if not curriculo_existente or curriculo_existente.user_id != session["user_id"]:
+            return jsonify({"error": "Currículo não encontrado"}), 404
 
-    if get_file_size(arquivo) > MAX_UPLOAD_BYTES:
-        return jsonify({"error": "Arquivo muito grande. Limite: 5 MB"}), 413
+    if curriculo_existente:
+        # Reaproveita um currículo já salvo em /curriculos — sem reler
+        # arquivo nem reextrair texto, usa os dados já persistidos.
+        filename = curriculo_existente.arquivo_nome or f"{curriculo_existente.label}.pdf"
+        arquivo_pdf_bytes = curriculo_existente.arquivo_pdf
+        texto = curriculo_existente.texto
+    else:
+        if "arquivo" not in request.files:
+            return jsonify({"error": "Nenhum arquivo enviado"}), 400
 
-    filename = secure_filename(arquivo.filename)
-    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+        arquivo = request.files["arquivo"]
 
-    # Preserva o binário exato enviado quando já é PDF (Task 1) — sem
-    # conversão/reprocessamento. Lido antes de salvar/extrair texto para
-    # garantir que é exatamente o que o usuário enviou.
-    arquivo_pdf_bytes = arquivo.read() if ext == "pdf" else None
-    arquivo.seek(0)
+        if arquivo.filename == "" or not allowed_file(arquivo.filename):
+            return jsonify({"error": "Arquivo inválido"}), 400
 
-    caminho = os.path.join(UPLOAD_FOLDER, filename)
-    arquivo.save(caminho)
-    texto, erro = carregar_arquivo(caminho)
-    os.remove(caminho)
+        if get_file_size(arquivo) > MAX_UPLOAD_BYTES:
+            return jsonify({"error": "Arquivo muito grande. Limite: 5 MB"}), 413
 
-    if erro:
-        return jsonify({"error": erro}), 400
+        filename = secure_filename(arquivo.filename)
+        ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
 
-    texto = sanitize_text(texto, max_length=20000)
+        # Preserva o binário exato enviado quando já é PDF (Task 1) — sem
+        # conversão/reprocessamento. Lido antes de salvar/extrair texto para
+        # garantir que é exatamente o que o usuário enviou.
+        arquivo_pdf_bytes = arquivo.read() if ext == "pdf" else None
+        arquivo.seek(0)
+
+        caminho = os.path.join(UPLOAD_FOLDER, filename)
+        arquivo.save(caminho)
+        texto, erro = carregar_arquivo(caminho)
+        os.remove(caminho)
+
+        if erro:
+            return jsonify({"error": erro}), 400
+
+        texto = sanitize_text(texto, max_length=20000)
 
     if has_prompt_injection(vaga) or has_prompt_injection(texto):
         return jsonify({"error": "Conteúdo inválido detectado"}), 422

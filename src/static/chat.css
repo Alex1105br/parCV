@@ -570,6 +570,9 @@ body {
     color: var(--color-text-muted);
     flex-shrink: 0;
     transition: background var(--transition), color var(--transition);
+    background: none;
+    border: none;
+    font-family: inherit;
 }
 
 .input-area__upload:hover {
