@@ -3,7 +3,6 @@
 {% block title %}Relatório de Entrevista - parCV{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='historico.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='curriculos.css') }}">
 <style>
     :root {
@@ -80,25 +79,73 @@
         gap: 12px;
     }
 
-    /* Layout ajustado para ter sidebar como no histórico */
-    .ev-layout {
+    /* Layout wrapper com sidebar */
+    .ev-wrapper {
         display: flex;
         align-items: flex-start;
-        padding: calc(var(--spacing-xl) + 12px);
-        gap: calc(var(--spacing-2xl) + 8px);
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
-    .ev-main {
-        flex: 1;
-        min-width: 0;
+        gap: 24px;
+        max-width: 1300px;
+        margin: 40px auto;
+        padding: 0 24px;
     }
 
     .ev-sidebar {
         flex: 0 0 260px;
         max-width: 260px;
-        min-width: 220px;
+    }
+
+    .ev-sidebar-card {
+        background: var(--bg-card);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-xl);
+        margin-bottom: 24px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    .ev-sidebar-card__label {
+        font-size: 12px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        font-weight: 500;
+        margin-bottom: 12px;
+    }
+
+    .ev-sidebar-card__value {
+        font-size: 14px;
+        color: var(--text-main);
+        word-break: break-word;
+        line-height: 1.5;
+    }
+
+    .ev-curriculo-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: var(--color-primary);
+        border: none;
+        border-radius: var(--radius-md);
+        color: white;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .ev-curriculo-btn:hover {
+        background: #7c7ff6;
+    }
+
+    .ev-curriculo-btn i {
+        width: 14px;
+        height: 14px;
+    }
+
+    .ev-main {
+        flex: 1;
+        min-width: 0;
     }
 
     .ev-card {
@@ -122,14 +169,9 @@
     /* Redesenho Inteligente do Card de Score: Tamanho controlado e texto centralizado de forma absoluta */
     .ev-card--score {
         display: flex;
-        flex-direction: column;
         align-items: center;
-        gap: var(--spacing-sm);
-        padding: var(--spacing-lg);
-        background: var(--bg-card);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-lg);
-        margin-bottom: var(--spacing-lg);
+        gap: var(--spacing-xl);
+        background: rgba(255, 255, 255, 0.02);
     }
 
     .ev-score-ring {
@@ -166,14 +208,10 @@
         margin-top: 2px;
     }
 
-    .ev-score-meta {
-        text-align: center;
-    }
-
     .ev-score-meta__title {
-        font-size: 16px;
+        font-size: 20px;
         font-weight: 700;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
     }
 
     .ev-score-meta__label {
@@ -421,19 +459,22 @@
 
     /* Responsividade */
     @media (max-width: 768px) {
-        .ev-layout {
+        .ev-wrapper {
             flex-direction: column;
-            padding: var(--spacing-lg);
+            padding: var(--spacing-xl);
         }
         .ev-sidebar {
             width: 100%;
             max-width: none;
             display: flex;
-            gap: var(--spacing-sm);
+            gap: var(--spacing-xl);
         }
-        .ev-card--score, .detalhe__meta {
+        .ev-sidebar-card {
             flex: 1;
             margin-bottom: 0;
+        }
+        .ev-main {
+            width: 100%;
         }
     }
 </style>
@@ -462,7 +503,7 @@
     </div>
 </header>
 
-<div class="ev-layout">
+<div class="ev-wrapper">
     <aside class="ev-sidebar" id="sidebar-content">
         <!-- Preenchido via JS -->
     </aside>
@@ -474,6 +515,27 @@
         </div>
 
         <div class="hidden" id="relatorio-content">
+
+            <!-- Score Geral Redesenhado -->
+            <div class="ev-card ev-card--score" id="card-score">
+                <div class="ev-score-ring" id="score-ring">
+                    <svg viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="var(--color-border)" stroke-width="8"/>
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="var(--color-primary)" stroke-width="8"
+                            stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="264"
+                            id="score-arc" style="transition: stroke-dashoffset 1s ease; transform: rotate(-90deg); transform-origin: 50% 50%;"/>
+                    </svg>
+                    <div class="ev-score-ring__value">
+                        <span id="score-numero">-</span>
+                        <span class="ev-score-ring__denom">/10</span>
+                    </div>
+                </div>
+                <div class="ev-score-meta">
+                    <h2 class="ev-score-meta__title">Desempenho Geral</h2>
+                    <p class="ev-score-meta__label" id="score-label">—</p>
+                </div>
+            </div>
+
             <div class="ev-resumo">
                 <div class="ev-resumo__col ev-resumo__col--success">
                     <h3 class="ev-resumo__title">
@@ -513,6 +575,7 @@
                 </h3>
                 <div id="perguntas-container" class="ev-acordeao"></div>
             </div>
+
         </div>
     </main>
 </div>
@@ -587,47 +650,21 @@ async function carregarRelatorio() {
             return;
         }
 
-        const score = relatorio.score_geral ?? 0;
-        let cor, label;
-        if (score >= 9.0)      { cor = '#22c55e'; label = 'Excelente'; }
-        else if (score >= 7.0) { cor = '#3b82f6'; label = 'Bom'; }
-        else if (score >= 5.0) { cor = '#facc15'; label = 'Regular'; }
-        else if (score >= 3.0) { cor = '#fb923c'; label = 'Ruim'; }
-        else                   { cor = '#ef4444'; label = 'Péssimo'; }
-
         // Renderizar Sidebar
         const sidebar = document.getElementById('sidebar-content');
         sidebar.innerHTML = `
-            <div class="ev-card--score">
-                <div class="ev-score-ring">
-                    <svg viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="42" fill="none" stroke="var(--color-border)" stroke-width="8"/>
-                        <circle cx="50" cy="50" r="42" fill="none" stroke="${cor}" stroke-width="8"
-                            stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="${264 * (1 - score / 10)}"
-                            style="transition: stroke-dashoffset 1s ease; transform: rotate(-90deg); transform-origin: 50% 50%;"/>
-                    </svg>
-                    <div class="ev-score-ring__value">
-                        <span id="score-numero" style="color: ${cor}">${score.toFixed(1)}</span>
-                        <span class="ev-score-ring__denom">/10</span>
-                    </div>
-                </div>
-                <div class="ev-score-meta">
-                    <h2 class="ev-score-meta__title">Score Final</h2>
-                    <p class="ev-score-meta__label" style="color: ${cor}">${label}</p>
-                </div>
-            </div>
             ${data.curriculo ? `
-            <div class="detalhe__meta">
-                <p class="detalhe__meta-label">Currículo</p>
-                <button type="button" class="detalhe__curriculo-btn" id="btn-view-cv" data-id="${data.curriculo.id}" data-label="${escapeHtml(data.curriculo.label)}">
+            <div class="ev-sidebar-card">
+                <div class="ev-sidebar-card__label">Currículo</div>
+                <button type="button" class="ev-curriculo-btn" id="btn-view-cv" data-id="${escapeHtml(data.curriculo.id)}" data-label="${escapeHtml(data.curriculo.label)}">
                     <i data-lucide="eye"></i>
                     <span>${escapeHtml(data.curriculo.label)}</span>
                 </button>
             </div>
             ` : ''}
-            <div class="detalhe__meta">
-                <p class="detalhe__meta-label">Vaga</p>
-                <p class="detalhe__meta-value">${escapeHtml(data.vaga_descricao || 'Não informada')}</p>
+            <div class="ev-sidebar-card">
+                <div class="ev-sidebar-card__label">Vaga</div>
+                <div class="ev-sidebar-card__value">${escapeHtml(data.vaga_descricao || 'Não informada')}</div>
             </div>
         `;
 
@@ -636,6 +673,34 @@ async function carregarRelatorio() {
                 openPdfModal(this.dataset.id, this.dataset.label);
             });
         }
+
+        const score = relatorio.score_geral ?? 0;
+        document.getElementById('score-numero').textContent = score.toFixed(1);
+
+        let cor, label;
+        if (score >= 9.0)      { cor = '#22c55e'; label = 'Excelente'; }
+        else if (score >= 7.0) { cor = '#3b82f6'; label = 'Bom'; }
+        else if (score >= 5.0) { cor = '#facc15'; label = 'Regular'; }
+        else if (score >= 3.0) { cor = '#fb923c'; label = 'Ruim'; }
+        else                   { cor = '#ef4444'; label = 'Péssimo'; }
+
+        document.getElementById('score-arc').style.stroke = cor;
+        document.getElementById('score-numero').style.color = cor;
+        document.getElementById('score-label').textContent = label;
+        document.getElementById('score-label').style.color = cor;
+
+        requestAnimationFrame(() => {
+            const offset = 264 * (1 - score / 10);
+            const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const arc = document.getElementById('score-arc');
+            if (prefersReduced) {
+                // Aplica diretamente sem transição
+                arc.style.transition = 'none';
+                arc.style.strokeDashoffset = offset;
+            } else {
+                arc.style.strokeDashoffset = offset;
+            }
+        });
 
         const toLi = arr => (arr || []).map(x => `<li>${escapeHtml(x)}</li>`).join('');
         document.getElementById('pontos-fortes').innerHTML = toLi(relatorio.pontos_fortes);
