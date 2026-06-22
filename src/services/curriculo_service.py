@@ -104,6 +104,48 @@ def _label_unica(user_id: str, label_base: str, excluir_id: str | None = None) -
 
 
 # ---------------------------------------------------------------------------
+# Cor automática (round-robin pela paleta fixa)
+# ---------------------------------------------------------------------------
+
+def proxima_cor_automatica(user_id: str) -> str:
+    """Devolve a próxima cor da paleta para um novo currículo do usuário,
+    avançando em sequência (round-robin) e reiniciando do começo após a
+    última cor.
+
+    O contador (`User.proximo_indice_cor`) só cresce — nunca decresce, nem
+    mesmo se currículos forem apagados — então a sequência de cores vista
+    pelo usuário ao longo do tempo nunca "recua" ou repete antes de
+    completar um ciclo inteiro pela paleta.
+
+    Implementado como UPDATE...RETURNING atômico (uma única ida ao banco)
+    para evitar que duas criações simultâneas peguem o mesmo índice. Se o
+    `user_id` não existir como esperado, devolve a cor padrão do model
+    (mesmo comportamento de antes desta feature).
+    """
+    paleta = Curriculo.CORES_PERMITIDAS
+    try:
+        resultado = db.session.execute(
+            db.text(
+                """
+                UPDATE users
+                SET proximo_indice_cor = proximo_indice_cor + 1
+                WHERE id = :user_id
+                RETURNING proximo_indice_cor
+                """
+            ),
+            {"user_id": user_id},
+        ).first()
+        if resultado is None:
+            return Curriculo.COR_PADRAO
+        indice_usado = (resultado[0] - 1) % len(paleta)
+        return paleta[indice_usado]
+    except Exception as e:
+        db.session.rollback()
+        logger.error("db_error", extra={"op": "proxima_cor_automatica", "erro": str(e)})
+        return Curriculo.COR_PADRAO
+
+
+# ---------------------------------------------------------------------------
 # Salvar / deduplicar
 # ---------------------------------------------------------------------------
 
@@ -146,10 +188,12 @@ def obter_ou_criar_curriculo(
     # Novo currículo
     label_base = gerar_label(texto, finalidade)
     label = _label_unica(user_id, label_base)
+    cor = proxima_cor_automatica(user_id)
 
     curriculo = Curriculo(
         user_id=user_id,
         label=label,
+        cor=cor,
         hash_conteudo=hash_cv,
         texto=texto,
         arquivo_pdf=arquivo_pdf,

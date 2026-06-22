@@ -127,6 +127,13 @@ def _apply_column_migrations(db):
             ADD COLUMN IF NOT EXISTS cor VARCHAR(7) NOT NULL DEFAULT '#6366f1'
             """,
         ),
+        (
+            "proximo_indice_cor em users",
+            """
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS proximo_indice_cor INTEGER NOT NULL DEFAULT 0
+            """,
+        ),
     ]
 
     with db.engine.connect() as conn:

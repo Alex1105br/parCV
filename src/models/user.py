@@ -22,6 +22,14 @@ class User(db.Model):
     reset_token            = db.Column(db.String(100), nullable=True)
     reset_token_expires_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
+    # Contador usado para distribuir automaticamente as cores das labels de
+    # currículo em sequência round-robin (ver Curriculo.CORES_PERMITIDAS).
+    # Sempre incrementa, nunca decresce — garante que a sequência de cores
+    # não se repita por causa de currículos apagados (ver
+    # curriculo_service.proxima_cor_automatica).
+    proximo_indice_cor = db.Column(db.Integer, nullable=False, default=0,
+                                    server_default="0")
+
     analises      = db.relationship("Analise",     back_populates="user", lazy="dynamic")
     otimizacoes   = db.relationship("Otimizacao",  back_populates="user", lazy="dynamic")
     chat_sessions = db.relationship("ChatSession", back_populates="user", lazy="dynamic")
