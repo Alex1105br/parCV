@@ -537,7 +537,7 @@ def gerar_pdf_relatorio_entrevista(entrevista):
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.platypus import (
         SimpleDocTemplate, Paragraph, Spacer,
-        Table, TableStyle, Flowable
+        Table, TableStyle, Flowable, KeepTogether
     )
 
     FONT_DIR = _find_font_dir()
@@ -550,6 +550,12 @@ def gerar_pdf_relatorio_entrevista(entrevista):
     TEXTO_MÉDIO  = colors.HexColor("#a0a5b5")
     BORDA        = colors.HexColor("#6366f1")
     PRIMARY      = colors.HexColor("#6366f1")
+
+    # Badges de tipo de pergunta (espelha o HTML)
+    HARD_COLOR   = colors.HexColor("#a5b4fc")
+    HARD_BG      = colors.HexColor("#1a1b2e")
+    SOFT_COLOR   = colors.HexColor("#86efac")
+    SOFT_BG      = colors.HexColor("#131e18")
 
     # Mapeamento das variáveis CSS (escala de score)
     PESSIMO      = colors.HexColor("#ef4444")
@@ -570,7 +576,7 @@ def gerar_pdf_relatorio_entrevista(entrevista):
         interna). Usado no relatório de entrevista para os "cards" de
         score, pontos fortes/fracos etc. sobre o fundo escuro."""
 
-        def __init__(self, content, width, bg_color, radius=10, border_color=None, border_width=0, padding=(12, 12, 12, 12), force_circle=False, forced_height=None):
+        def __init__(self, content, width, bg_color, radius=10, border_color=None, border_width=0, padding=(12, 12, 12, 12), force_circle=False, forced_height=None, top_accent_color=None, top_accent_width=4):
             """Calcula a altura do card a partir do conteúdo (via
             content.wrap()) somado ao padding. Se force_circle e
             forced_height forem passados, ignora a altura calculada e
@@ -584,6 +590,8 @@ def gerar_pdf_relatorio_entrevista(entrevista):
             self.border_color = border_color
             self.border_width = border_width
             self.force_circle = force_circle
+            self.top_accent_color = top_accent_color
+            self.top_accent_width = top_accent_width
             
             if isinstance(padding, (int, float)):
                 self.padding = (padding, padding, padding, padding)
@@ -622,7 +630,7 @@ def gerar_pdf_relatorio_entrevista(entrevista):
         def draw(self):
             """Interface exigida pelo ReportLab: desenha o retângulo
             arredondado (com borda opcional) no canvas e depois o
-            conteúdo por cima, centralizado verticalmente."""
+            conteúdo por cima, alinhado ao topo com padding correto."""
             canvas = self.canv
             canvas.saveState()
             
@@ -633,12 +641,20 @@ def gerar_pdf_relatorio_entrevista(entrevista):
                 canvas.roundRect(0, 0, self.width, self.height, self.radius, fill=1, stroke=1)
             else:
                 canvas.roundRect(0, 0, self.width, self.height, self.radius, fill=1, stroke=0)
+
+            # Barra colorida no topo (border-top do CSS)
+            if self.top_accent_color:
+                aw = self.top_accent_width
+                canvas.setFillColor(self.top_accent_color)
+                # Retângulo da barra, só no topo, com cantos arredondados apenas no topo
+                canvas.roundRect(0, self.height - aw, self.width, aw, min(self.radius, aw / 2), fill=1, stroke=0)
             
             canvas.restoreState()
             p_top, p_right, p_bottom, p_left = self.padding
             
-            offset_y = (self.height - self.h) / 2.0
-            self.content.drawOn(canvas, p_left, offset_y)
+            # Posiciona o conteúdo a partir do topo (não centralizado verticalmente)
+            content_y = self.height - p_top - self.h
+            self.content.drawOn(canvas, p_left, content_y)
 
     def dark_background(canv, doc):
         """Callback de página do SimpleDocTemplate (onPage): pinta o
@@ -777,29 +793,65 @@ def gerar_pdf_relatorio_entrevista(entrevista):
     story.append(Spacer(1, 20))
 
     # ─── TRÊS CARDS LADO A LADO ────────────────────────────────────────────────
-    CARD_W = (CONTENT_W - 0.6 * cm) / 3
+    CARD_GAP = 0.3 * cm
+    CARD_W = (CONTENT_W - 2 * CARD_GAP) / 3
 
-    def build_list_card(titulo, icone_cor, itens):
-        """Monta um RoundedCard com título colorido + lista de itens
-        (ou "—" se a lista vier vazia). Reutilizado para os 3 cards
-        lado a lado: Pontos Fortes, Pontos a Melhorar e Recomendações."""
-        rows = [Paragraph(titulo, ps(f'ct_{titulo}', bold=True, size=10, color=icone_cor, after=10))]
-        for item in itens:
-            rows.append(Paragraph(item, ps(f'ci_{titulo}_{item[:8]}', size=8.5, color=TEXTO_CLARO, after=8, leading=12)))
-        if not itens:
-            rows.append(Paragraph("—", ps('vazio', size=8.5, color=TEXTO_MÉDIO)))
-        
-        return RoundedCard(rows, CARD_W, BG_CARD, radius=10, border_color=BORDA, border_width=0.5, padding=15)
+    def build_list_card(titulo, accent_cor, itens):
+        """Card com barra colorida no topo, título e lista de itens com bullet •."""
+        inner_w = CARD_W - 30   # padding lateral total = 15 + 15
 
-    card_fortes = build_list_card("Pontos Fortes", EXCELENTE, pontos_fortes)
-    card_fracos = build_list_card("Pontos a Melhorar", RUIM, pontos_fracos)
-    card_rec    = build_list_card("Recomendações", BOM, recomendacoes)
+        titulo_p = Paragraph(
+            titulo,
+            ps(f'ct_{titulo}', bold=True, size=10, color=accent_cor, after=0, leading=14),
+        )
 
-    tres_cards = Table([[card_fortes, card_fracos, card_rec]], colWidths=[CARD_W + 0.1*cm]*3)
+        rows = [titulo_p, Spacer(1, 10)]
+
+        if itens:
+            for item in itens:
+                bullet = Paragraph(
+                    f"• {item}",
+                    ps(f'ci_{titulo}_{item[:10]}', size=8.5, color=TEXTO_CLARO, after=0, leading=13, before=0),
+                )
+                rows.append(bullet)
+                rows.append(Spacer(1, 7))
+            rows.pop()   # remove último Spacer extra
+        else:
+            rows.append(Paragraph("—", ps(f'vazio_{titulo}', size=8.5, color=TEXTO_MÉDIO, after=0)))
+
+        inner_tbl = Table([[r] for r in rows], colWidths=[inner_w])
+        inner_tbl.setStyle(TableStyle([
+            ('LEFTPADDING',   (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING',  (0, 0), (-1, -1), 0),
+            ('TOPPADDING',    (0, 0), (-1, -1), 0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+        ]))
+
+        return RoundedCard(
+            inner_tbl, CARD_W, BG_CARD,
+            radius=10,
+            border_color=colors.HexColor("#1e2030"),
+            border_width=0.5,
+            padding=(16, 15, 16, 15),
+            top_accent_color=accent_cor,
+            top_accent_width=4,
+        )
+
+    card_fortes = build_list_card("Pontos Fortes",    EXCELENTE, pontos_fortes)
+    card_fracos = build_list_card("Pontos a Melhorar", RUIM,     pontos_fracos)
+    card_rec    = build_list_card("Recomendações",     BOM,      recomendacoes)
+
+    tres_cards = Table(
+        [[card_fortes, '', card_fracos, '', card_rec]],
+        colWidths=[CARD_W, CARD_GAP, CARD_W, CARD_GAP, CARD_W],
+    )
     tres_cards.setStyle(TableStyle([
-        ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('VALIGN',        (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING',   (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING',  (0, 0), (-1, -1), 0),
+        ('TOPPADDING',    (0, 0), (-1, -1), 0),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+        ('ALIGN',         (0, 0), (-1, -1), 'LEFT'),
     ]))
     story.append(tres_cards)
     story.append(Spacer(1, 15))
@@ -838,49 +890,101 @@ def gerar_pdf_relatorio_entrevista(entrevista):
     for i, pergunta in enumerate(entrevista.perguntas, 1):
         av = pergunta.avaliacao_resposta or {}
         score = av.get("score", 0)
-        
+
         _, q_color, q_bg_alpha = get_status_info(score)
-        
-        num_p = Paragraph(f"Pergunta {i}", ps(f'pnum{i}', bold=True, size=11, color=PRIMARY, after=0))
-        badge_p = Paragraph(f"<b>{score}/10</b>", ps(f'pbadge{i}', bold=True, size=11, color=q_color, after=0))
-        perg_hdr = Table([[num_p, badge_p]], colWidths=[CONTENT_W - 4 * cm, 3 * cm])
-        perg_hdr.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,-1), BG_CARD),
-            ('LEFTPADDING', (0,0), (-1,-1), 20),
-            ('RIGHTPADDING', (0,0), (-1,-1), 20),
-            ('TOPPADDING', (0,0), (-1,-1), 12),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 12),
-            ('LINEBELOW', (0,0), (-1,-1), 0.5, BORDA),
-            ('ALIGN', (1,0), (1,0), 'RIGHT'),
+
+        # ── Badge Hard/Soft Skills ─────────────────────────────────────────────
+        is_hard    = pergunta.numero_sequencial <= pergunta.HARD_SKILLS_LIMITE
+        tema_label = "Hard Skills" if is_hard else "Soft Skills"
+        tema_color = HARD_COLOR if is_hard else SOFT_COLOR
+        tema_bg    = HARD_BG    if is_hard else SOFT_BG
+
+        tema_p     = Paragraph(f"<b>{tema_label}</b>",
+                               ps(f'ptema{i}', bold=True, size=8, color=tema_color, after=0, leading=10))
+        tema_badge = RoundedCard(tema_p, 2.2 * cm, tema_bg, radius=8,
+                                 border_color=tema_color, border_width=0.5,
+                                 padding=(4, 10, 4, 10))
+
+        # ── Cabeçalho: "Pergunta N"  [badge tema]  score ──────────────────────
+        num_p   = Paragraph(f"Pergunta {i}",
+                            ps(f'pnum{i}', bold=True, size=11, color=PRIMARY, after=0, leading=14))
+        score_p = Paragraph(f"<b>{score}/10</b>",
+                            ps(f'pbadge{i}', bold=True, size=11, color=q_color, after=0, leading=14))
+
+        col_num   = CONTENT_W - 2.6 * cm - 3.0 * cm - 1.2 * cm   # espaço para texto
+        col_tema  = 2.6 * cm
+        col_score = 3.0 * cm
+
+        hdr_tbl = Table(
+            [[num_p, tema_badge, score_p]],
+            colWidths=[col_num, col_tema, col_score],
+        )
+        hdr_tbl.setStyle(TableStyle([
+            ('VALIGN',        (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEFTPADDING',   (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING',  (0, 0), (-1, -1), 0),
+            ('TOPPADDING',    (0, 0), (-1, -1), 0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+            ('ALIGN',         (2, 0), (2,  0),  'RIGHT'),
         ]))
 
-        perg_label = Paragraph("PERGUNTA", ps(f'plbl{i}', bold=True, size=8, color=TEXTO_MÉDIO, after=6))
-        enunciado = Paragraph(pergunta.pergunta_principal, ps(f'ptxt{i}', bold=True, size=11, color=TEXTO_CLARO, after=15, leading=15))
-        resp_label = Paragraph("SUA RESPOSTA", ps(f'rlbl{i}', bold=True, size=8, color=TEXTO_MÉDIO, after=6))
-        resp_txt = Paragraph(pergunta.resposta_usuario or "Não fornecida.", ps(f'resp{i}', size=10, color=TEXTO_CLARO, leading=15))
-        
-        fb_label = Paragraph("FEEDBACK", ps(f'fblbl{i}', bold=True, size=8, color=q_color, after=6))
-        fb_txt = Paragraph(av.get("feedback", "Sem feedback."), ps(f'fb{i}', size=10, color=TEXTO_CLARO, leading=15))
-        fb_box = RoundedCard([fb_label, fb_txt], CONTENT_W - 2.2 * cm, q_bg_alpha, radius=6, border_color=q_color, border_width=0.5, padding=15)
+        hdr_card = RoundedCard(
+            hdr_tbl, CONTENT_W, colors.HexColor("#1c1e2a"),
+            radius=10, border_color=PRIMARY, border_width=0.5,
+            padding=(12, 16, 12, 16),
+        )
 
-        corpo_card = Table([
+        # ── Corpo da pergunta ──────────────────────────────────────────────────
+        perg_label = Paragraph("PERGUNTA",
+                               ps(f'plbl{i}', bold=True, size=8, color=TEXTO_MÉDIO, after=4, leading=10))
+        enunciado  = Paragraph(pergunta.pergunta_principal,
+                               ps(f'ptxt{i}', bold=True, size=10, color=TEXTO_CLARO, after=0, leading=15))
+
+        resp_label = Paragraph("SUA RESPOSTA",
+                               ps(f'rlbl{i}', bold=True, size=8, color=TEXTO_MÉDIO, after=4, leading=10))
+        resp_txt   = Paragraph(pergunta.resposta_usuario or "Não fornecida.",
+                               ps(f'resp{i}', size=10, color=TEXTO_CLARO, after=0, leading=14))
+
+        fb_label   = Paragraph("FEEDBACK",
+                               ps(f'fblbl{i}', bold=True, size=8, color=q_color, after=4, leading=10))
+        fb_txt     = Paragraph(av.get("feedback", "Sem feedback."),
+                               ps(f'fb{i}', size=10, color=TEXTO_CLARO, after=0, leading=14))
+
+        # Caixa de feedback com borda colorida pelo score
+        fb_box = RoundedCard(
+            [fb_label, Spacer(1, 2), fb_txt],
+            CONTENT_W - 2.4 * cm,
+            colors.HexColor("#0b0c10"),
+            radius=6, border_color=q_color, border_width=0.8,
+            padding=(12, 14, 12, 14),
+        )
+
+        corpo_rows = [
             [perg_label],
             [enunciado],
+            [Spacer(1, 12)],
             [resp_label],
             [resp_txt],
-            [Spacer(1, 15)],
-            [fb_box]
-        ], colWidths=[CONTENT_W - 1.2 * cm])
-        corpo_card.setStyle(TableStyle([
-            ('LEFTPADDING', (0,0), (-1,-1), 20),
-            ('RIGHTPADDING', (0,0), (-1,-1), 20),
-            ('TOPPADDING', (0,0), (-1,-1), 0),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+            [Spacer(1, 12)],
+            [fb_box],
+        ]
+        corpo_tbl = Table(corpo_rows, colWidths=[CONTENT_W - 2.4 * cm])
+        corpo_tbl.setStyle(TableStyle([
+            ('LEFTPADDING',   (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING',  (0, 0), (-1, -1), 0),
+            ('TOPPADDING',    (0, 0), (-1, -1), 0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
         ]))
 
-        perg_card = RoundedCard([perg_hdr, Spacer(1, 20), corpo_card, Spacer(1, 25)], CONTENT_W, BG_CARD, radius=10, border_color=BORDA, border_width=0.5, padding=0)
-        story.append(perg_card)
-        story.append(Spacer(1, 15))
+        corpo_card = RoundedCard(
+            [Spacer(1, 4), corpo_tbl],
+            CONTENT_W, BG_CARD,
+            radius=10, border_color=BORDA, border_width=0.5,
+            padding=(14, 20, 18, 20),
+        )
+
+        story.append(KeepTogether([hdr_card, Spacer(1, 4), corpo_card]))
+        story.append(Spacer(1, 18))
 
     doc.build(story, onFirstPage=dark_background, onLaterPages=dark_background)
     buffer.seek(0)
