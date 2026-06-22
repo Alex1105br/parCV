@@ -45,7 +45,8 @@ class Entrevista(db.Model):
     user = db.relationship("User", back_populates="entrevistas")
     curriculo = db.relationship("Curriculo", back_populates="entrevistas")
     perguntas = db.relationship("PerguntaEntrevista", back_populates="entrevista",
-                                cascade="all, delete-orphan")
+                                cascade="all, delete-orphan",
+                                order_by="PerguntaEntrevista.numero_sequencial")
 
 
 class PerguntaEntrevista(db.Model):
