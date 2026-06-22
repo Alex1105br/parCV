@@ -294,9 +294,18 @@
     font-style: italic;
 }
 
+.analise-card__meta-row {
+    display: flex;
+    align-items: center;
+}
+
 .analise-card__date {
+    display: inline-block;
+    vertical-align: middle;
     font-size: var(--font-size-xs);
     color: var(--color-text-muted);
+    margin-left: auto;
+    padding-left: var(--spacing-sm);
 }
 
 .analise-card__arrow {
@@ -673,6 +682,7 @@
     --cor-label-bg: rgba(99, 102, 241, 0.1);
     --cor-label-border: rgba(99, 102, 241, 0.25);
     display: inline-flex;
+    vertical-align: middle;
     align-items: center;
     gap: 4px;
     background: var(--cor-label-bg);

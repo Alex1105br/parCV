@@ -109,8 +109,10 @@
                                 '</button>' +
                             '</div>' +
                             vagaHtml +
-                            curriculoHtml +
-                            '<span class="analise-card__date">' + formatDate(a.criado_em) + '</span>' +
+                            '<div class="analise-card__meta-row">' +
+                                curriculoHtml +
+                                '<span class="analise-card__date">' + formatDate(a.criado_em) + '</span>' +
+                            '</div>' +
                         '</div>' +
                         '<i data-lucide="chevron-right" class="analise-card__arrow"></i>' +
                     '</a>';
@@ -320,8 +322,10 @@
                                 '</button>' +
                             '</div>' +
                             vagaHtml +
-                            curriculoHtml +
-                            '<span class="analise-card__date">' + formatDate(e.criado_em) + '</span>' +
+                            '<div class="analise-card__meta-row">' +
+                                curriculoHtml +
+                                '<span class="analise-card__date">' + formatDate(e.criado_em) + '</span>' +
+                            '</div>' +
                         '</div>' +
                         '<i data-lucide="chevron-right" class="analise-card__arrow"></i>' +
                     '</a>';
