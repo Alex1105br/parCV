@@ -49,8 +49,10 @@
 
         function renderList(data) {
             var container = document.getElementById('list-container-analises');
+            var btnTodas = document.getElementById('btn-apagar-todas-analises');
 
             if (!data.analises || data.analises.length === 0) {
+                if (btnTodas) btnTodas.style.display = 'none';
                 container.innerHTML =
                     '<div class="empty-state">' +
                         '<i data-lucide="inbox"></i>' +
@@ -61,6 +63,8 @@
                 if (window.lucide) lucide.createIcons({ nodes: [container] });
                 return;
             }
+
+            if (btnTodas) btnTodas.style.display = '';
 
             var listHtml = '<div class="analise-list">';
             data.analises.forEach(function (a) {
@@ -248,8 +252,10 @@
 
         function renderList(data) {
             var container = document.getElementById('list-container-entrevistas');
+            var btnTodas = document.getElementById('btn-apagar-todas-entrevistas');
 
             if (!data.entrevistas || data.entrevistas.length === 0) {
+                if (btnTodas) btnTodas.style.display = 'none';
                 container.innerHTML =
                     '<div class="empty-state">' +
                         '<i data-lucide="inbox"></i>' +
@@ -260,6 +266,8 @@
                 if (window.lucide) lucide.createIcons({ nodes: [container] });
                 return;
             }
+
+            if (btnTodas) btnTodas.style.display = '';
 
             var listHtml = '<div class="analise-list">';
             data.entrevistas.forEach(function (e) {
@@ -439,4 +447,70 @@
 
         loadPage(1);
     })();
+
+    // ===========================================================================
+    // Botões "Apagar todas" — Análises e Entrevistas
+    // ===========================================================================
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var btnAnalisesTodas = document.getElementById('btn-apagar-todas-analises');
+        if (btnAnalisesTodas) {
+            btnAnalisesTodas.addEventListener('click', async function () {
+                var confirmado = await confirmModal({
+                    title: 'Apagar todas as análises',
+                    message: 'Apagar todas as análises do histórico? Essa ação não pode ser desfeita.',
+                    confirmText: 'Apagar todas',
+                    cancelText: 'Cancelar',
+                    danger: true
+                });
+                if (!confirmado) return;
+                try {
+                    var resp = await fetch('/analises', { method: 'DELETE' });
+                    if (!resp.ok) throw new Error('Erro ' + resp.status);
+                    var container = document.getElementById('list-container-analises');
+                    container.innerHTML =
+                        '<div class="empty-state">' +
+                            '<i data-lucide="inbox"></i>' +
+                            '<p class="empty-state__title">Nenhuma análise encontrada</p>' +
+                            '<p class="empty-state__text">Faça sua primeira análise de currículo.</p>' +
+                            '<a href="/analisar" class="btn btn--primary"><i data-lucide="scan-search"></i> Analisar currículo</a>' +
+                        '</div>';
+                    if (window.lucide) lucide.createIcons({ nodes: [container] });
+                    btnAnalisesTodas.style.display = 'none';
+                } catch (err) {
+                    window.alert('Não foi possível apagar as análises. Tente novamente.');
+                }
+            });
+        }
+
+        var btnEntrevistasTodas = document.getElementById('btn-apagar-todas-entrevistas');
+        if (btnEntrevistasTodas) {
+            btnEntrevistasTodas.addEventListener('click', async function () {
+                var confirmado = await confirmModal({
+                    title: 'Apagar todas as entrevistas',
+                    message: 'Apagar todas as entrevistas do histórico? Essa ação não pode ser desfeita.',
+                    confirmText: 'Apagar todas',
+                    cancelText: 'Cancelar',
+                    danger: true
+                });
+                if (!confirmado) return;
+                try {
+                    var resp = await fetch('/entrevista/todas', { method: 'DELETE' });
+                    if (!resp.ok) throw new Error('Erro ' + resp.status);
+                    var container = document.getElementById('list-container-entrevistas');
+                    container.innerHTML =
+                        '<div class="empty-state">' +
+                            '<i data-lucide="inbox"></i>' +
+                            '<p class="empty-state__title">Nenhuma entrevista encontrada</p>' +
+                            '<p class="empty-state__text">Faça sua primeira simulação de entrevista.</p>' +
+                            '<a href="/entrevista" class="btn btn--primary"><i data-lucide="user-check"></i> Simular entrevista</a>' +
+                        '</div>';
+                    if (window.lucide) lucide.createIcons({ nodes: [container] });
+                    btnEntrevistasTodas.style.display = 'none';
+                } catch (err) {
+                    window.alert('Não foi possível apagar as entrevistas. Tente novamente.');
+                }
+            });
+        }
+    });
 })();

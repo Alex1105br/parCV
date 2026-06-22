@@ -446,6 +446,22 @@ def finalizar_entrevista(entrevista_id):
         return jsonify({"error": "Erro ao gerar relatório"}), 500
 
 
+@bp.route("/todas", methods=["DELETE"])
+@login_required
+def deletar_todas_entrevistas():
+    """Apaga definitivamente todas as entrevistas do usuário logado."""
+    try:
+        entrevistas = Entrevista.query.filter_by(user_id=session["user_id"]).all()
+        for e in entrevistas:
+            db.session.delete(e)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.error("db_error", extra={"op": "deletar_todas_entrevistas", "erro": str(e)})
+        return jsonify({"error": "Erro ao apagar entrevistas"}), 500
+    return jsonify({"ok": True, "deletadas": len(entrevistas)})
+
+
 @bp.route("/<entrevista_id>/relatorio", methods=["GET"])
 @login_required
 def relatorio(entrevista_id):

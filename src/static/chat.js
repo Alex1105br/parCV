@@ -502,12 +502,30 @@
 
     function isMobile() { return window.innerWidth <= 768; }
 
+    const sidebarContent = sidebar.querySelector('.sidebar__content');
+
     btnToggleSidebar.addEventListener('click', function () {
         if (isMobile()) {
             sidebar.classList.toggle('sidebar--mobile-open');
             sidebarOverlay.classList.toggle('sidebar-overlay--visible');
         } else {
-            sidebar.classList.toggle('sidebar--collapsed');
+            var collapsing = !sidebar.classList.contains('sidebar--collapsed');
+            if (collapsing) {
+                // Esconde o conteúdo ANTES de iniciar a transição
+                if (sidebarContent) sidebarContent.style.display = 'none';
+                sidebar.classList.add('sidebar--collapsed');
+            } else {
+                // Expande: remove a classe primeiro, mas mantém conteúdo oculto
+                // até a transição de largura terminar
+                sidebar.classList.remove('sidebar--collapsed');
+                if (sidebarContent) sidebarContent.style.display = 'none';
+                sidebar.addEventListener('transitionend', function onExpand(e) {
+                    if (e.propertyName !== 'width') return;
+                    sidebar.removeEventListener('transitionend', onExpand);
+                    if (sidebarContent) sidebarContent.style.display = '';
+                    updateFooterVisibility();
+                });
+            }
         }
     });
 
@@ -610,6 +628,7 @@
                 // isso, ele ficava visível pairando sobre uma lista vazia
                 // até a próxima recarga da página.
                 updatePinnedSectionVisibility();
+                updateFooterVisibility();
                 if (wasActive) clearChatUI();
             } catch (err) {
                 addMessage('Erro ao excluir: ' + err.message, 'error');
@@ -773,6 +792,7 @@
             }
         }
         existing.classList.add('sidebar__item--active');
+        updateFooterVisibility();
     }
 
     function startInlineRename(item, sid, titleEl) {
@@ -867,4 +887,48 @@
     }
 
     msgInput.focus();
+
+    // ── Visibilidade do rodapé "Apagar histórico" ─────────────────────────────
+    function updateFooterVisibility() {
+        var footer = document.getElementById('sidebar-footer');
+        if (!footer) return;
+        var temRecentes = sessionList && sessionList.children.length > 0;
+        var temFixadas = pinnedList && pinnedList.children.length > 0;
+        var temConversas = temRecentes || temFixadas;
+        var colapsada = sidebar.classList.contains('sidebar--collapsed');
+        footer.style.display = (temConversas && !colapsada) ? '' : 'none';
+    }
+
+    // Executa na carga inicial
+    updateFooterVisibility();
+
+    // ── Apagar todas as conversas ─────────────────────────────────────────────
+    var btnApagarTodas = document.getElementById('btn-apagar-todas-sessoes');
+    if (btnApagarTodas) {
+        btnApagarTodas.addEventListener('click', async function () {
+            var confirmado = await confirmModal({
+                title: 'Apagar todas as conversas',
+                message: 'Apagar todas as conversas do histórico? Essa ação não pode ser desfeita.',
+                confirmText: 'Apagar todas',
+                cancelText: 'Cancelar',
+                danger: true
+            });
+            if (!confirmado) return;
+            try {
+                var resp = await fetch('/chat/sessoes/todas', { method: 'DELETE' });
+                if (!resp.ok) throw new Error('Erro ' + resp.status);
+                var sessionListEl = document.getElementById('session-list');
+                if (sessionListEl) sessionListEl.innerHTML = '';
+                var pinnedListEl = document.getElementById('pinned-list');
+                if (pinnedListEl) {
+                    pinnedListEl.innerHTML = '';
+                    updatePinnedSectionVisibility();
+                }
+                updateFooterVisibility();
+                clearChatUI();
+            } catch (err) {
+                window.alert('Não foi possível apagar as conversas. Tente novamente.');
+            }
+        });
+    }
 })();

@@ -33,10 +33,16 @@
     <div class="historico__columns">
 
         <section class="historico__column">
-            <h2 class="historico__column-title">
-                <i data-lucide="scan-search"></i>
-                Análises
-            </h2>
+            <div class="historico__column-header">
+                <h2 class="historico__column-title">
+                    <i data-lucide="scan-search"></i>
+                    Análises
+                </h2>
+                <button type="button" class="btn btn--danger-ghost btn--sm" id="btn-apagar-todas-analises" title="Apagar todas as análises" style="display:none">
+                    <i data-lucide="trash-2"></i>
+                    Apagar todas
+                </button>
+            </div>
             <div id="list-container-analises">
                 <div class="analise-list" id="skeleton-list-analises">
                     <div class="skeleton-card">
@@ -58,10 +64,16 @@
         </section>
 
         <section class="historico__column">
-            <h2 class="historico__column-title">
-                <i data-lucide="user-check"></i>
-                Entrevistas
-            </h2>
+            <div class="historico__column-header">
+                <h2 class="historico__column-title">
+                    <i data-lucide="user-check"></i>
+                    Entrevistas
+                </h2>
+                <button type="button" class="btn btn--danger-ghost btn--sm" id="btn-apagar-todas-entrevistas" title="Apagar todas as entrevistas" style="display:none">
+                    <i data-lucide="trash-2"></i>
+                    Apagar todas
+                </button>
+            </div>
             <div id="list-container-entrevistas">
                 <div class="analise-list" id="skeleton-list-entrevistas">
                     <div class="skeleton-card">

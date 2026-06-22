@@ -201,6 +201,20 @@ def deletar_analise(analise_id):
     return jsonify({"ok": True})
 
 
+@bp.route("/analises", methods=["DELETE"])
+@login_required
+def deletar_todas_analises():
+    """Apaga definitivamente todas as análises do usuário logado."""
+    try:
+        count = Analise.query.filter_by(user_id=session["user_id"]).delete()
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.error("db_error", extra={"op": "deletar_todas_analises", "erro": str(e)})
+        return jsonify({"error": "Erro ao apagar análises"}), 500
+    return jsonify({"ok": True, "deletadas": count})
+
+
 @bp.route("/otimizar", methods=["POST"])
 @login_required
 @limiter.limit("5 per minute; 30 per hour")

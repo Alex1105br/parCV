@@ -470,3 +470,18 @@ def excluir_sessao(sid):
     if is_current:
         session.pop("chat_sid", None)
     return jsonify({"success": True})
+
+
+@bp.route("/chat/sessoes/todas", methods=["DELETE"])
+@login_required
+def excluir_todas_sessoes():
+    """Exclui todas as sessões de chat do usuário logado permanentemente."""
+    try:
+        count = ChatSession.query.filter_by(user_id=session["user_id"]).delete()
+        db.session.commit()
+        session.pop("chat_sid", None)
+    except Exception as e:
+        db.session.rollback()
+        logger.error("db_error", extra={"op": "excluir_todas_sessoes", "erro": str(e)})
+        return jsonify({"error": "Erro ao apagar conversas"}), 500
+    return jsonify({"success": True, "deletadas": count})
