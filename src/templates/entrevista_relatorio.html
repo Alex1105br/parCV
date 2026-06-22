@@ -656,7 +656,7 @@ async function carregarRelatorio() {
             ${data.curriculo ? `
             <div class="ev-sidebar-card">
                 <div class="ev-sidebar-card__label">Currículo</div>
-                <button type="button" class="ev-curriculo-btn" id="btn-view-cv" data-id="${escapeHtml(data.curriculo.id)}" data-label="${escapeHtml(data.curriculo.label)}">
+                <button type="button" class="ev-curriculo-btn" id="btn-view-cv" data-id="${escapeHtml(data.curriculo.id)}" data-label="${escapeHtml(data.curriculo.label)}" style="background:${escapeHtml(data.curriculo.cor || '#6366f1')};">
                     <i data-lucide="eye"></i>
                     <span>${escapeHtml(data.curriculo.label)}</span>
                 </button>
