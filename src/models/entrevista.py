@@ -22,6 +22,14 @@ class Entrevista(db.Model):
     (PATCH /entrevista/<id>/titulo) — exibido e editável na aba
     "Entrevistas" do Histórico (GET /entrevista/lista)."""
     __tablename__ = "entrevista"
+    __table_args__ = (
+        # Cobre exatamente o padrão de list_entrevistas: filtra por
+        # user_id e ordena por criado_em desc. Sem índice, cada chamada
+        # de /entrevista/lista faz sequential scan na tabela inteira
+        # (de todos os usuários) — o índice composto resolve filtro e
+        # ordenação numa busca só, sem precisar de 2 índices separados.
+        db.Index("ix_entrevista_user_criado", "user_id", "criado_em"),
+    )
 
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = db.Column(db.String(36), db.ForeignKey("users.id"), nullable=False)

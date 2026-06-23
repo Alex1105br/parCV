@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from io import BytesIO
 
 from flask import Blueprint, request, jsonify, render_template, session, send_file
+from sqlalchemy.orm import joinedload
 from werkzeug.utils import secure_filename
 
 from src.app import limiter
@@ -212,6 +213,11 @@ def list_entrevistas():
     per_page = min(request.args.get("per_page", 20, type=int), 50)
     pagination = (
         Entrevista.query
+        # Mesma correção de N+1 query aplicada em list_analises
+        # (routes/analisar.py): traz o Curriculo relacionado via JOIN na
+        # mesma query, em vez de 1 query extra por linha ao acessar
+        # e.curriculo no loop abaixo.
+        .options(joinedload(Entrevista.curriculo))
         .filter_by(user_id=session["user_id"])
         .order_by(Entrevista.criado_em.desc())
         .paginate(page=page, per_page=per_page, error_out=False)

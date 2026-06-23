@@ -1,6 +1,7 @@
 import os
 
 from flask import Blueprint, render_template, request, session, jsonify, send_file
+from sqlalchemy.orm import joinedload
 from werkzeug.utils import secure_filename
 
 from src.app import limiter
@@ -138,6 +139,11 @@ def list_analises():
     per_page = min(request.args.get("per_page", 20, type=int), 50)
     pagination = (
         Analise.query
+        # joinedload traz o Curriculo relacionado já no JOIN da mesma
+        # query (LEFT JOIN), em vez de 1 query extra por linha ao acessar
+        # a.curriculo no loop abaixo (era um N+1: para per_page=20, isso
+        # significava 1 + 20 = 21 idas ao banco; agora é 1 só).
+        .options(joinedload(Analise.curriculo))
         .filter_by(user_id=session["user_id"])
         .order_by(Analise.criado_em.desc())
         .paginate(page=page, per_page=per_page, error_out=False)

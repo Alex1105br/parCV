@@ -19,6 +19,12 @@ class Analise(db.Model):
     suportar análises feitas antes de qualquer vínculo de usuário ser
     obrigatório no fluxo."""
     __tablename__ = "analise"
+    __table_args__ = (
+        # Mesma justificativa do índice em Entrevista (models/entrevista.py):
+        # cobre o filtro por user_id + ordenação por criado_em desc usados
+        # em list_analises, evitando sequential scan na tabela inteira.
+        db.Index("ix_analise_user_criado", "user_id", "criado_em"),
+    )
 
     id                     = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     criado_em              = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))

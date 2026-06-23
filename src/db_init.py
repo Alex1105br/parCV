@@ -17,25 +17,30 @@ def init_db(app):
         _apply_column_migrations(db)
 
 
-def _colunas_existentes(conn, db, tabela, colunas):
-    """Retorna o subconjunto de `colunas` que já existe na tabela `tabela`,
-    consultando information_schema (leitura de metadado, não pega lock na
-    tabela). Em caso de qualquer erro na consulta, retorna None — sinal para
-    o chamador ignorar a checagem e seguir com o ALTER TABLE como antes
-    (comportamento idêntico ao anterior, nunca pior)."""
+def _carregar_colunas_existentes(conn, db, tabelas):
+    """Busca em UMA única query todas as colunas de todas as `tabelas`
+    informadas, e devolve um dict {tabela: {colunas}}. Antes, cada migração
+    com checagem fazia sua própria consulta ao information_schema (8
+    roundtrips separados ao banco a cada start do app); agora é 1 roundtrip
+    só, e o resultado é reusado em memória para todas as comparações.
+    Em caso de erro, devolve None — sinal para o chamador ignorar a
+    checagem e seguir com ALTER TABLE como antes (nunca pior que o
+    comportamento anterior)."""
     try:
         resultado = conn.execute(
             db.text(
                 """
-                SELECT column_name FROM information_schema.columns
+                SELECT table_name, column_name FROM information_schema.columns
                 WHERE table_schema = 'public'
-                  AND table_name = :tabela
-                  AND column_name = ANY(:colunas)
+                  AND table_name = ANY(:tabelas)
                 """
             ),
-            {"tabela": tabela.lower(), "colunas": [c.lower() for c in colunas]},
+            {"tabelas": [t.lower() for t in tabelas]},
         )
-        return {row[0] for row in resultado}
+        colunas_por_tabela = {t.lower(): set() for t in tabelas}
+        for tabela, coluna in resultado:
+            colunas_por_tabela[tabela].add(coluna)
+        return colunas_por_tabela
     except Exception:
         return None
 
@@ -190,11 +195,23 @@ def _apply_column_migrations(db):
         ),
     ]
 
+    # Antes: 1 SELECT ao information_schema por migração com checagem (8
+    # roundtrips ao banco). Agora: 1 SELECT só, buscando de uma vez as
+    # colunas de todas as tabelas que aparecem em alguma checagem — o
+    # resultado fica em memória e é reusado nas comparações abaixo.
+    tabelas_a_checar = sorted({checagem[0] for _, _, checagem in migrations if checagem})
+
     with db.engine.connect() as conn:
+        colunas_por_tabela = _carregar_colunas_existentes(conn, db, tabelas_a_checar)
+
         for descricao, sql, checagem in migrations:
             if checagem:
                 tabela, colunas = checagem
-                existentes = _colunas_existentes(conn, db, tabela, colunas)
+                existentes = (
+                    colunas_por_tabela.get(tabela.lower())
+                    if colunas_por_tabela is not None
+                    else None
+                )
                 if existentes is not None and set(c.lower() for c in colunas) <= existentes:
                     print(f"[db] OK (já existia, pulado): {descricao}")
                     continue
@@ -202,6 +219,14 @@ def _apply_column_migrations(db):
                 conn.execute(db.text(sql.strip()))
                 conn.commit()
                 print(f"[db] OK: {descricao}")
+                # Mantém o cache em memória coerente: se essa migração tinha
+                # checagem e acabou de rodar o ALTER, marca as colunas como
+                # existentes agora, para o caso de outra migração futura no
+                # mesmo loop referenciar a mesma tabela.
+                if checagem and colunas_por_tabela is not None:
+                    colunas_por_tabela.setdefault(tabela.lower(), set()).update(
+                        c.lower() for c in colunas
+                    )
             except Exception as e:
                 conn.rollback()
                 print(f"[db] ERRO em '{descricao}': {e}")
