@@ -93,9 +93,14 @@ class Curriculo(db.Model):
     analises  = db.relationship("Analise",  back_populates="curriculo", lazy="dynamic")
     entrevistas = db.relationship("Entrevista", back_populates="curriculo", lazy="dynamic")
 
-    # ── índice composto para tornar a busca de dedup instantânea ──────────
+    # ── índices ─────────────────────────────────────────────────────────
+    # ix_curriculo_user_hash: usado na dedup (busca por user_id+hash_conteudo).
+    # ix_curriculo_user_criado: cobre listar()/listar_api() (WHERE user_id
+    # = ... ORDER BY criado_em DESC) — mesmo padrão usado em Analise e
+    # Entrevista (ver models/analise.py e models/entrevista.py).
     __table_args__ = (
         db.Index("ix_curriculo_user_hash", "user_id", "hash_conteudo"),
+        db.Index("ix_curriculo_user_criado", "user_id", "criado_em"),
         db.UniqueConstraint("user_id", "label", name="uq_curriculo_user_label"),
     )
 

@@ -32,9 +32,23 @@ def listar_cores():
 @login_required
 def listar():
     """Lista todos os currículos do usuário logado, do mais recente ao mais antigo."""
+    # with_entities: busca só as colunas usadas na resposta, em vez de
+    # Curriculo.query.all() (que traria a linha inteira, incluindo
+    # arquivo_pdf — binário pesado que não é usado aqui). Com banco
+    # remoto isso evita transferir megabytes de PDF pela rede a cada
+    # chamada, só para descartá-los depois no dict abaixo.
+    # func.left(texto, 200) já corta o texto no próprio banco — preview
+    # nunca precisa do texto inteiro (até 20000 chars) chegando pela rede.
+    from sqlalchemy import func
     curriculos = (
-        Curriculo.query
-        .filter_by(user_id=session["user_id"])
+        db.session.query(
+            Curriculo.id,
+            Curriculo.label,
+            Curriculo.cor,
+            Curriculo.criado_em,
+            func.left(Curriculo.texto, 200).label("preview"),
+        )
+        .filter(Curriculo.user_id == session["user_id"])
         .order_by(Curriculo.criado_em.desc())
         .all()
     )
@@ -45,7 +59,7 @@ def listar():
                 "label":     c.label,
                 "cor":       c.cor,
                 "criado_em": c.criado_em.isoformat(),
-                "preview":   c.texto[:200].replace("\n", " "),
+                "preview":   c.preview.replace("\n", " "),
             }
             for c in curriculos
         ]
@@ -60,9 +74,20 @@ def listar_api():
     A listagem trabalha exclusivamente com a versão PDF de cada currículo
     (original ou convertida nas Tasks 1/2) — não retorna mais o texto extraído.
     """
+    # Mesma lógica de listar() acima: with_entities evita trazer
+    # arquivo_pdf (LargeBinary, pode ter vários MB) pela rede só para
+    # testar "is not None". O teste agora é feito no próprio banco via
+    # IS NOT NULL — chega como booleano, sem nenhum byte do PDF trafegar.
     curriculos = (
-        Curriculo.query
-        .filter_by(user_id=session["user_id"])
+        db.session.query(
+            Curriculo.id,
+            Curriculo.label,
+            Curriculo.cor,
+            Curriculo.criado_em,
+            Curriculo.arquivo_nome,
+            Curriculo.arquivo_pdf.isnot(None).label("tem_arquivo_pdf"),
+        )
+        .filter(Curriculo.user_id == session["user_id"])
         .order_by(Curriculo.criado_em.desc())
         .all()
     )
@@ -74,7 +99,7 @@ def listar_api():
                 "cor":             c.cor,
                 "criado_em":       c.criado_em.isoformat(),
                 "arquivo_nome":    c.arquivo_nome,
-                "tem_arquivo_pdf": c.arquivo_pdf is not None,
+                "tem_arquivo_pdf": c.tem_arquivo_pdf,
             }
             for c in curriculos
         ]

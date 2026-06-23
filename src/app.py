@@ -45,9 +45,17 @@ def create_app():
     # conexões ociosas. pool_pre_ping testa a conexão antes de cada uso e
     # pool_recycle força a renovação periódica, evitando que o pool
     # mantenha conexões além do tempo que o servidor de banco tolera.
+    #
+    # pool_size baixo (5) é de propósito: ao usar o Session Pooler do
+    # Supabase (porta 6543), o limite de conexões simultâneas é mais
+    # restrito que numa conexão direta — manter o pool da aplicação
+    # pequeno evita esgotar esse limite quando o reloader do Flask sobe
+    # 2 processos em debug=True (cada processo abre seu próprio pool).
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
         "pool_pre_ping": True,
         "pool_recycle": 280,
+        "pool_size": 5,
+        "max_overflow": 5,
     }
 
     # ── Flask-Mail (SMTP) ──────────────────────────────────────────────────
