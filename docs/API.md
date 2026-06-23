@@ -89,7 +89,21 @@ Lista paginada das análises do usuário logado.
 
 **Query params:** `page` (default 1), `per_page` (default 20, máx 50)
 
-**Resposta 200:** `{"analises": [{id, score_total, criado_em, vaga}], "total", "page", "pages"}`
+**Resposta 200:** `{"analises": [{id, titulo, score_total, criado_em, vaga, curriculo_label, curriculo_cor, curriculo_id}], "total", "page", "pages"}`
+
+### `PATCH /analises/<analise_id>/titulo` 🔒
+Renomeia manualmente o título de uma análise.
+
+**Body (JSON):** `{"titulo": "..."}`
+
+**Resposta 200:** `{"id", "titulo"}`
+**Erros:** `400` (título vazio), `404`.
+
+### `DELETE /analises/<analise_id>` 🔒
+Apaga definitivamente uma análise do histórico.
+
+**Resposta 200:** `{"ok": true}`
+**Erros:** `404` (não encontrada ou pertence a outro usuário), `500` (erro ao apagar).
 
 ### `GET /historico` 🔒
 Página HTML de histórico (`historico.html`).
@@ -126,6 +140,70 @@ Gera o PDF do currículo otimizado.
 
 **Resposta 200:** arquivo PDF (`Content-Type: application/pdf`, `as_attachment=True`).
 **Erros:** `400` (sem texto disponível), `422` (prompt injection no texto enviado via POST), `500` (erro na geração).
+
+---
+
+## Currículos (`src/routes/curriculo.py`, prefixo `/curriculos`)
+
+### `GET /curriculos/` 🔒
+Página HTML de gestão de currículos (`curriculos.html`).
+
+### `GET /curriculos/cores` 🔒
+Devolve a paleta fixa de 30 cores disponíveis para a label e qual delas é o padrão.
+
+**Resposta 200:** `{"cores": ["#6366f1", ...], "cor_padrao": "#6366f1"}`
+
+### `GET /curriculos/lista` 🔒
+Lista todos os currículos do usuário logado, do mais recente ao mais antigo.
+
+**Resposta 200:**
+```json
+{
+  "curriculos": [
+    {"id", "label", "cor", "criado_em", "arquivo_nome", "tem_arquivo_pdf"}
+  ]
+}
+```
+
+### `GET /curriculos/<curriculo_id>` 🔒
+Retorna o texto completo de um currículo.
+
+**Resposta 200:** `{"id", "label", "cor", "texto", "criado_em"}`
+**Erros:** `404`.
+
+### `PATCH /curriculos/<curriculo_id>/label` 🔒
+Edita a label de um currículo, garantindo unicidade por usuário.
+
+**Body (JSON):** `{"label": "..."}`
+
+**Resposta 200:** `{"id", "label"}`
+**Erros:** `400` (label vazia ou já existe), `404`.
+
+### `PATCH /curriculos/<curriculo_id>/cor` 🔒
+Altera a cor da label de um currículo. A cor deve ser exatamente uma das opções da paleta fixa devolvida por `GET /curriculos/cores` — qualquer outro valor é rejeitado.
+
+**Body (JSON):** `{"cor": "#6366f1"}`
+
+**Resposta 200:** `{"id", "cor"}`
+**Erros:** `400` (cor não informada ou fora da paleta), `404`.
+
+### `DELETE /curriculos/<curriculo_id>` 🔒
+Apaga um currículo permanentemente.
+
+**Resposta 200:** `{"ok": true}`
+**Erros:** `404`, `500`.
+
+### `GET /curriculos/pdf/<curriculo_id>` 🔒
+Retorna o binário do PDF para visualização inline (ex.: em um `<iframe>`).
+
+**Resposta 200:** `Content-Type: application/pdf`, `as_attachment=False`.
+**Erros:** `404` (currículo não encontrado ou sem arquivo PDF).
+
+### `GET /curriculos/download/<curriculo_id>` 🔒
+Força o download do arquivo PDF original.
+
+**Resposta 200:** `Content-Type: application/pdf`, `as_attachment=True`.
+**Erros:** `404`.
 
 ---
 
@@ -213,13 +291,43 @@ Gera um plano de entrevista (10 perguntas: 6 hard skills + 4 soft skills) a part
 ```
 **Erros:** `400` (sem currículo/vaga, arquivo inválido), `413` (arquivo grande), `422` (prompt injection na vaga ou no currículo), `500` (erro ao gerar plano).
 
+### `GET /entrevista/lista` 🔒
+Lista paginada das entrevistas do usuário logado, ordenadas da mais recente à mais antiga.
+
+**Query params:** `page` (default 1), `per_page` (default 20, máx 50)
+
+**Resposta 200:**
+```json
+{
+  "entrevistas": [
+    {"id", "titulo", "status", "vaga_descricao", "criado_em", "score_geral", "curriculo_label", "curriculo_cor", "curriculo_id"}
+  ],
+  "total", "page", "pages"
+}
+```
+`score_geral` é extraído de `relatorio_final` quando a entrevista já está concluída; `null` caso contrário.
+
 ### `GET /entrevista/<entrevista_id>/executar` 🔒
 Página de execução da entrevista (`entrevista_execucao.html`). `404` (texto simples, não JSON) se a entrevista não existir/pertencer ao usuário.
 
 ### `GET /entrevista/<entrevista_id>` 🔒
 Dados completos da entrevista, incluindo todas as perguntas e respostas já dadas.
 
-**Resposta 200:** `{id, status, numero_perguntas, plano_entrevista, criado_em, relatorio_final, perguntas: [{numero_sequencial, pergunta_principal, resposta_usuario, respondido, avaliacao_resposta, score}]}`
+**Resposta 200:** `{id, titulo, status, numero_perguntas, plano_entrevista, criado_em, relatorio_final, perguntas: [{numero_sequencial, pergunta_principal, resposta_usuario, respondido, avaliacao_resposta, score}]}`
+
+### `PATCH /entrevista/<entrevista_id>/titulo` 🔒
+Renomeia manualmente o título de uma entrevista.
+
+**Body (JSON):** `{"titulo": "..."}`
+
+**Resposta 200:** `{"id", "titulo"}`
+**Erros:** `400` (título vazio), `404`.
+
+### `DELETE /entrevista/<entrevista_id>` 🔒
+Apaga definitivamente uma entrevista do histórico. O cascade delete remove também todas as `PerguntaEntrevista` filhas.
+
+**Resposta 200:** `{"ok": true}`
+**Erros:** `404`, `500`.
 
 ### `GET /entrevista/<entrevista_id>/pergunta/<numero>` 🔒
 Dados de uma pergunta específica pelo número sequencial (1-10).
@@ -250,6 +358,47 @@ Exporta o relatório final em PDF.
 
 **Resposta 200:** arquivo PDF (`as_attachment=True`, nome `relatorio_entrevista_<id>.pdf`).
 **Erros:** `404` (entrevista não encontrada), `500` (erro na geração do PDF).
+
+---
+
+## Conta (`src/routes/conta.py`)
+
+### `GET /conta` 🔒
+Página HTML de configurações da conta (`conta.html`).
+
+### `POST /conta/dados` 🔒 ⏱ `(10/min)`
+Atualiza nome e informações de perfil do usuário logado (exceto e-mail).
+
+**Body (JSON):**
+```json
+{"nome": "...", "telefone": "...", "profissao": "..."}
+```
+`telefone` e `profissao` são opcionais (podem ser strings vazias para limpar o campo).
+
+**Resposta 200:** `{"ok": true, "name": "..."}` — o `name` retornado reflete o nome atualizado (também atualizado em `session["user_name"]` para refletir na navbar imediatamente).
+**Erros:** `400` (nome vazio ou inválido).
+
+### `POST /conta/senha` 🔒 ⏱ `(5/min)`
+Altera a senha após verificar a senha atual.
+
+**Body (JSON):**
+```json
+{"senha_atual": "...", "nova_senha": "...", "confirmar_senha": "..."}
+```
+
+**Validações:** `senha_atual` correta; `nova_senha` com 8+ caracteres; `nova_senha` e `confirmar_senha` coincidem.
+**Resposta 200:** `{"ok": true}`
+**Erros:** `400` (validação falhou — mensagem específica no campo `error`).
+
+### `POST /conta/excluir` 🔒 ⏱ `(3/min)`
+Remove permanentemente o usuário logado e todos os seus dados (análises, otimizações, sessões de chat, entrevistas, currículos).
+
+**Body (JSON):** `{"senha": "..."}` — confirmação de identidade.
+
+**Resposta 200:** `{"ok": true}` — o frontend é responsável por redirecionar para `/login`.
+**Erros:** `400` (senha incorreta).
+
+**Efeito colateral:** `session.clear()` é chamado antes do retorno — a sessão é invalidada no mesmo request.
 
 ---
 
