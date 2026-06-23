@@ -4,9 +4,11 @@ Plataforma web para otimizar currículos e se preparar para entrevistas com apoi
 
 - **Análise ATS** — score de compatibilidade, pontos fortes/fracos, sugestões e palavras-chave da vaga que estão faltando no currículo.
 - **Otimização de currículo** — reescrita do currículo com IA, com exportação em PDF (3 templates visuais: clássico, moderno, executivo) e suporte a foto e links clicáveis.
+- **Biblioteca de currículos** — gerenciamento centralizado de currículos salvos, com labels coloridas personalizáveis, visualização e download do PDF original, deduplicação automática por conteúdo e reutilização direta nas análises/entrevistas.
 - **Chat de carreira** — assistente conversacional especializado em carreira e currículos, com histórico de conversas salvo por usuário.
 - **Simulação de entrevista** — geração de um plano de perguntas a partir do currículo + vaga, execução pergunta a pergunta com avaliação por IA, e relatório final exportável em PDF.
-- **Histórico** — listagem e detalhe das análises e otimizações já feitas.
+- **Histórico** — listagem e detalhe das análises, otimizações e entrevistas já feitas.
+- **Conta** — edição de dados de perfil (nome, telefone, profissão), alteração de senha e exclusão de conta.
 - **Autenticação** — cadastro, login, logout e recuperação de senha por e-mail (token com expiração de 1 hora).
 
 O backend é em **Flask** (Python), com **PostgreSQL** (ex.: Supabase) como banco de dados, e suporta dois backends de LLM: **Groq** (nuvem) ou **Ollama** (local).
@@ -168,7 +170,9 @@ Pacotes instalados (`requirements.txt`):
 | `flask-limiter` | 4.0 | rate limiting das rotas de IA |
 | `psycopg2-binary` | 2.9.10 | driver PostgreSQL |
 | `environs` | 11.0 | leitura de variáveis de ambiente / `.env` |
-| `python-docx` | 1.1 | leitura de currículos `.docx` |
+| `marshmallow` | 4.3 | serialização/validação de dados |
+| `pillow` | 12.2 | processamento de imagens (foto no currículo) |
+| `python-docx` | 1.1 | leitura de currículos `.docx` e conversão para PDF |
 | `reportlab` | 4.0 | geração de PDF |
 | `requests` | 2.31 | chamadas HTTP à API da Groq/Ollama |
 | `werkzeug` | 3.0 | utilitários web (hash de senha, etc.) |
@@ -304,7 +308,16 @@ Não é necessário criar tabelas manualmente. Ao iniciar (`python3 run.py`), o 
 
 Isso é idempotente — pode rodar quantas vezes quiser sem causar erro.
 
-O projeto também tem **Flask-Migrate** (Alembic) configurado em `migrations/`, com uma única migration consolidada (`0001_initial`) representando o schema final do MVP — `users`, `analise`, `otimizacao`, `chat_session`, `entrevista` e `pergunta_entrevista`. Se preferir aplicar essa migration explicitamente em vez de depender do `init_db()` automático:
+O projeto também tem **Flask-Migrate** (Alembic) configurado em `migrations/`, com quatro migrations em sequência:
+
+| Migration | Descrição |
+|---|---|
+| `0001_initial` | Schema completo inicial: `users`, `analise`, `otimizacao`, `chat_session`, `entrevista`, `pergunta_entrevista`, `curriculo` |
+| `0002_entrevista_titulo` | Adiciona coluna `titulo` à tabela `entrevista` (título gerado pela IA, exibível e editável no Histórico) |
+| `0003_curriculo_arquivo_pdf` | Adiciona `arquivo_pdf`, `arquivo_nome` e `arquivo_mimetype` à tabela `curriculo` (armazenamento do binário PDF original) |
+| `0004_user_perfil_extra` | Adiciona `telefone` e `profissao` à tabela `users` (campos editáveis na tela /conta) |
+
+Se preferir aplicar as migrations explicitamente em vez de depender do `init_db()` automático:
 
 ```bash
 flask --app run db upgrade
@@ -419,6 +432,7 @@ Esse arquivo funciona como um teste de regressão rápido para a camada de segur
 
 Se alguém futuramente alterar `has_prompt_injection()`, os padrões da regex, ou esquecer de chamar essa validação numa rota nova, repetir esse teste manualmente é a forma mais rápida de notar a regressão antes que vá para produção.
 
+---
 
 ## Comandos úteis (resumo)
 
@@ -450,67 +464,82 @@ deactivate
 
 ```
 Trabalho/
-├── run.py                       # entrypoint da aplicação
+├── run.py                        # entrypoint da aplicação
 ├── requirements.txt
-├── .env.example                 # modelo de variáveis de ambiente
+├── .env.example                  # modelo de variáveis de ambiente
 ├── .gitignore
-├── vaga.txt                     # exemplo de descrição de vaga (para testes)
-├── prompt-injection.txt         # caso de teste de segurança (prompt injection) — ver seção própria
+├── vaga.txt                      # exemplo de descrição de vaga (para testes)
+├── prompt-injection.txt          # caso de teste de segurança (prompt injection) — ver seção própria
 ├── README.md
 ├── docs/
-│   ├── API.md                   # referência completa dos endpoints HTTP
-│   └── ARQUITETURA.md          # como as peças do sistema se conectam
+│   ├── API.md                    # referência completa dos endpoints HTTP
+│   └── ARQUITETURA.md            # como as peças do sistema se conectam
 ├── backlog/                      # histórico de sprints (uso interno/apresentação)
 │   ├── BACKLOG.md
 │   └── parcv-marp.css
-├── logs/                          # logs gerados em runtime (não versionado, ver .gitignore)
-│   └── parcv.log
-├── migrations/                     # Alembic / Flask-Migrate
+├── migrations/                   # Alembic / Flask-Migrate
 │   ├── alembic.ini
 │   ├── env.py
 │   ├── script.py.mako
 │   ├── README
 │   └── versions/
-│       └── 0001_initial.py        # schema único consolidado (ver seção de Banco de dados)
+│       ├── 0001_initial.py           # schema completo inicial
+│       ├── 0002_entrevista_titulo.py # coluna titulo em entrevista
+│       ├── 0003_curriculo_arquivo_pdf.py  # armazenamento do PDF original
+│       └── 0004_user_perfil_extra.py # telefone e profissao em users
 └── src/
     ├── __init__.py
-    ├── app.py                      # factory da aplicação Flask
-    ├── config.py                   # leitura das variáveis de ambiente
-    ├── db_init.py                  # criação/atualização automática das tabelas
-    ├── logging_config.py           # logging estruturado (JSON, request_id)
-    ├── utils.py                    # helpers: auth, arquivos, sanitização, prompt injection
-    ├── models/                      # modelos SQLAlchemy
+    ├── app.py                    # factory da aplicação Flask
+    ├── config.py                 # leitura das variáveis de ambiente
+    ├── db_init.py                # criação/atualização automática das tabelas
+    ├── logging_config.py         # logging estruturado (JSON, request_id)
+    ├── utils.py                  # helpers: auth, arquivos, sanitização, prompt injection
+    ├── models/                   # modelos SQLAlchemy
     │   ├── __init__.py
-    │   ├── db.py                    # instância SQLAlchemy
-    │   ├── user.py                  # User
-    │   ├── analise.py                # Analise
-    │   ├── otimizacao.py             # Otimizacao
-    │   ├── chat_session.py           # ChatSession
-    │   └── entrevista.py             # Entrevista, PerguntaEntrevista
-    ├── routes/                      # blueprints (camada HTTP)
+    │   ├── db.py                 # instância SQLAlchemy
+    │   ├── user.py               # User (com telefone, profissao, proximo_indice_cor)
+    │   ├── analise.py            # Analise
+    │   ├── otimizacao.py         # Otimizacao
+    │   ├── chat_session.py       # ChatSession
+    │   ├── curriculo.py          # Curriculo (com arquivo PDF e paleta de cores)
+    │   └── entrevista.py         # Entrevista, PerguntaEntrevista
+    ├── routes/                   # blueprints (camada HTTP)
     │   ├── __init__.py
-    │   ├── auth.py                   # login, registro, logout, recuperação de senha
-    │   ├── home.py                   # página inicial
-    │   ├── analisar.py                # análise ATS, otimização de currículo, histórico, export PDF
-    │   ├── chat.py                    # chat de carreira (streaming SSE), sessões de conversa
-    │   └── entrevista.py              # simulação de entrevista (plano → execução → relatório)
-    ├── services/                    # regras de negócio
+    │   ├── auth.py               # login, registro, logout, recuperação de senha
+    │   ├── home.py               # página inicial
+    │   ├── analisar.py           # análise ATS, otimização de currículo, histórico, export PDF
+    │   ├── chat.py               # chat de carreira (streaming SSE), sessões de conversa
+    │   ├── curriculo.py          # CRUD de currículos salvos, visualização/download de PDF
+    │   ├── conta.py              # dados de perfil, alteração de senha, exclusão de conta
+    │   └── entrevista.py         # simulação de entrevista (plano → execução → relatório)
+    ├── services/                 # regras de negócio
     │   ├── __init__.py
-    │   ├── model.py                   # abstração Groq/Ollama, prompts/parsing da entrevista
-    │   ├── prompts.py                  # prompts de análise ATS e otimização de currículo
-    │   ├── parser.py                   # extração de JSON da resposta da LLM
-    │   └── pdf.py                      # geração de PDF (currículo e relatório de entrevista)
-    ├── static/                       # CSS/JS
+    │   ├── model.py              # abstração Groq/Ollama, prompts/parsing da entrevista
+    │   ├── prompts.py            # prompts de análise ATS e otimização de currículo
+    │   ├── parser.py             # extração de JSON da resposta da LLM
+    │   ├── curriculo.py          # label automática, deduplicação, gestão de cores
+    │   ├── conversor_pdf.py      # conversão de .docx/.txt para PDF (via ReportLab)
+    │   ├── conta.py              # atualização de perfil, alteração de senha, exclusão de conta
+    │   └── pdf.py                # geração de PDF (currículo otimizado e relatório de entrevista)
+    ├── static/                   # CSS/JS
     │   ├── base.css
     │   ├── home.css / home.js
     │   ├── auth.css
     │   ├── analisar.css / analisar.js
     │   ├── chat.css / chat.js
-    │   ├── historico.css / historico.js
-    │   ├── historico_detalhe.js
-    │   ├── entrevista.js
-    │   └── favicon.svg
-    └── templates/                    # HTML (Jinja2)
+    │   ├── historico.css / historico.js / historico_detalhe.js
+    │   ├── curriculos.css / curriculos.js
+    │   ├── curriculo_picker.js   # seletor de currículo reutilizável (análise/entrevista)
+    │   ├── conta.css / conta.js
+    │   ├── confirm_modal.js      # modal de confirmação genérico
+    │   ├── images/
+    │   │   └── logo-ui.png
+    │   └── favicon/
+    │       ├── favicon.ico / favicon.svg
+    │       ├── favicon-16x16.png / favicon-32x32.png
+    │       ├── apple-touch-icon.png
+    │       └── android-chrome-192x192.png / android-chrome-512x512.png
+    └── templates/                # HTML (Jinja2)
         ├── base.html
         ├── home.html
         ├── login.html
@@ -518,9 +547,11 @@ Trabalho/
         ├── forgot_password.html
         ├── reset_password.html
         ├── analisar.html
+        ├── curriculos.html       # biblioteca de currículos
         ├── historico.html
         ├── historico_detalhe.html
         ├── chat.html
+        ├── conta.html            # configurações de conta e perfil
         ├── entrevista_planejamento.html
         ├── entrevista_execucao.html
         └── entrevista_relatorio.html
@@ -539,5 +570,6 @@ Trabalho/
 | `No module named venv` ao criar o ambiente virtual | pacote `python3-venv` não instalado (comum em Ubuntu/WSL) | `sudo apt install python3-venv -y` |
 | Erro de conexão com o banco | `DATABASE_URL` incorreta ou banco fora do ar | Confirme a string de conexão no `.env` e se o Postgres/Supabase está acessível |
 | E-mail de recuperação de senha não chega | `MAIL_USERNAME`/`MAIL_PASSWORD` vazios ou incorretos | Configure uma conta Gmail + App Password em `MAIL_USERNAME`/`MAIL_PASSWORD` (caminho mais simples) |
+| Currículo salvo sem PDF para visualizar | Upload de `.docx` ou `.txt` sem o serviço de conversão funcionando | Verifique se `python-docx` e `reportlab` estão instalados no venv |
 
 > ⚠️ Se você está no Windows, todos os comandos deste guia devem ser executados **dentro do terminal do WSL**, nunca no PowerShell/CMD — só o navegador é aberto normalmente pelo Windows, em `http://localhost:5000`. Se você está em Linux nativo, basta usar seu terminal normal.
