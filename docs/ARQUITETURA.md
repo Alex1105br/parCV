@@ -25,7 +25,7 @@ PostgreSQL                              LLM externo (Groq API / Ollama local)
 
 ### `src/app.py` — Application Factory
 
-`create_app()` monta a aplicação Flask: carrega config, inicializa extensões (`SQLAlchemy`, `Flask-Mail`, `Flask-Migrate`, `Flask-Limiter`), registra os 5 blueprints e define:
+`create_app()` monta a aplicação Flask: carrega config, inicializa extensões (`SQLAlchemy`, `Flask-Mail`, `Flask-Migrate`, `Flask-Limiter`), registra os 7 blueprints e define:
 
 - **`@app.before_request` / `@app.after_request`**: geram um `request_id` (UUID curto) por requisição, guardado em `g.request_id` e num `ContextVar` (`request_id_var`), usado pelo `StructuredFormatter` do logging para correlacionar logs da mesma requisição. O `after_request` também loga duração e status de cada chamada, e devolve o `request_id` no header `X-Request-Id`.
 - **`@app.errorhandler(429)`**: resposta JSON padronizada quando o rate limiter bloqueia uma requisição.
@@ -48,6 +48,8 @@ Cada arquivo é um Blueprint Flask, registrado em `app.py`. Responsabilidade: re
 | `analisar.py` | `/` | análise ATS, otimização de currículo, histórico, export PDF |
 | `chat.py` | `/` | chat de carreira com streaming SSE, sessões de conversa |
 | `entrevista.py` | `/entrevista` | simulação de entrevista (plano → execução → relatório) |
+| `curriculo.py` | `/curriculos` | CRUD de currículos salvos, visualização/download de PDF, paleta de cores |
+| `conta.py` | `/` | dados de perfil do usuário, alteração de senha, exclusão de conta |
 
 Toda rota que exige usuário logado usa o decorator `@login_required` (definido em `src/utils.py`), que verifica `"user_id" in session` e redireciona para `/login` caso contrário.
 
@@ -59,8 +61,11 @@ Funções puras (ou quase puras — algumas fazem I/O de rede para a LLM), sem a
 |---|---|
 | `model.py` | Abstrai os dois backends de LLM (Groq/Ollama) atrás de uma interface única: `call_model()` (síncrono) e `stream_resposta()` (streaming SSE). Também contém os prompts e o parsing de resposta específicos da simulação de entrevista (`gerar_plano_entrevista`, `avaliar_resposta`, `gerar_relatorio_final`). |
 | `prompts.py` | Templates de prompt para análise ATS e otimização de currículo. Cada prompt embute o conteúdo do usuário em tags `<curriculo>`/`<vaga>` com instrução explícita para a IA tratá-las como dados, não comandos. |
-| `parser.py` | Extrai JSON de respostas de LLM (que às vezes vêm com texto extra ou cercas ```` ```json ````), com fallback por regex se o JSON vier malformado. |
+| `parser.py` | Extrai JSON de respostas de LLM (que às vezes vêm com texto extra ou cercas ` ```json ` ), com fallback por regex se o JSON vier malformado. |
 | `pdf.py` | Gera os PDFs (currículo otimizado em 3 templates visuais; relatório de entrevista) usando ReportLab. Faz parsing do texto com marcadores (`---SECAO:---` etc.) em blocos tipados antes de desenhar. |
+| `curriculo.py` | Geração automática de label via LLM, garantia de unicidade de label por usuário, gerenciamento da paleta de cores (round-robin automático + seleção manual), deduplicação por hash SHA-256 do texto. |
+| `conversor_pdf.py` | Converte currículos enviados em `.docx` ou `.txt` para PDF usando ReportLab, preservando a estrutura visual do documento. PDFs são armazenados diretamente sem conversão. |
+| `conta.py` | Atualização de dados de perfil (nome, telefone, profissão), alteração de senha com verificação da senha atual, exclusão de conta e todos os dados relacionados. |
 
 ### `src/models/` — Persistência (SQLAlchemy)
 
@@ -94,6 +99,7 @@ Browser envia arquivo + vaga
   → valida extensão/tamanho (utils.allowed_file, get_file_size)
   → extrai texto (utils.carregar_arquivo: pdftotext / python-docx / leitura direta)
   → sanitiza e checa prompt injection
+  → salva/recupera Curriculo por hash SHA-256 (services.curriculo.obter_ou_criar_curriculo)
   → monta prompt (services.prompts.build_prompt_ats)
   → chama LLM (services.model.call_model)
   → extrai JSON da resposta (services.parser.extrair_json)
@@ -117,6 +123,12 @@ Fluxo em 3 etapas, cada uma uma chamada separada à IA:
 
 O relatório final pode ser exportado em PDF via `GET /entrevista/<id>/exportar-pdf` (`services.pdf.gerar_pdf_relatorio_entrevista`).
 
+### Gestão de currículos (`/curriculos`)
+
+Currículos são persistidos na tabela `curriculo` com deduplicação automática por hash SHA-256 do texto extraído. Ao fazer upload de um novo currículo em qualquer tela (análise ou entrevista), o sistema verifica se um currículo com o mesmo conteúdo já existe para aquele usuário — se sim, reutiliza o registro existente em vez de criar um duplicado.
+
+O arquivo PDF original (ou a versão convertida, para DOCX/TXT) é armazenado na coluna `arquivo_pdf` como `LargeBinary`, permitindo visualização e download fiel ao arquivo enviado.
+
 ## Schema do banco de dados
 
 ```
@@ -124,22 +136,26 @@ users
  ├─< analise (user_id)
  ├─< otimizacao (user_id)
  ├─< chat_session (user_id)
- └─< entrevista (user_id)
+ ├─< entrevista (user_id)
+ └─< curriculo (user_id)
 
 analise
- └─< otimizacao (analise_id, opcional)
+ ├─< otimizacao (analise_id, opcional)
+ └─> curriculo (curriculo_id, opcional)
 
 entrevista
- └─< pergunta_entrevista (entrevista_id, cascade delete)
+ ├─< pergunta_entrevista (entrevista_id, cascade delete)
+ └─> curriculo (curriculo_id, opcional)
 ```
 
 | Tabela | Campos principais | Observações |
 |---|---|---|
-| `users` | `name`, `email` (único), `password` (hash), `reset_token`, `reset_token_expires_at` | Senha com `werkzeug.security.generate_password_hash`. Token de reset expira em 1h. |
-| `analise` | `score_total`, `criterios` (JSON), `pontos_fortes/fracos` (JSON), `sugestoes` (JSON), `palavras_chave_faltando` (JSON), `certificados_sugeridos` (JSON), `texto_original`, `vaga` | Resultado de uma análise ATS. |
+| `users` | `name`, `email` (único), `password` (hash), `reset_token`, `reset_token_expires_at`, `telefone`, `profissao`, `proximo_indice_cor` | Senha com `werkzeug.security.generate_password_hash`. Token de reset expira em 1h. `proximo_indice_cor` é um contador crescente para distribuição round-robin automática das cores de label dos currículos. |
+| `curriculo` | `user_id` (FK), `label` (único por usuário), `cor`, `hash_conteudo` (SHA-256), `texto`, `arquivo_pdf` (LargeBinary), `arquivo_nome`, `arquivo_mimetype` | Paleta de 30 cores fixas. Índice composto `(user_id, hash_conteudo)` para deduplicação eficiente. Constraint única `(user_id, label)`. |
+| `analise` | `score_total`, `criterios` (JSON), `pontos_fortes/fracos` (JSON), `sugestoes` (JSON), `palavras_chave_faltando` (JSON), `certificados_sugeridos` (JSON), `texto_original`, `vaga`, `titulo`, `curriculo_id` (FK opcional) | Resultado de uma análise ATS. `titulo` gerado automaticamente pela LLM. |
 | `otimizacao` | `curriculo_original`, `curriculo_otimizado`, `melhorias` (JSON), `analise_id` (FK opcional) | Resultado de uma otimização de currículo. |
 | `chat_session` | `titulo`, `titulo_gerado` (bool), `mensagens` (JSON — lista de `{role, content}`), `fixado` (bool), `fixado_em` (timestamp, null se não-fixada) | Uma sessão = uma conversa do chat. Título gerado automaticamente pela IA na primeira mensagem. A lista de conversas fixadas é ordenada por `fixado_em` (não por `atualizado_em`), para que enviar mensagens não mude a posição de uma conversa já fixada. |
-| `entrevista` | `curriculo_arquivo`, `vaga_descricao`, `numero_perguntas`, `plano_entrevista` (JSON), `status` (`em_planejamento`/`em_andamento`/`concluida`), `relatorio_final` (JSON) | |
+| `entrevista` | `curriculo_arquivo`, `vaga_descricao`, `numero_perguntas`, `plano_entrevista` (JSON), `status` (`em_planejamento`/`em_andamento`/`concluida`), `relatorio_final` (JSON), `titulo`, `curriculo_id` (FK opcional) | `titulo` gerado automaticamente pela LLM. |
 | `pergunta_entrevista` | `entrevista_id` (FK), `numero_sequencial`, `pergunta_principal`, `resposta_usuario`, `avaliacao_resposta` (JSON) | Perguntas 1-6 = hard skills, 7-10 = soft skills (convenção fixada no código, não numa coluna). |
 
 Todas as tabelas usam campos `JSON` nativos do Postgres para estruturas semi-tabulares (listas de strings, dicts de critérios) — escolha que evita tabelas auxiliares para dados que não precisam de query relacional própria.
@@ -150,7 +166,9 @@ Todas as tabelas usam campos `JSON` nativos do Postgres para estruturas semi-tab
 
 ## Decisões de design que vale registrar
 
-- **Sem camada de "service objects" para auth/CRUD simples**: rotas como login/registro acessam o model diretamente. A separação rota/service só existe onde há lógica de negócio não-trivial (prompts de IA, parsing, geração de PDF).
+- **Sem camada de "service objects" para auth/CRUD simples**: rotas como login/registro acessam o model diretamente. A separação rota/service só existe onde há lógica de negócio não-trivial (prompts de IA, parsing, geração de PDF, gestão de currículos).
 - **IDs UUID gerados em Python, não pelo banco**: permite ter o ID disponível antes do `commit()` (útil em `entrevista.py`, que usa `db.session.flush()` para obter o ID da `Entrevista` antes de criar as `PerguntaEntrevista` filhas).
 - **Rate limiting por rota, não global**: `default_limits=[]` no `Limiter` — cada rota sensível (chamadas à IA, principalmente) declara seu próprio limite via `@limiter.limit(...)`, em vez de um limite genérico para toda a aplicação.
-- **`db_init.py` como alternativa a migrations em alguns ambientes**: roda `db.create_all()` (idempotente) e aplica `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` para colunas adicionadas depois da criação inicial — pensado para ambientes (ex. Supabase) onde rodar `alembic upgrade head` é menos direto que em um Postgres própio. As migrations Alembic em `migrations/versions/` continuam sendo a fonte de verdade do schema.
+- **`db_init.py` como alternativa a migrations em alguns ambientes**: roda `db.create_all()` (idempotente) e aplica `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` para colunas adicionadas depois da criação inicial — pensado para ambientes (ex. Supabase) onde rodar `alembic upgrade head` é menos direto que em um Postgres próprio. As migrations Alembic em `migrations/versions/` continuam sendo a fonte de verdade do schema.
+- **Armazenamento do PDF original no banco**: a coluna `arquivo_pdf` em `curriculo` armazena o binário diretamente no Postgres (`LargeBinary`) em vez de em disco, simplificando o deploy (sem dependência de volume externo) ao custo de maior tamanho de banco — trade-off aceitável para um MVP.
+- **Deduplicação de currículos por hash de conteúdo**: currículos com o mesmo texto (independente de nome de arquivo ou data) geram o mesmo SHA-256 e são compartilhados entre análises/entrevistas, evitando duplicatas e reduzindo consumo de armazenamento.
