@@ -424,6 +424,37 @@ document.getElementById('btn-cancelar').addEventListener('click', async () => {
     window.location.href = '/entrevista';
 });
 
+// Descobre em qual pergunta o usuário deve retomar, consultando o estado
+// já salvo no banco (GET /entrevista/<id> traz todas as perguntas com
+// resposta_usuario/respondido). Sem isso, perguntaAtual ficava sempre
+// travado em 1 a cada load/reload, fazendo a tela "esquecer" o progresso
+// já respondido (as respostas continuavam salvas no banco, só a tela não
+// refletia isso). Se a entrevista já estiver concluída, manda para o
+// relatório em vez de reabrir a execução.
+async function resolverProgresso() {
+    try {
+        const res = await fetch(`/entrevista/${entrevistaId}`);
+        if (!res.ok) throw new Error('Erro ao carregar entrevista');
+        const data = await res.json();
+
+        if (data.status === 'concluida') {
+            entrevistaFinalizada = true;
+            window.location.href = `/entrevista/${entrevistaId}/relatorio`;
+            return false;
+        }
+
+        totalPerguntas = data.numero_perguntas || totalPerguntas;
+        const perguntas = data.perguntas || [];
+        const pendente = perguntas.find(p => !p.respondido);
+        perguntaAtual = pendente ? pendente.numero_sequencial : (perguntas.length || 1);
+        return true;
+    } catch (err) {
+        // Se não foi possível resolver o progresso, segue do início
+        // (comportamento anterior) em vez de travar a tela.
+        return true;
+    }
+}
+
 async function carregarPergunta() {
     document.getElementById('card-pergunta').classList.add('hidden');
     document.getElementById('card-feedback').classList.add('hidden');
@@ -442,7 +473,10 @@ async function carregarPergunta() {
         temaEl.className = 'ev-pergunta-meta ' + (isHard ? 'ev-pergunta-meta--hard' : 'ev-pergunta-meta--soft');
         document.getElementById('progresso-texto').textContent = `${perguntaAtual}/${totalPerguntas}`;
         document.getElementById('barra-preenchimento').style.width = `${((perguntaAtual - 1) / totalPerguntas) * 100}%`;
-        document.getElementById('resposta-input').value = '';
+        // Repopula a resposta já salva, se essa pergunta já tiver sido
+        // respondida antes (ex.: usuário voltou uma pergunta ou recarregou
+        // a página em cima de uma pergunta já respondida).
+        document.getElementById('resposta-input').value = data.resposta_anterior || '';
         document.getElementById('error-resposta').classList.add('hidden');
 
         document.getElementById('card-loading').classList.add('hidden');
@@ -538,6 +572,9 @@ async function finalizarEntrevista() {
     }
 }
 
-window.addEventListener('load', carregarPergunta);
+window.addEventListener('load', async () => {
+    const podeCarregar = await resolverProgresso();
+    if (podeCarregar) carregarPergunta();
+});
 </script>
 {% endblock %}
