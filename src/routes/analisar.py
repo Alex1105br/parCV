@@ -263,34 +263,48 @@ def deletar_analise(analise_id):
 @limiter.limit("5 per minute; 30 per hour")
 def otimizar():
     """Reescreve o currículo otimizado para a vaga informada. Mesmo fluxo
-    de validação/extração de /analisar, mas usa build_prompt_otimizar e
-    extrai o texto reescrito (com marcadores ---SECAO:--- etc., consumidos
-    depois por services/pdf.py). O texto otimizado fica salvo em
-    session["curriculo_otimizado"] para uso posterior por /otimizar/pdf
-    sem precisar reenviar o texto inteiro."""
-    if "arquivo" not in request.files:
-        return jsonify({"error": "Nenhum arquivo enviado"}), 400
-
-    arquivo = request.files["arquivo"]
+    de validação/extração de /analisar (incluindo reaproveitamento de
+    currículo salvo via curriculo_id, sem reler arquivo nem reextrair
+    texto), mas usa build_prompt_otimizar e extrai o texto reescrito (com
+    marcadores ---SECAO:--- etc., consumidos depois por services/pdf.py).
+    O texto otimizado fica salvo em session["curriculo_otimizado"] para
+    uso posterior por /otimizar/pdf sem precisar reenviar o texto inteiro."""
     vaga = sanitize_text(request.form.get("vaga", ""))
+    curriculo_id = (request.form.get("curriculo_id") or "").strip()
 
-    if arquivo.filename == "" or not allowed_file(arquivo.filename):
-        return jsonify({"error": "Arquivo inválido"}), 400
+    curriculo_existente = None
+    if curriculo_id:
+        curriculo_existente = db.session.get(Curriculo, curriculo_id)
+        if not curriculo_existente or curriculo_existente.user_id != session["user_id"]:
+            return jsonify({"error": "Currículo não encontrado"}), 404
 
-    if get_file_size(arquivo) > MAX_UPLOAD_BYTES:
-        return jsonify({"error": "Arquivo muito grande. Limite: 5 MB"}), 413
+    if curriculo_existente:
+        # Reaproveita um currículo já salvo em /curriculos — sem reler
+        # arquivo nem reextrair texto, usa os dados já persistidos.
+        texto = curriculo_existente.texto
+    else:
+        if "arquivo" not in request.files:
+            return jsonify({"error": "Nenhum arquivo enviado"}), 400
 
-    filename = secure_filename(arquivo.filename)
-    caminho = os.path.join(UPLOAD_FOLDER, filename)
-    arquivo.save(caminho)
+        arquivo = request.files["arquivo"]
 
-    texto, erro = carregar_arquivo(caminho)
-    os.remove(caminho)
+        if arquivo.filename == "" or not allowed_file(arquivo.filename):
+            return jsonify({"error": "Arquivo inválido"}), 400
 
-    if erro:
-        return jsonify({"error": erro}), 400
+        if get_file_size(arquivo) > MAX_UPLOAD_BYTES:
+            return jsonify({"error": "Arquivo muito grande. Limite: 5 MB"}), 413
 
-    texto = sanitize_text(texto, max_length=20000)
+        filename = secure_filename(arquivo.filename)
+        caminho = os.path.join(UPLOAD_FOLDER, filename)
+        arquivo.save(caminho)
+
+        texto, erro = carregar_arquivo(caminho)
+        os.remove(caminho)
+
+        if erro:
+            return jsonify({"error": erro}), 400
+
+        texto = sanitize_text(texto, max_length=20000)
 
     if has_prompt_injection(vaga) or has_prompt_injection(texto):
         return jsonify({"error": "Conteúdo inválido detectado"}), 422

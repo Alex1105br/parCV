@@ -373,8 +373,8 @@
 
     // ===== Optimization =====
     async function otimizarCurriculo() {
-        if (!fileInput.files.length) {
-            alert('Selecione um arquivo de currículo primeiro e clique em Analisar.');
+        if (!fileInput.files.length && !selectedCurriculo) {
+            alert('Selecione um arquivo ou um currículo salvo primeiro e clique em Analisar.');
             return;
         }
 
@@ -385,7 +385,11 @@
         btnOtimizar.disabled = true;
 
         const formData = new FormData();
-        formData.append('arquivo', fileInput.files[0]);
+        if (selectedCurriculo) {
+            formData.append('curriculo_id', selectedCurriculo.id);
+        } else {
+            formData.append('arquivo', fileInput.files[0]);
+        }
         const vaga = vagaInput.value.trim();
         if (vaga) formData.append('vaga', vaga);
 
