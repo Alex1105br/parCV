@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}">
     <link rel="manifest" href="{{ url_for('static', filename='favicon/site.webmanifest') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
+    <!-- Aplica tema antes do paint para evitar flash de tema errado -->
+    <script>
+        (function(){var t=localStorage.getItem('parcv-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();
+    </script>
     <!-- Lucide com versão fixada (evita quebras por upgrades automáticos) -->
     <script src="https://unpkg.com/lucide@0.383.0/dist/umd/lucide.min.js"
             onerror="window._lucideFailed=true"></script>
@@ -22,6 +26,7 @@
 <body>
     {% block body %}{% endblock %}
     {% block scripts %}{% endblock %}
+    <script src="{{ url_for('static', filename='theme.js') }}"></script>
     <script>
         // Inicializa ícones Lucide; fallback silencioso se o CDN falhou
         if (window.lucide) {

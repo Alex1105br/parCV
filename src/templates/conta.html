@@ -57,6 +57,12 @@
                 <i data-lucide="settings" class="sidebar__user-settings"></i>
             </a>
 
+            <button type="button" class="sidebar__theme-toggle" id="theme-toggle" aria-label="Alternar tema">
+                <i data-lucide="sun" class="theme-icon theme-icon--light"></i>
+                <i data-lucide="moon" class="theme-icon theme-icon--dark"></i>
+                <span class="sidebar__theme-label">Modo claro</span>
+            </button>
+
             <form method="post" action="{{ url_for('auth.logout') }}">
                 <button type="submit" class="sidebar__logout" aria-label="Sair">
                     <i data-lucide="log-out"></i>

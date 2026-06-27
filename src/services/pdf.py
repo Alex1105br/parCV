@@ -543,19 +543,19 @@ def gerar_pdf_relatorio_entrevista(entrevista):
     FONT_DIR = _find_font_dir()
     _register_fonts(FONT_DIR)
 
-    # ── Paleta dark (espelha o tema do Dashboard parCV) ───────────────────────
-    BG_CARD      = colors.HexColor("#13151c")
-    BG_CARD2     = colors.HexColor("#13151c")
-    TEXTO_CLARO  = colors.HexColor("#ffffff")
-    TEXTO_MÉDIO  = colors.HexColor("#a0a5b5")
-    BORDA        = colors.HexColor("#6366f1")
-    PRIMARY      = colors.HexColor("#6366f1")
+    # ── Paleta clara (adequada para PDF/impressão) ────────────────────────────
+    BG_CARD      = colors.HexColor("#f4f5f7")
+    BG_CARD2     = colors.HexColor("#eef0f4")
+    TEXTO_CLARO  = colors.HexColor("#0f1117")
+    TEXTO_MÉDIO  = colors.HexColor("#5a6278")
+    BORDA        = colors.HexColor("#4f52d3")
+    PRIMARY      = colors.HexColor("#4f52d3")
 
-    # Badges de tipo de pergunta (espelha o HTML)
-    HARD_COLOR   = colors.HexColor("#a5b4fc")
-    HARD_BG      = colors.HexColor("#1a1b2e")
-    SOFT_COLOR   = colors.HexColor("#86efac")
-    SOFT_BG      = colors.HexColor("#131e18")
+    # Badges de tipo de pergunta
+    HARD_COLOR   = colors.HexColor("#4f52d3")
+    HARD_BG      = colors.HexColor("#eef0f9")
+    SOFT_COLOR   = colors.HexColor("#16a34a")
+    SOFT_BG      = colors.HexColor("#f0faf3")
 
     # Mapeamento das variáveis CSS (escala de score)
     PESSIMO      = colors.HexColor("#ef4444")
@@ -658,10 +658,9 @@ def gerar_pdf_relatorio_entrevista(entrevista):
 
     def dark_background(canv, doc):
         """Callback de página do SimpleDocTemplate (onPage): pinta o
-        fundo de toda página do relatório com a cor escura do tema,
-        antes do conteúdo ser desenhado por cima."""
+        fundo de toda página do relatório com branco para exportação em PDF."""
         canv.saveState()
-        canv.setFillColor(colors.HexColor("#0b0c10"))
+        canv.setFillColor(colors.HexColor("#ffffff"))
         canv.rect(0, 0, A4[0], A4[1], fill=1, stroke=0)
         canv.restoreState()
 
@@ -739,7 +738,7 @@ def gerar_pdf_relatorio_entrevista(entrevista):
         ps('h_score_val', bold=True, size=22, color=TEXTO_CLARO, after=0, leading=22, alignment=1),
     )
     
-    score_circle = RoundedCard(score_val_p, 1.8 * cm, colors.HexColor("#0b0c10"), radius=9, border_color=s_cor, border_width=1.5, padding=(6, 2, 6, 2), force_circle=True, forced_height=1.8 * cm)
+    score_circle = RoundedCard(score_val_p, 1.8 * cm, colors.HexColor("#ffffff"), radius=9, border_color=s_cor, border_width=1.5, padding=(6, 2, 6, 2), force_circle=True, forced_height=1.8 * cm)
 
     # Combinamos "PONTUAÇÃO GERAL" e "(0 A 10)" com alignment=1 para garantir a simetria horizontal exata
     score_text_label = Paragraph(
@@ -929,7 +928,7 @@ def gerar_pdf_relatorio_entrevista(entrevista):
         ]))
 
         hdr_card = RoundedCard(
-            hdr_tbl, CONTENT_W, colors.HexColor("#1c1e2a"),
+            hdr_tbl, CONTENT_W, colors.HexColor("#eef0f4"),
             radius=10, border_color=PRIMARY, border_width=0.5,
             padding=(12, 16, 12, 16),
         )
@@ -954,7 +953,7 @@ def gerar_pdf_relatorio_entrevista(entrevista):
         fb_box = RoundedCard(
             [fb_label, Spacer(1, 2), fb_txt],
             CONTENT_W - 2.4 * cm,
-            colors.HexColor("#0b0c10"),
+            colors.HexColor("#ffffff"),
             radius=6, border_color=q_color, border_width=0.8,
             padding=(12, 14, 12, 14),
         )

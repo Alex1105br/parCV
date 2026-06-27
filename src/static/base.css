@@ -73,7 +73,405 @@
     --transition: 0.2s ease;
 }
 
-/* ===== Reset ===== */
+/* ===== Tema Claro ===== */
+[data-theme="light"] {
+    --color-primary: #4f52d3;
+    --color-primary-hover: #3d40bc;
+    --color-primary-subtle: rgba(79, 82, 211, 0.12);
+
+    --color-danger: #dc2626;
+    --color-danger-bg: rgba(220, 38, 38, 0.1);
+    --color-danger-text: #b91c1c;
+
+    --color-success: #16a34a;
+    --color-success-hover: #15803d;
+    --color-success-text: #166534;
+
+    --color-warning: #d97706;
+    --color-warning-bg: rgba(217, 119, 6, 0.1);
+    --color-warning-text: #92400e;
+
+    --color-peach: #ea580c;
+
+    --color-bg: #f4f5f7;
+    --color-surface: #ffffff;
+    --color-surface-raised: #eef0f4;
+    --color-border: rgba(0, 0, 0, 0.08);
+
+    --color-text: #0f1117;
+    --color-text-muted: #5a6278;
+    --color-text-inverse: #ffffff;
+
+    --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== Tema Claro — Overrides Globais ===== */
+[data-theme="light"] body {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+/* Header global (analisar, historico) */
+[data-theme="light"] .header {
+    background: var(--color-surface);
+    border-bottom-color: var(--color-border);
+}
+
+[data-theme="light"] .header__title {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .header__home {
+    background: var(--color-surface-raised);
+    border-color: var(--color-border);
+    color: var(--color-primary);
+}
+
+[data-theme="light"] .header__home:hover {
+    background: var(--color-primary-subtle);
+    border-color: var(--color-primary);
+}
+
+/* Forms */
+[data-theme="light"] .form-input,
+[data-theme="light"] .form-textarea {
+    background: var(--color-bg);
+    border-color: var(--color-border);
+    color: var(--color-text);
+}
+
+/* Buttons */
+[data-theme="light"] .btn--secondary {
+    background: var(--color-surface-raised);
+    color: var(--color-text);
+    border-color: var(--color-border);
+}
+
+[data-theme="light"] .btn--secondary:hover:not(:disabled) {
+    background: var(--color-surface);
+    border-color: var(--color-text-muted);
+}
+
+/* Modal de confirmação global */
+[data-theme="light"] .confirm-modal {
+    background: var(--color-surface-raised);
+    border-color: var(--color-border);
+}
+
+[data-theme="light"] .confirm-modal__title {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .confirm-modal__message {
+    color: var(--color-text-muted);
+}
+
+[data-theme="light"] .confirm-modal__btn {
+    color: var(--color-text);
+    border-color: var(--color-border);
+}
+
+/* ── Sidebar (home.css + conta + curriculos) ────────────── */
+[data-theme="light"] .sidebar {
+    background: #ffffff;
+    border-right: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .sidebar__brand-text {
+    color: #0f1117;
+}
+
+[data-theme="light"] .sidebar__toggle {
+    color: #5a6278;
+}
+
+[data-theme="light"] .sidebar__toggle:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #0f1117;
+}
+
+[data-theme="light"] .sidebar__item {
+    color: #5a6278;
+}
+
+[data-theme="light"] .sidebar__item:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: #0f1117;
+}
+
+[data-theme="light"] .sidebar__item--active {
+    background: rgba(79, 82, 211, 0.1);
+    color: #4f52d3;
+}
+
+[data-theme="light"] .sidebar__footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .sidebar__user--link {
+    color: #0f1117;
+}
+
+[data-theme="light"] .sidebar__user--link:hover {
+    background: rgba(79, 82, 211, 0.08);
+    color: #4f52d3;
+}
+
+[data-theme="light"] .sidebar__logout {
+    color: #5a6278;
+}
+
+[data-theme="light"] .sidebar__logout:hover {
+    color: #dc2626;
+}
+
+[data-theme="light"] .sidebar__theme-toggle {
+    color: #5a6278;
+}
+
+[data-theme="light"] .sidebar__theme-toggle:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: #0f1117;
+}
+
+/* ── Chat sidebar (chat.css usa .sidebar com var() mas bg vem de --color-bg) */
+[data-theme="light"] .sidebar__brand {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .sidebar__nav-item {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .sidebar__nav-item:hover {
+    background: var(--color-surface-raised);
+}
+
+[data-theme="light"] .sidebar__item-actions {
+    background: var(--color-surface-raised);
+    border-color: var(--color-border);
+}
+
+[data-theme="light"] .sidebar__action {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .sidebar__action:hover {
+    background: var(--color-surface);
+}
+
+[data-theme="light"] .sidebar__apagar-todas {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+[data-theme="light"] .sidebar__apagar-todas:hover {
+    background: var(--color-danger-bg);
+}
+
+[data-theme="light"] .sidebar__item-rename-input {
+    background: var(--color-surface-raised);
+    color: var(--color-text);
+}
+
+/* ── analisar.css — hardcoded backgrounds ─────────────────── */
+[data-theme="light"] .analisar__form .form-textarea,
+[data-theme="light"] .file-drop {
+    background: rgba(240, 241, 248, 0.8);
+}
+
+[data-theme="light"] .file-drop:hover,
+[data-theme="light"] .file-drop--active {
+    background: rgba(79, 82, 211, 0.04);
+}
+
+/* ── curriculos.css — modal PDF (cores fixas em branco/cinza) ─ */
+/* O modal PDF usa cores fixas de UI de visualizador — mantém branco mesmo
+   no escuro; no claro ficam idênticos (já são claros). Nenhum override necessário. */
+
+/* ── auth.css — card e inputs já usam var(), só precisa do fundo */
+[data-theme="light"] .card {
+    background: var(--color-surface);
+}
+
+/* ── Simulação de Entrevista (planejamento, execução e relatório) ── */
+[data-theme="light"] .ev-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .ev-card__title,
+[data-theme="light"] .ev-card__subtitle,
+[data-theme="light"] .ev-plano-title,
+[data-theme="light"] .ev-plano-subtitle,
+[data-theme="light"] .ev-loading-text,
+[data-theme="light"] .ev-pergunta-texto,
+[data-theme="light"] .ev-tracker__label,
+[data-theme="light"] .ev-parecer-texto,
+[data-theme="light"] .ev-score-meta__title,
+[data-theme="light"] .ev-acordeao__preview,
+[data-theme="light"] .ev-detalhe-bloco p,
+[data-theme="light"] .ev-resumo__list li,
+[data-theme="light"] .ev-feedback-texto {
+    color: #0f1117;
+}
+
+[data-theme="light"] .ev-card__subtitle,
+[data-theme="light"] .ev-plano-subtitle,
+[data-theme="light"] .ev-loading-text,
+[data-theme="light"] .ev-tracker__label,
+[data-theme="light"] .form-label {
+    color: #5a6278;
+}
+
+/* Textarea dentro das entrevistas */
+[data-theme="light"] .form-textarea {
+    background: #f4f5f7;
+    border-color: rgba(0, 0, 0, 0.12);
+    color: #0f1117;
+}
+
+[data-theme="light"] .form-textarea:focus {
+    border-color: #4f52d3;
+}
+
+/* Área de upload de arquivo */
+[data-theme="light"] .file-drop {
+    background: rgba(240, 241, 248, 0.8);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .file-drop:hover,
+[data-theme="light"] .file-drop--hover {
+    border-color: #4f52d3;
+    background: rgba(79, 82, 211, 0.04);
+}
+
+[data-theme="light"] .file-drop--selected {
+    border-color: #16a34a;
+    background: rgba(22, 163, 74, 0.04);
+}
+
+[data-theme="light"] .file-drop__icon {
+    color: #5a6278;
+}
+
+[data-theme="light"] .file-drop__hint {
+    color: #5a6278;
+}
+
+[data-theme="light"] .file-drop__name {
+    background: rgba(0, 0, 0, 0.06);
+    color: #0f1117;
+}
+
+/* Tópicos no planejamento */
+[data-theme="light"] .ev-topico {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #0f1117;
+}
+
+/* Estratégia */
+[data-theme="light"] .ev-estrategia {
+    background: rgba(79, 82, 211, 0.04);
+    color: #1a1f36;
+}
+
+/* Spinner */
+[data-theme="light"] .ev-spinner {
+    border-color: rgba(0, 0, 0, 0.1);
+    border-top-color: #4f52d3;
+}
+
+/* Seção de feedback na execução */
+[data-theme="light"] .ev-feedback-header {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .ev-feedback-score {
+    background: #f4f5f7;
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+/* Relatório — sidebar */
+[data-theme="light"] .ev-sidebar-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .ev-sidebar-card__label {
+    color: #5a6278;
+}
+
+[data-theme="light"] .ev-sidebar-card__value {
+    color: #0f1117;
+}
+
+/* Relatório — cards de resumo */
+[data-theme="light"] .ev-resumo__col {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .ev-resumo__list li::before {
+    color: #5a6278;
+}
+
+/* Relatório — acordeão de perguntas */
+[data-theme="light"] .ev-acordeao__item {
+    border-color: rgba(0, 0, 0, 0.08);
+    background: #ffffff;
+}
+
+[data-theme="light"] .ev-acordeao__header {
+    color: #0f1117;
+}
+
+[data-theme="light"] .ev-acordeao__header:hover {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .ev-acordeao__chevron {
+    color: #5a6278;
+}
+
+[data-theme="light"] .ev-acordeao__body {
+    background: #f4f5f7;
+    border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .ev-detalhe-bloco h4 {
+    color: #5a6278;
+}
+
+[data-theme="light"] .ev-detalhe-bloco--feedback {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Relatório — seção title */
+[data-theme="light"] .ev-card__section-title {
+    color: #0f1117;
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Score ring denom */
+[data-theme="light"] .ev-score-ring__denom {
+    color: #5a6278;
+}
+
+/* Acordeão num */
+[data-theme="light"] .ev-acordeao__num {
+    color: #4f52d3;
+}
+
 *,
 *::before,
 *::after {
@@ -113,6 +511,19 @@ img {
 button {
     font-family: inherit;
     cursor: pointer;
+}
+
+/* ===== Theme button no header (páginas sem sidebar: analisar, historico, chat) ===== */
+.header__theme-btn {
+    padding: 6px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.header__theme-btn i {
+    width: 16px;
+    height: 16px;
 }
 
 /* ===== Utility Classes ===== */

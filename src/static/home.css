@@ -473,7 +473,119 @@ body {
         gap: var(--spacing-md);
     }
 }
-/* ── Configurações de conta: sidebar__user como link clicável ────── */
+/* ── Theme Toggle Button ─────────────────────────────────────────── */
+.sidebar__theme-toggle {
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: 12px 14px;
+    color: #a0a5b5;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font-size: var(--font-size-base);
+    white-space: nowrap;
+    border-radius: var(--radius-md);
+    transition: background 0.2s, color 0.2s;
+}
+
+.sidebar__theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+}
+
+.sidebar__theme-toggle i {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.sidebar__theme-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Ícone visível por modo */
+.theme-icon--light { display: none; }
+.theme-icon--dark  { display: block; }
+
+[data-theme="light"] .theme-icon--light { display: block; }
+[data-theme="light"] .theme-icon--dark  { display: none; }
+
+/* Oculta label quando retraída */
+.sidebar--collapsed .sidebar__theme-toggle {
+    justify-content: center;
+    padding: 12px;
+}
+.sidebar--collapsed .sidebar__theme-label {
+    display: none;
+}
+
+/* ── Overrides tema claro: cores hardcoded na home ───────────────── */
+[data-theme="light"] body {
+    background-color: #f4f5f7;
+}
+
+[data-theme="light"] .layout {
+    background-color: #f4f5f7;
+}
+
+[data-theme="light"] .home-header__title {
+    color: #0f1117;
+}
+
+[data-theme="light"] .home-header__subtitle {
+    color: #5a6278;
+}
+
+[data-theme="light"] .card {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    color: #0f1117;
+}
+
+[data-theme="light"] .card:hover {
+    border-color: #4f52d3;
+    box-shadow: 0 12px 20px -8px rgba(79, 82, 211, 0.2);
+}
+
+[data-theme="light"] .card__icon-wrap {
+    background: rgba(79, 82, 211, 0.08);
+    color: #4f52d3;
+}
+
+[data-theme="light"] .card__title {
+    color: #0f1117;
+}
+
+[data-theme="light"] .card__desc {
+    color: #5a6278;
+}
+
+[data-theme="light"] .info-section--footer {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .step__number {
+    background: rgba(79, 82, 211, 0.1);
+    color: #4f52d3;
+}
+
+[data-theme="light"] .step__text {
+    color: #5a6278;
+}
+
+[data-theme="light"] .info-section__title {
+    color: #5a6278;
+}
+
+[data-theme="light"] .info-section__title i {
+    color: #4f52d3;
+}
+
 .sidebar__user--link {
     text-decoration: none;
     cursor: pointer;
