@@ -653,16 +653,20 @@ SOFT SKILLS — Respostas comportamentais (perguntas 7 a 10):
 
 INSTRUÇÕES:
 - Analise os dois blocos acima com atenção.
-- "pontos_fortes" deve cobrir tanto conquistas técnicas (hard skills) quanto comportamentais (soft skills) onde o candidato se destacou.
-- "pontos_fracos" deve listar falhas ou respostas fracas de AMBOS os blocos — não ignore soft skills com score baixo.
-- "recomendacoes" deve ser concreto e diferenciado: se o candidato foi fraco em soft skills, inclua recomendações específicas de desenvolvimento comportamental (ex: comunicação, gestão de conflitos, trabalho em equipe); se foi fraco em hard skills, inclua recomendações técnicas.
+- "pontos_fortes" deve cobrir tanto conquistas técnicas (hard skills) quanto comportamentais (soft skills) onde o candidato se destacou. Liste 3-4 itens.
+- "pontos_fracos" deve listar APENAS falhas ou lacunas reais identificadas nas respostas (score < 8 ou feedback negativo explícito). REGRAS OBRIGATÓRIAS para "pontos_fracos":
+  * NUNCA inclua observações positivas, elogios ou afirmações do tipo "não apresentou fraquezas" ou "desempenho excelente" nessa lista.
+  * Se o candidato não tiver fraquezas reais, retorne uma lista vazia [].
+  * Cada item deve descrever uma lacuna concreta observada nas respostas, não uma sugestão de melhoria genérica.
+  * Itens como "poderia ter detalhado mais X" só são válidos se o feedback da pergunta apontar isso como problema real.
+- "recomendacoes" deve ser concreto e diferenciado: se o candidato foi fraco em soft skills, inclua recomendações específicas de desenvolvimento comportamental (ex: comunicação, gestão de conflitos, trabalho em equipe); se foi fraco em hard skills, inclua recomendações técnicas. Se o desempenho foi geral alto, as recomendações devem ser de aprimoramento avançado, não de correção de falhas.
 
 Gere JSON (APENAS JSON):
 {{
     "score_geral": <0.0-10.0>,
     "parecer_final": "<parecer executivo conciso cobrindo hard e soft skills - max 500 chars>",
-    "pontos_fortes": [<lista de 3-4 pontos fortes, misturando hard e soft skills onde houver destaque>],
-    "pontos_fracos": [<lista de 3-4 pontos fracos, incluindo soft skills se houver score baixo>],
+    "pontos_fortes": [<lista de 3-4 pontos fortes reais, misturando hard e soft skills onde houver destaque>],
+    "pontos_fracos": [<lista de 0-4 pontos fracos REAIS com base em falhas observadas — lista vazia [] se não houver fraquezas genuínas>],
     "recomendacoes": [<lista de 3-4 recomendações concretas e diferenciadas por tipo de lacuna>],
     "recomendacao_gestor": "<REJEITAR / ENTREVISTA_ADICIONAL / APROVAR>"
 }}"""
