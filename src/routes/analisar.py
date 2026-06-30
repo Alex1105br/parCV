@@ -89,6 +89,20 @@ def analisar():
     result = extrair_json(resposta)
     result["texto_original"] = texto
 
+    # Recalcula score_total server-side como soma das notas dos critérios —
+    # o LLM às vezes devolve um valor inconsistente com a soma real.
+    # Os critérios esperados e seus pesos máximos:
+    #   estrutura(15) + clareza(15) + experiencia(20) + palavras_chave(20)
+    #   + skills(15) + compatibilidade(15) = 100
+    criterios = result.get("criterios") or {}
+    CRITERIOS_CHAVE = ["estrutura", "clareza", "experiencia", "palavras_chave", "skills", "compatibilidade"]
+    soma = sum(
+        int((criterios.get(k) or {}).get("nota", 0))
+        for k in CRITERIOS_CHAVE
+    )
+    if soma > 0:
+        result["score_total"] = max(0, min(100, soma))
+
     titulo = gerar_titulo_analise(texto, vaga)
     result["titulo"] = titulo
 

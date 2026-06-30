@@ -502,6 +502,25 @@ Gere um JSON com a seguinte estrutura (APENAS JSON, sem outros textos):
             # Limitar a exatamente 10 perguntas
             plano["numero_perguntas"] = 10
             plano["questoes_principais"] = plano["questoes_principais"][:10]
+
+            # Garante mínimo de 10 perguntas — se o LLM devolveu menos, completa
+            # com perguntas de fallback para não criar entrevistas com perguntas
+            # faltando (causaria 404 no frontend ao tentar carregar pergunta 9/10).
+            FALLBACK_PERGUNTAS = [
+                "Descreva seu maior projeto técnico e as tecnologias que você utilizou.",
+                "Qual é sua experiência com as tecnologias principais exigidas nesta vaga?",
+                "Como você aborda a resolução de um bug crítico em produção?",
+                "Explique como você garante a qualidade do código que escreve.",
+                "Descreva sua experiência com metodologias ágeis ou processos de desenvolvimento.",
+                "Como você se mantém atualizado com as novas tecnologias da sua área?",
+                "Conte sobre uma situação em que precisou explicar um problema técnico para uma pessoa não técnica.",
+                "Descreva um momento em que você teve que lidar com prazos apertados e como se organizou.",
+                "Conte sobre um conflito com um colega de equipe e como você o resolveu.",
+                "Quais são seus objetivos profissionais para os próximos 2 anos e como esta vaga se encaixa neles?",
+            ]
+            while len(plano["questoes_principais"]) < 10:
+                idx = len(plano["questoes_principais"])
+                plano["questoes_principais"].append(FALLBACK_PERGUNTAS[idx])
             
             return plano
     except json.JSONDecodeError as e:
