@@ -1,6 +1,7 @@
 import os
+import threading
 
-from flask import Blueprint, render_template, request, session, jsonify, send_file
+from flask import Blueprint, render_template, request, session, jsonify, send_file, current_app
 from sqlalchemy.orm import joinedload
 from werkzeug.utils import secure_filename
 
@@ -12,7 +13,7 @@ from src.models.curriculo import Curriculo
 from src.models.db import db
 from src.models.otimizacao import Otimizacao
 from src.services.curriculo import obter_ou_criar_curriculo
-from src.services.model import call_model, gerar_titulo_analise
+from src.services.model import call_model, gerar_titulo_analise, titulo_fallback_analise
 from src.services.parser import extrair_json, extrair_texto_curriculo
 from src.services.prompts import build_prompt_ats, build_prompt_otimizar
 from src.services.pdf import gerar_pdf_curriculo
@@ -82,7 +83,16 @@ def analisar():
     if has_prompt_injection(vaga) or has_prompt_injection(texto):
         return jsonify({"error": "Conteúdo inválido detectado"}), 422
 
-    resposta, erro = call_model(build_prompt_ats(texto, vaga), num_predict=2200)
+    # num_predict=4500: o JSON de análise ATS é extenso (6 critérios com motivo +
+    # pontos_fortes/fracos + veredito + certificados) — testes mostraram que
+    # mesmo 3500 tokens não bastavam para fechar o JSON (a resposta batia
+    # exatamente no teto de completion_tokens, ou seja, era cortada no meio).
+    # Reduzimos a verbosidade pedida no prompt (build_prompt_ats) E agora damos
+    # mais espaço de tokens, já que a chamada de título não roda mais colada
+    # nesta (foi movida para background — ver _gerar_titulo_bg), então não
+    # competem pelo mesmo orçamento de TPM da Groq (8000/min). Com
+    # prompt_tokens ~3000 + 4500 de completion ainda sobra margem sob o limite.
+    resposta, erro = call_model(build_prompt_ats(texto, vaga), num_predict=4500)
     if erro:
         return jsonify({"error": erro}), 500
 
@@ -94,8 +104,8 @@ def analisar():
     # Os critérios esperados e seus pesos máximos:
     #   estrutura(15) + clareza(15) + experiencia(20) + palavras_chave(20)
     #   + skills(15) + compatibilidade(15) = 100
-    criterios = result.get("criterios") or {}
     CRITERIOS_CHAVE = ["estrutura", "clareza", "experiencia", "palavras_chave", "skills", "compatibilidade"]
+    criterios = result.get("criterios") or {}
     soma = sum(
         int((criterios.get(k) or {}).get("nota", 0))
         for k in CRITERIOS_CHAVE
@@ -103,7 +113,36 @@ def analisar():
     if soma > 0:
         result["score_total"] = max(0, min(100, soma))
 
-    titulo = gerar_titulo_analise(texto, vaga)
+    # Normaliza campos obrigatórios: garante que o frontend nunca receba
+    # undefined/null em campos que acessa diretamente, mesmo quando o LLM
+    # retorna JSON malformado ou incompleto (ex.: extrair_json devolve
+    # {"error": ..., "raw": ...} sem as chaves esperadas).
+    criterio_vazio = {"nota": 0, "motivo": "", "pontos_fortes": [], "pontos_fracos": []}
+    criterios_normalizados = {}
+    for chave in CRITERIOS_CHAVE:
+        c = criterios.get(chave)
+        if isinstance(c, dict):
+            criterios_normalizados[chave] = c
+        elif isinstance(c, (int, float)):
+            # Formato legado: critério era número puro
+            criterios_normalizados[chave] = {**criterio_vazio, "nota": int(c)}
+        else:
+            criterios_normalizados[chave] = dict(criterio_vazio)
+    result["criterios"] = criterios_normalizados
+    result.setdefault("score_total", 0)
+    result.setdefault("pontos_fortes", [])
+    result.setdefault("pontos_fracos", [])
+    result.setdefault("sugestoes", [])
+    result.setdefault("palavras_chave_faltando", [])
+    result.setdefault("certificados_sugeridos", [])
+    result.setdefault("veredito", None)
+
+    # Título gerado de forma determinística (sem LLM) para não emendar uma
+    # 2ª chamada logo após a de análise e estourar o TPM da Groq no mesmo
+    # minuto. O título "de verdade" (com inferência de cargo via LLM) é
+    # gerado em background depois de responder e atualizado no banco —
+    # ver _gerar_titulo_bg mais abaixo.
+    titulo = titulo_fallback_analise(texto, vaga)
     result["titulo"] = titulo
 
     try:
@@ -135,6 +174,28 @@ def analisar():
         db.session.add(analise)
         db.session.commit()
         result["id"] = analise.id
+
+        analise_id = analise.id
+        app_obj = current_app._get_current_object()
+
+        def _gerar_titulo_bg():
+            """Roda depois da resposta já ter sido enviada: chama a LLM
+            para gerar o título "de verdade" (com inferência de cargo a
+            partir da vaga) e atualiza o registro já persistido. Best
+            effort — se falhar (ex.: rate limit), o título determinístico
+            que já foi devolvido ao usuário permanece."""
+            with app_obj.app_context():
+                try:
+                    titulo_llm = gerar_titulo_analise(texto, vaga)
+                    if titulo_llm and titulo_llm != titulo:
+                        fresh = db.session.get(Analise, analise_id)
+                        if fresh:
+                            fresh.titulo = titulo_llm
+                            db.session.commit()
+                except Exception as e:
+                    logger.warning("titulo_bg_error", extra={"erro": str(e)})
+
+        threading.Thread(target=_gerar_titulo_bg, daemon=True).start()
     except Exception as e:
         db.session.rollback()
         logger.error("db_error", extra={"op": "salvar_analise", "erro": str(e)})

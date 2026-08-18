@@ -1,4 +1,5 @@
 import json
+import re
 import time
 import requests
 
@@ -19,6 +20,27 @@ from src.config import (
 
 
 # ===== Groq Backend =====
+
+# Tempo máximo de espera que vale a pena aguardar num retry automático de
+# rate limit (acima disso, melhor devolver o erro logo — ver _groq_call).
+_RATE_LIMIT_MAX_WAIT = 20.0
+
+
+def _parse_retry_after(error_message):
+    """Extrai o tempo de espera sugerido pela Groq na mensagem de erro de
+    rate limit (ex.: '...Please try again in 18.8175s...'), usado para
+    fazer retry automático em vez de simplesmente falhar — ver _groq_call.
+    Retorna None se a mensagem não tiver esse padrão."""
+    if not error_message:
+        return None
+    m = re.search(r"try again in ([\d.]+)s", error_message)
+    if not m:
+        return None
+    try:
+        return float(m.group(1))
+    except ValueError:
+        return None
+
 
 def _groq_stream(messages, max_tokens=None):
     """Stream chat completion from Groq API. Yields (token, done, error) tuples."""
@@ -62,11 +84,22 @@ def _groq_stream(messages, max_tokens=None):
             return
 
 
-def _groq_call(prompt, max_tokens=None, timeout=None):
+def _groq_call(prompt, max_tokens=None, timeout=None, _retry=True):
     """Synchronous single-prompt call via Groq. Returns (response_text, error, usage).
     usage é o dict {prompt_tokens, completion_tokens, total_tokens} devolvido
     pela API da Groq (vazio em caso de erro) — usado por call_model() só
-    para log, não é repassado aos callers."""
+    para log, não é repassado aos callers.
+
+    Retry automático em rate limit (HTTP 429): a Groq devolve na própria
+    mensagem de erro quanto tempo falta até liberar orçamento de TPM (ex.
+    "try again in 1.85s"). Isso é comum aqui porque o TPM (8000/min) é
+    compartilhado entre TODAS as chamadas da org (análise, título em
+    background, otimização, entrevista) — é fácil um botão como "Otimizar
+    currículo" esbarrar num orçamento que a análise acabou de consumir.
+    Em vez de devolver erro na hora, esperamos o tempo sugerido (se for
+    curto o bastante para não travar a resposta por muito tempo) e
+    tentamos de novo, uma única vez (_retry=False na chamada recursiva
+    evita loop infinito se o retry também esbarrar em rate limit)."""
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
         "Content-Type": "application/json",
@@ -84,6 +117,15 @@ def _groq_call(prompt, max_tokens=None, timeout=None):
         )
         if response.status_code != 200:
             error = response.json().get("error", {}).get("message", response.text)
+            if _retry and response.status_code == 429:
+                wait = _parse_retry_after(error)
+                if wait is not None and wait <= _RATE_LIMIT_MAX_WAIT:
+                    logger.info(
+                        "groq_rate_limit_retry",
+                        extra={"wait_s": wait},
+                    )
+                    time.sleep(wait + 0.5)
+                    return _groq_call(prompt, max_tokens=max_tokens, timeout=timeout, _retry=False)
             return None, error, {}
         body = response.json()
         content = body["choices"][0]["message"]["content"]
@@ -283,6 +325,29 @@ def _gerar_titulo_sync(mensagem, doc_label):
     if not titulo:
         titulo = datetime.now().strftime("Conversa %d/%m %H:%M")
 
+    return titulo
+
+
+def titulo_fallback_analise(curriculo_text, vaga=None):
+    """Título determinístico e instantâneo (sem chamar a LLM), usado como
+    título imediato na resposta síncrona de POST /analisar. O título
+    "de verdade" — com inferência de cargo via LLM — é gerado depois
+    em background por gerar_titulo_analise() e atualizado no banco,
+    para não competir por TPM com a chamada de análise (que já usa a
+    maior parte do orçamento por minuto) nem atrasar a resposta ao
+    usuário. Mesma lógica de fallback usada dentro de
+    gerar_titulo_analise."""
+    from src.utils import sanitize_text
+    from datetime import datetime
+
+    curriculo_text = (curriculo_text or "").strip()
+    vaga = (vaga or "").strip()
+    primeira_linha_curriculo = curriculo_text.split("\n")[0].strip() if curriculo_text else ""
+
+    fallback = vaga[:60] or primeira_linha_curriculo[:60]
+    titulo = sanitize_text(fallback)[:100] if fallback else None
+    if not titulo:
+        titulo = datetime.now().strftime("Análise %d/%m %H:%M")
     return titulo
 
 

@@ -12,8 +12,16 @@ LLM_BACKEND = env.str(
 ).lower()
 
 # --- Groq ---
+#GROQ_API_KEY = env.str("GROQ_API_KEY", default="")
+#GROQ_MODEL = env.str("GROQ_MODEL", default="llama-3.3-70b-versatile")
+#GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+
+
+
+# --- Groq ---
+
 GROQ_API_KEY = env.str("GROQ_API_KEY", default="")
-GROQ_MODEL = env.str("GROQ_MODEL", default="llama-3.3-70b-versatile")
+GROQ_MODEL = env.str("GROQ_MODEL", default="openai/gpt-oss-120b")
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 if LLM_BACKEND == "groq" and not GROQ_API_KEY:

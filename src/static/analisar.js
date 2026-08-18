@@ -310,7 +310,17 @@
             return;
         }
 
-        const score = data.score_total;
+        // Garante que criterios e listas existam mesmo com resposta parcial do LLM
+        data.criterios = data.criterios || {};
+        var CRITERIOS_CHAVE = ['estrutura', 'clareza', 'experiencia', 'palavras_chave', 'skills', 'compatibilidade'];
+        CRITERIOS_CHAVE.forEach(function(k) { data.criterios[k] = data.criterios[k] || {}; });
+        data.pontos_fortes = data.pontos_fortes || [];
+        data.pontos_fracos = data.pontos_fracos || [];
+        data.sugestoes = data.sugestoes || [];
+        data.palavras_chave_faltando = data.palavras_chave_faltando || [];
+        data.certificados_sugeridos = data.certificados_sugeridos || [];
+
+        const score = data.score_total || 0;
         var cor = scoreCor(score);
 
         var analiseHtml =
