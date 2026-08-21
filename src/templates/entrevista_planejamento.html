@@ -377,7 +377,6 @@
     .hidden { display: none !important; }
 </style>
 {% endblock %}
-
 {% block body %}
 <header class="header">
     <div class="header__left">
@@ -399,7 +398,7 @@
             </div>
             <div>
                 <h2 class="ev-card__title">Configure sua entrevista</h2>
-                <p class="ev-card__subtitle">Envie seu currículo e a vaga desejada para que a IA monte 10 perguntas personalizadas (hard skills e soft skills)</p>
+                <p class="ev-card__subtitle">Envie seu currículo e a vaga desejada para que a IA monte 4 perguntas personalizadas (2 hard skills + 2 soft skills)</p>
             </div>
         </div>
 
@@ -459,7 +458,7 @@
                 Plano gerado
             </div>
             <h2 class="ev-plano-title">Sua entrevista está pronta</h2>
-            <p class="ev-plano-subtitle">Serão feitas <strong id="num-perguntas">10</strong> perguntas personalizadas (6 hard skills + 4 soft skills) com base no seu perfil e na vaga.</p>
+            <p class="ev-plano-subtitle">Serão feitas <strong id="num-perguntas">4</strong> perguntas personalizadas (2 hard skills + 2 soft skills) com base no seu perfil e na vaga.</p>
         </div>
 
         <ul class="ev-topicos" id="topicos-list"></ul>
@@ -553,10 +552,16 @@ document.getElementById('form-planejamento').addEventListener('submit', async (e
         if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Erro ao gerar plano'); }
         const data = await res.json();
 
-        document.getElementById('num-perguntas').textContent = data.numero_perguntas;
-        document.getElementById('strategy-text').textContent = data.plano.estrategia || '';
+        // Tratamento com fallback seguro para os atributos do plano
+        const plano = data.plano || {};
+        const numeroPerguntas = data.numero_perguntas || plano.numero_perguntas || 4;
+        const estrategiaText = plano.estrategia_entrevista || plano.estrategia || '';
+        const topicosArray = plano.topicos_principais || plano.topicos || [];
+
+        document.getElementById('num-perguntas').textContent = numeroPerguntas;
+        document.getElementById('strategy-text').textContent = estrategiaText;
         document.getElementById('topicos-list').innerHTML =
-            (data.plano.topicos || []).map(t => `<li class="ev-topico"><i data-lucide="chevron-right"></i>${t}</li>`).join('');
+            topicosArray.map(t => `<li class="ev-topico"><i data-lucide="chevron-right"></i>${t}</li>`).join('');
         document.getElementById('btn-iniciar').href = `/entrevista/${data.entrevista_id}/executar`;
 
         document.getElementById('card-loading').classList.add('hidden');

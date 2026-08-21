@@ -520,36 +520,34 @@ DESCRIÇÃO DA VAGA:
 
 Gere um JSON com a seguinte estrutura (APENAS JSON, sem outros textos):
 {{
-    "numero_perguntas": 10,
-    "topicos_principais": [<lista de 4-6 tópicos principais, misturando habilidades técnicas e comportamentais>],
+    "numero_perguntas": 4,
+    "topicos_principais": [<lista de 2-4 tópicos principais, misturando habilidades técnicas e comportamentais>],
     "estrategia_entrevista": "<descrição breve da estratégia em 2-3 linhas, mencionando a cobertura de hard e soft skills>",
-    "questoes_principais": [<lista de exatamente 10 perguntas, sendo:
-        - perguntas 1 a 6: hard skills (habilidades técnicas específicas da vaga, tecnologias, metodologias, resolução de problemas técnicos),
-        - perguntas 7 a 10: soft skills (comunicação, trabalho em equipe, liderança, adaptabilidade, resolução de conflitos, gestão de tempo)
+    "questoes_principais": [<lista de exatamente 4 perguntas, sendo:
+        - perguntas 1 e 2: hard skills (habilidades técnicas específicas da vaga, tecnologias, resolução de problemas),
+        - perguntas 3 e 4: soft skills (comunicação, trabalho em equipe, adaptabilidade, gestão de tempo)
     >]
 }}"""
     
-    response, error = call_model(prompt, num_predict=1500)
+    response, error = call_model(prompt, num_predict=800)
     
+    FALLBACK_PERGUNTAS = [
+        "Descreva seu maior projeto técnico e as tecnologias que você utilizou.",
+        "Qual é sua experiência com as tecnologias principais exigidas nesta vaga?",
+        "Conte sobre uma situação em que precisou explicar um problema técnico para uma pessoa não técnica.",
+        "Descreva um momento em que você teve que lidar com prazos apertados e como se organizou."
+    ]
+
+    FALLBACK_PLANO = {
+        "numero_perguntas": 4,
+        "topicos_principais": ["Habilidades Técnicas", "Resolução de Problemas", "Comunicação", "Gestão de Tempo"],
+        "estrategia_entrevista": "Avaliação objetiva com 2 perguntas de hard skills e 2 perguntas de soft skills.",
+        "questoes_principais": FALLBACK_PERGUNTAS
+    }
+
     if error or not response:
         logger.error(f"Erro ao gerar plano: {error}")
-        return {
-            "numero_perguntas": 10,
-            "topicos_principais": ["Habilidades Técnicas", "Resolução de Problemas", "Comunicação", "Trabalho em Equipe", "Gestão de Tempo"],
-            "estrategia_entrevista": "Avaliação equilibrada com 6 perguntas de hard skills (competências técnicas) e 4 perguntas de soft skills (competências comportamentais)",
-            "questoes_principais": [
-                "Descreva seu maior projeto técnico e as tecnologias que você utilizou",
-                "Qual é sua experiência com as tecnologias principais exigidas nesta vaga?",
-                "Como você aborda a resolução de um bug crítico em produção?",
-                "Explique como você garante a qualidade do código que escreve",
-                "Descreva sua experiência com metodologias ágeis ou processos de desenvolvimento",
-                "Como você se mantém atualizado com as novas tecnologias da sua área?",
-                "Conte sobre uma situação em que precisou explicar um problema técnico para uma pessoa não técnica",
-                "Descreva um momento em que você teve que lidar com prazos apertados e como se organizou",
-                "Conte sobre um conflito com um colega de equipe e como você o resolveu",
-                "Quais são seus objetivos profissionais para os próximos 2 anos e como esta vaga se encaixa neles?"
-            ]
-        }
+        return FALLBACK_PLANO
     
     try:
         # Extrair JSON da resposta
@@ -559,56 +557,27 @@ Gere um JSON com a seguinte estrutura (APENAS JSON, sem outros textos):
             json_str = response[json_start:json_end]
             plano = json.loads(json_str)
             
-            # Validar campos
-            plano.setdefault("numero_perguntas", 10)
-            plano.setdefault("topicos_principais", [])
-            plano.setdefault("estrategia_entrevista", "")
-            plano.setdefault("questoes_principais", [])
-            # Limitar a exatamente 10 perguntas
-            plano["numero_perguntas"] = 10
-            plano["questoes_principais"] = plano["questoes_principais"][:10]
-
-            # Garante mínimo de 10 perguntas — se o LLM devolveu menos, completa
-            # com perguntas de fallback para não criar entrevistas com perguntas
-            # faltando (causaria 404 no frontend ao tentar carregar pergunta 9/10).
-            FALLBACK_PERGUNTAS = [
-                "Descreva seu maior projeto técnico e as tecnologias que você utilizou.",
-                "Qual é sua experiência com as tecnologias principais exigidas nesta vaga?",
-                "Como você aborda a resolução de um bug crítico em produção?",
-                "Explique como você garante a qualidade do código que escreve.",
-                "Descreva sua experiência com metodologias ágeis ou processos de desenvolvimento.",
-                "Como você se mantém atualizado com as novas tecnologias da sua área?",
-                "Conte sobre uma situação em que precisou explicar um problema técnico para uma pessoa não técnica.",
-                "Descreva um momento em que você teve que lidar com prazos apertados e como se organizou.",
-                "Conte sobre um conflito com um colega de equipe e como você o resolveu.",
-                "Quais são seus objetivos profissionais para os próximos 2 anos e como esta vaga se encaixa neles?",
-            ]
-            while len(plano["questoes_principais"]) < 10:
-                idx = len(plano["questoes_principais"])
-                plano["questoes_principais"].append(FALLBACK_PERGUNTAS[idx])
+            # Validar e forçar parâmetros
+            plano["numero_perguntas"] = 4
+            plano.setdefault("topicos_principais", ["Habilidades Técnicas", "Comunicação"])
+            plano.setdefault("estrategia_entrevista", "Avaliação focada em 2 hard skills e 2 soft skills.")
             
+            questoes = plano.get("questoes_principais", [])
+            # Limitar a no máximo 4 perguntas
+            questoes = questoes[:4]
+
+            # Garante exatamente 4 perguntas caso o LLM devolva menos
+            while len(questoes) < 4:
+                idx = len(questoes)
+                questoes.append(FALLBACK_PERGUNTAS[idx])
+            
+            plano["questoes_principais"] = questoes
             return plano
+
     except json.JSONDecodeError as e:
         logger.warning(f"Erro ao parsear JSON do plano: {e}")
     
-    return {
-        "numero_perguntas": 10,
-        "topicos_principais": ["Habilidades Técnicas", "Resolução de Problemas", "Comunicação", "Trabalho em Equipe", "Gestão de Tempo"],
-        "estrategia_entrevista": "Avaliação equilibrada com 6 perguntas de hard skills (competências técnicas) e 4 perguntas de soft skills (competências comportamentais)",
-        "questoes_principais": [
-            "Descreva seu maior projeto técnico e as tecnologias que você utilizou",
-            "Qual é sua experiência com as tecnologias principais exigidas nesta vaga?",
-            "Como você aborda a resolução de um bug crítico em produção?",
-            "Explique como você garante a qualidade do código que escreve",
-            "Descreva sua experiência com metodologias ágeis ou processos de desenvolvimento",
-            "Como você se mantém atualizado com as novas tecnologias da sua área?",
-            "Conte sobre uma situação em que precisou explicar um problema técnico para uma pessoa não técnica",
-            "Descreva um momento em que você teve que lidar com prazos apertados e como se organizou",
-            "Conte sobre um conflito com um colega de equipe e como você o resolveu",
-            "Quais são seus objetivos profissionais para os próximos 2 anos e como esta vaga se encaixa neles?"
-        ]
-    }
-
+    return FALLBACK_PLANO
 
 def avaliar_resposta(pergunta, resposta, contexto):
     """
